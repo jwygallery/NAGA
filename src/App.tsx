@@ -35,38 +35,38 @@ const ACTIVITIES_DATA: ActivityItem[] = [
     date: '2027.07',
     title: '2027 SEOUL BUL-SU-SA-DO-BUK 45KM MAIN CHALLENGE',
     distance: '45km',
-    keyPoints: '불암산 - 수락산 - 사패산 - 도봉산 - 북한산 종주 풀코스',
+    keyPoints: '45km 종주 풀코스 & 전해질 음료, 수제 그릭요거트',
     location: '불암산 ~ 북한산 종주 트레일',
     elevation: '+3,850m 누적고도',
-    gearRequired: 'NAGA 알파인 테크니컬 팩, 트레일러닝화, 헤드랜턴, 비상 쉘 재킷',
-    recoveryProtocol: 'NAGA Guard Hydrometer 전해질 체크 & Alpine Shake 회복 급식',
+    gearRequired: '트레킹 기어, 물병, 헤드랜턴 (필수), 비상 보온 의류',
+    recoveryProtocol: 'NAGA™ 전해질 음료 & 운동 후 수제 그릭요거트 제공',
     description: '서울의 5대 암릉 명산을 잇는 총 45km 고난도 알파인 트레버스. 극대화된 내구력과 페이스 관리, 테크니컬 암릉 주파 능력을 검증하는 메인 챌린지.',
   },
   {
     id: 'act-03',
     code: '[2027.06]',
     date: '2027.06',
-    title: 'PRE-TRAINING DRILL 03: NORTH HAN MOUNTAIN',
+    title: 'PRE-TRAINING DRILL 03: BUK-HAN',
     distance: '15km',
-    keyPoints: '암릉 적응 & Alpine Shake',
+    keyPoints: '야간 산행 연습 & 헤드랜턴 적응',
     location: '북한산 백운대 - 의상능선 테크니컬 암릉',
     elevation: '+1,280m 누적고도',
-    gearRequired: '알파인 릿지 슈즈, 접지 글러브, 경량 윈드쉘',
-    recoveryProtocol: 'Alpine Shake 단백질 & 필수 아미노산 즉각 보충',
-    description: '북한산 주능선의 고난도 암릉 구간 적응 훈련 및 세션 직후 Alpine Shake 포뮬러를 통한 근육 회복 주기 테스트.',
+    gearRequired: '트레킹 기어, 물병, 헤드랜턴',
+    recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
+    description: '야간 산행 연습 및 시야가 제한된 어두운 야간 암릉 지형에서의 안전한 보행과 장비 적응 훈련.',
   },
   {
     id: 'act-02',
     code: '[2027.06]',
     date: '2027.06',
-    title: 'PRE-TRAINING DRILL 02: SA-PAE & DO-BONG',
-    distance: '15km',
-    keyPoints: '야간 트레일 & Hydrometer',
-    location: '사패산 - 도봉산 Y계곡 및 능선',
-    elevation: '+1,150m 누적고도',
-    gearRequired: '300 루멘 이상 헤드랜턴, 리플렉티브 기어, NAGA 전해질 팩',
-    recoveryProtocol: 'NAGA Guard Hydrometer 수분 및 전해질 균형 실시간 측정',
-    description: '심야 트레일 기동성 확보를 위한 야간 주행 훈련 및 Guard Hydrometer 센서를 활용한 체내 탈수/전해질 손실도 정밀 계측 세션.',
+    title: 'PRE-TRAINING DRILL 02: NAM-SAN',
+    distance: '10km',
+    keyPoints: '남산 업힐 인터벌 & 프로틴 쉐이크',
+    location: '남산 순환로 및 업힐 트레일 코스',
+    elevation: '+450m 누적고도',
+    gearRequired: '트레킹 기어, 물병',
+    recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
+    description: '남산 업힐 인터벌 훈련을 통한 심폐 지구력 강화 및 가파른 경사로 페이스 조절 능력 훈련.',
   },
   {
     id: 'act-01',
@@ -74,12 +74,12 @@ const ACTIVITIES_DATA: ActivityItem[] = [
     date: '2027.06',
     title: 'PRE-TRAINING DRILL 01: BUL-AM & SU-RAK',
     distance: '15km',
-    keyPoints: '페이스 측정 & 업사이클링 스탬핑',
+    keyPoints: '페이스 분석 & 프로틴 쉐이크',
     location: '불암산 - 수락산 기차바위 암릉 코스',
     elevation: '+1,020m 누적고도',
-    gearRequired: '고프코어 경량 트레킹 기어, 친환경 텀블러',
-    recoveryProtocol: '불암-수락 1차 구간 타임 스탬프 측정 및 업사이클링 태그 발급',
-    description: '메인 챌린지 1단계 구간 페이스 분석과 테크니컬 패브릭 재활용 업사이클링 스탬핑 세션 병행 훈련.',
+    gearRequired: '트레킹 기어, 물병',
+    recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
+    description: '메인 챌린지 1단계 페이스 분석과 심폐능력 테스트.',
   },
 ];
 
@@ -599,7 +599,7 @@ export default function App() {
                       <span className="text-white font-medium break-words">{selectedActivity.gearRequired}</span>
                     </div>
                     <div>
-                      <span className="text-white/50 uppercase block text-[10px] sm:text-xs">RECOVERY / SCI-TECH</span>
+                      <span className="text-white/50 uppercase block text-[10px] sm:text-xs">RECOVERY</span>
                       <span className="text-white font-medium break-words">{selectedActivity.recoveryProtocol}</span>
                     </div>
                   </div>
