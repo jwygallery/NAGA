@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko" class="bg-black text-white antialiased">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NAGA™ | National Alpine Guard Association</title>
+    <meta name="description" content="고려대학교 약학대학 산악단체이자 고프코어/테크니컬 아웃도어 브랜드 NAGA™ 공식 웹 플랫폼" />
+    <meta property="og:title" content="NAGA™ | National Alpine Guard Association" />
+    <meta property="og:description" content="고려대학교 약학대학 산악단체이자 고프코어/테크니컬 아웃도어 브랜드 NAGA™ 공식 웹 플랫폼" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    
+    <!-- Google Fonts: Space Grotesk & Syne & Noto Sans KR -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              night: '#000000',
+              snow: '#FFFFFF',
+            },
+            fontFamily: {
+              sans: ['"Space Grotesk"', '"Noto Sans KR"', 'sans-serif'],
+              syne: ['"Syne"', 'sans-serif'],
+              mono: ['"Space Grotesk"', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Crisp 1px minimal wireframe styling and pure contrast */
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Space Grotesk', 'Noto Sans KR', sans-serif;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+      }
+      /* Custom selection style */
+      ::selection {
+        background: #ffffff;
+        color: #000000;
+      }
+    </style>
+  </head>
+  <body class="bg-black text-white min-h-screen">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
