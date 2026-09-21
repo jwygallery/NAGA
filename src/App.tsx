@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useId } from 'react';
 import { ChevronLeft, ChevronRight, X, ArrowRight, Check } from 'lucide-react';
+import { IMAGE_REGISTRY } from './imageRegistry';
 
 // View type definition for SPA View Swap
 type ViewMode = 'home' | 'activities' | 'recovery' | 'join';
@@ -42,11 +43,7 @@ const ACTIVITIES_DATA: ActivityItem[] = [
     gearRequired: '트레킹 기어, 물병, 헤드랜턴 (필수), 비상 보온 의류',
     recoveryProtocol: 'NAGA™ 전해질 음료 & 운동 후 수제 그릭요거트 제공',
     description: '서울의 5대 암릉 명산을 잇는 총 45km 고난도 알파인 트레버스. 극대화된 내구력과 페이스 관리, 테크니컬 암릉 주파 능력을 검증하는 메인 챌린지.',
-    images: [
-      '/images/activity_04_slide_1.jpg',
-      '/images/activity_04_slide_2.jpg',
-      '/images/activity_04_slide_3.jpg',
-    ],
+    images: IMAGE_REGISTRY.activities.mainChallenge,
   },
   {
     id: 'act-03',
@@ -60,11 +57,7 @@ const ACTIVITIES_DATA: ActivityItem[] = [
     gearRequired: '트레킹 기어, 물병, 헤드랜턴',
     recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
     description: '야간 산행 연습 및 시야가 제한된 어두운 야간 암릉 지형에서의 안전한 보행과 장비 적응 훈련.',
-    images: [
-      '/images/activity_03_slide_1.jpg',
-      '/images/activity_03_slide_2.jpg',
-      '/images/activity_03_slide_3.jpg',
-    ],
+    images: IMAGE_REGISTRY.activities.drill03Bukhan,
   },
   {
     id: 'act-02',
@@ -78,11 +71,7 @@ const ACTIVITIES_DATA: ActivityItem[] = [
     gearRequired: '트레킹 기어, 물병',
     recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
     description: '남산 업힐 인터벌 훈련을 통한 심폐 지구력 강화 및 가파른 경사로 페이스 조절 능력 훈련.',
-    images: [
-      '/images/activity_02_slide_1.jpg',
-      '/images/activity_02_slide_2.jpg',
-      '/images/activity_02_slide_3.jpg',
-    ],
+    images: IMAGE_REGISTRY.activities.drill02Namsan,
   },
   {
     id: 'act-01',
@@ -96,11 +85,7 @@ const ACTIVITIES_DATA: ActivityItem[] = [
     gearRequired: '트레킹 기어, 물병',
     recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
     description: '메인 챌린지 1단계 페이스 분석과 심폐능력 테스트.',
-    images: [
-      '/images/activity_01_slide_1.jpg',
-      '/images/activity_01_slide_2.jpg',
-      '/images/activity_01_slide_3.jpg',
-    ],
+    images: IMAGE_REGISTRY.activities.drill01BulamSurak,
   },
 ];
 
@@ -110,7 +95,7 @@ const PRODUCTS_DATA: ProductItem[] = [
     code: '[Product 01]',
     name: 'NAGA Guard Hydrometer',
     category: 'TECHNICAL DIAGNOSTICS & HYDRATION',
-    image: '/images/product_01_hydrometer.jpg',
+    image: IMAGE_REGISTRY.products.hydrometer,
     spec: '정밀 전해질 침투압 농도 측정기 / 내한성 티타늄 하우징 / IP68 완전 방수',
     usage: '극한의 알파인 트레일 및 45km 연속 주행 중 체내 수분 손실 및 전해질 밸런스를 측정하는 휴대용 정밀 하이드로미터.',
   },
@@ -119,7 +104,7 @@ const PRODUCTS_DATA: ProductItem[] = [
     code: '[Product 02]',
     name: 'NAGA Alpine Shake',
     category: 'RAPID METABOLIC RECOVERY',
-    image: '/images/product_02_alpine_shake.jpg',
+    image: IMAGE_REGISTRY.products.alpineShake,
     spec: 'BCAA & 전해질 복합 알파인 포뮬러 / 30g 고밀도 단백질 / 휴대용 파우치 규격',
     usage: '고도 상승 및 암릉 기동 직후 급성 근육 피로를 중화하고 글리코겐을 신속 재충전하는 전문 산악 포뮬러 쉐이크.',
   },
@@ -128,51 +113,17 @@ const PRODUCTS_DATA: ProductItem[] = [
     code: '[Product 03]',
     name: 'NAGA Balance Greek Bowl',
     category: 'POST-EXPEDITION NUTRITION',
-    image: '/images/product_03_greek_bowl.jpg',
+    image: IMAGE_REGISTRY.products.greekBowl,
     spec: '유청 분리 고농축 그릭 요거트 / 고단백 슈퍼푸드 너트 믹스 / 천연 아카시아 꿀',
     usage: '장거리 알파인 활동 후 위장 부담 없이 장시간 단백질을 공급하는 고영양 밸런스 리커버리 볼.',
   },
 ];
 
-const HERO_SLIDES = [
-  {
-    id: 1,
-    title: 'BUL-SU-SA-DO-BUK 45KM',
-    tag: 'EXTREME ALPINE RIDGE TRAVERSE',
-    image: '/images/hero_slide_01.jpg',
-    caption: 'SEOUL GRANITE APEX RIDGE // 45KM CONTINUOUS DRILL',
-  },
-  {
-    id: 2,
-    title: 'TECHNICAL ALPINE GEAR',
-    tag: 'HIGH-ALTITUDE RESISTANCE & GORPCORE SPEC',
-    image: '/images/hero_slide_02.jpg',
-    caption: 'NATIONAL ALPINE GUARD ASSOCIATION // PHARMACEUTICAL RECOVERY',
-  },
-  {
-    id: 3,
-    title: 'NIGHT RUN & PRE-DRILL',
-    tag: 'SA-PAE & DO-BONG RIDGE RECON',
-    image: '/images/hero_slide_03.jpg',
-    caption: 'TECHNICAL TRAIL HEADLAMP SYSTEM // HYDROMETER TESTING',
-  },
-  {
-    id: 4,
-    title: 'NORTH HAN ROCK WALL',
-    tag: 'STEEP GRANITE ADAPTATION',
-    image: '/images/hero_slide_04.jpg',
-    caption: 'PRECISION ROCK CLIMBING // ALPINE SHAKE PROTOTYPE',
-  },
-];
+const HERO_SLIDES = IMAGE_REGISTRY.heroSlides;
 
 function BrandLogo() {
   const [candidateIndex, setCandidateIndex] = useState(0);
-  const candidates = [
-    '/images/brand_logo.jpg',
-    '/images/brand_logo.png',
-    '/images/brand_logo.svg',
-    '/logo.svg',
-  ];
+  const candidates = IMAGE_REGISTRY.logo.candidates;
 
   return (
     <div className="w-10 h-10 bg-black border border-white/30 flex items-center justify-center p-1 group-hover:border-white transition-colors overflow-hidden">
@@ -866,7 +817,7 @@ export default function App() {
               {/* Course Photo (가로 4:3 비율 코스 사진) */}
               <div className="relative w-full aspect-[4/3] max-h-[440px] bg-black border border-white/20 overflow-hidden">
                 <img
-                  src="/images/activity_04_slide_1.jpg"
+                  src={IMAGE_REGISTRY.joinNotice.coursePhoto}
                   alt="2027 서울 불수사도북 챌린지 코스 트레버스"
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
