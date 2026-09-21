@@ -1,6 +1,6 @@
 {
   "name": "NAGA™ | National Alpine Guard Association",
-  "description": "고려대학교 약학대학 산악단체이자 고프코어/테크니컬 아웃도어 브랜드 NAGA™ 공식 웹 플랫폼",
+  "description": "Outdoor Wellness Crew NAGA TM Official Web Platform",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

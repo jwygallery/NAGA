@@ -198,6 +198,7 @@ export default function App() {
   const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formError, setFormError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const nameInputId = useId();
   const phoneInputId = useId();
@@ -255,7 +256,7 @@ export default function App() {
     );
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formPhone.trim()) {
       setFormError('이름과 연락처는 필수 입력 항목입니다.');
@@ -267,7 +268,39 @@ export default function App() {
     }
 
     setFormError('');
-    setFormSubmitted(true);
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('https://formspree.io/f/xzezejbr', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          name: formName.trim(),
+          phone: formPhone.trim(),
+          instagram: formInstagram.trim() || '(미기재)',
+          sessions: selectedSessions.join(', '),
+          submittedAt: new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
+        }),
+      });
+
+      if (response.ok) {
+        setFormSubmitted(true);
+      } else {
+        const data = await response.json().catch(() => ({}));
+        if (data && data.errors && data.errors.length > 0) {
+          setFormError(data.errors.map((err: { message: string }) => err.message).join(', '));
+        } else {
+          setFormError('신청서 전송 중 오류가 발생했습니다. 다시 시도해 주세요.');
+        }
+      }
+    } catch {
+      setFormError('네트워크 오류가 발생했습니다. 인터넷 연결을 확인 후 다시 시도해 주세요.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetForm = () => {
@@ -277,6 +310,7 @@ export default function App() {
     setSelectedSessions([]);
     setFormSubmitted(false);
     setFormError('');
+    setIsSubmitting(false);
   };
 
   return (
@@ -754,13 +788,11 @@ export default function App() {
             ) : (
               <form
                 name="apply"
+                action="https://formspree.io/f/xzezejbr"
                 method="POST"
-                data-netlify="true"
                 onSubmit={handleFormSubmit}
                 className="border border-white/20 p-4 sm:p-8 space-y-5 sm:space-y-6 bg-black"
               >
-                {/* Netlify Forms hidden input */}
-                <input type="hidden" name="form-name" value="apply" />
 
                 {formError && (
                   <div className="border border-white bg-white/10 px-4 py-2.5 text-xs font-mono tracking-[0.15em] text-white uppercase">
@@ -870,9 +902,14 @@ export default function App() {
                   <button
                     type="submit"
                     id="submit-application-btn"
-                    className="w-full py-3.5 sm:py-4 bg-white text-black font-mono text-xs sm:text-sm font-bold tracking-[0.2em] sm:tracking-[0.25em] uppercase hover:bg-white/90 active:scale-[0.99] transition-all flex items-center justify-center gap-3 border border-white min-h-[46px]"
+                    disabled={isSubmitting}
+                    className="w-full py-3.5 sm:py-4 bg-white text-black font-mono text-xs sm:text-sm font-bold tracking-[0.2em] sm:tracking-[0.25em] uppercase hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] transition-all flex items-center justify-center gap-3 border border-white min-h-[46px]"
                   >
-                    <span>[ SUBMIT APPLICATION ➔ ]</span>
+                    {isSubmitting ? (
+                      <span className="animate-pulse">[ TRANSMITTING DATA... ]</span>
+                    ) : (
+                      <span>[ SUBMIT APPLICATION ➔ ]</span>
+                    )}
                   </button>
                 </div>
               </form>
