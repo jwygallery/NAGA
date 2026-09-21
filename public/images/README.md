@@ -5,9 +5,12 @@
 ---
 
 ### 1. 브랜드 로고 (Header & Favicon)
-| 파일 경로 | 추천 규격 | 용도 및 설명 |
-| :--- | :--- | :--- |
-| `public/images/brand_logo.svg` (또는 `public/logo.svg`) | 500x500 (1:1 정사각형) | 상단 헤더 및 파비콘에 사용되는 NAGA™ 공식 로고 |
+* **지원 포맷**: `SVG` (권장), `PNG` (투명 배경 권장), `JPG` 모두 완벽 지원
+* **추천 규격**: `500 × 500 px` (1:1 정사각형)
+* **파일명 옵션**: 아래 3가지 중 편하신 확장자로 올려주시면 시스템이 자동 인식합니다.
+  - `public/images/brand_logo.svg` (벡터 원본)
+  - `public/images/brand_logo.png` (일반 투명 PNG)
+  - `public/images/brand_logo.jpg` (일반 JPG 이미지)
 
 ---
 
