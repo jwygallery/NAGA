@@ -16,6 +16,7 @@ interface ActivityItem {
   gearRequired: string;
   recoveryProtocol: string;
   description: string;
+  images: string[];
 }
 
 interface ProductItem {
@@ -41,6 +42,11 @@ const ACTIVITIES_DATA: ActivityItem[] = [
     gearRequired: '트레킹 기어, 물병, 헤드랜턴 (필수), 비상 보온 의류',
     recoveryProtocol: 'NAGA™ 전해질 음료 & 운동 후 수제 그릭요거트 제공',
     description: '서울의 5대 암릉 명산을 잇는 총 45km 고난도 알파인 트레버스. 극대화된 내구력과 페이스 관리, 테크니컬 암릉 주파 능력을 검증하는 메인 챌린지.',
+    images: [
+      '/images/activity_04_slide_1.jpg',
+      '/images/activity_04_slide_2.jpg',
+      '/images/activity_04_slide_3.jpg',
+    ],
   },
   {
     id: 'act-03',
@@ -54,6 +60,11 @@ const ACTIVITIES_DATA: ActivityItem[] = [
     gearRequired: '트레킹 기어, 물병, 헤드랜턴',
     recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
     description: '야간 산행 연습 및 시야가 제한된 어두운 야간 암릉 지형에서의 안전한 보행과 장비 적응 훈련.',
+    images: [
+      '/images/activity_03_slide_1.jpg',
+      '/images/activity_03_slide_2.jpg',
+      '/images/activity_03_slide_3.jpg',
+    ],
   },
   {
     id: 'act-02',
@@ -67,6 +78,11 @@ const ACTIVITIES_DATA: ActivityItem[] = [
     gearRequired: '트레킹 기어, 물병',
     recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
     description: '남산 업힐 인터벌 훈련을 통한 심폐 지구력 강화 및 가파른 경사로 페이스 조절 능력 훈련.',
+    images: [
+      '/images/activity_02_slide_1.jpg',
+      '/images/activity_02_slide_2.jpg',
+      '/images/activity_02_slide_3.jpg',
+    ],
   },
   {
     id: 'act-01',
@@ -80,6 +96,11 @@ const ACTIVITIES_DATA: ActivityItem[] = [
     gearRequired: '트레킹 기어, 물병',
     recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
     description: '메인 챌린지 1단계 페이스 분석과 심폐능력 테스트.',
+    images: [
+      '/images/activity_01_slide_1.jpg',
+      '/images/activity_01_slide_2.jpg',
+      '/images/activity_01_slide_3.jpg',
+    ],
   },
 ];
 
@@ -190,6 +211,17 @@ export default function App() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
+  const [modalSlideIndex, setModalSlideIndex] = useState(0);
+
+  const nextModalSlide = () => {
+    if (!selectedActivity?.images?.length) return;
+    setModalSlideIndex((prev) => (prev + 1) % selectedActivity.images.length);
+  };
+
+  const prevModalSlide = () => {
+    if (!selectedActivity?.images?.length) return;
+    setModalSlideIndex((prev) => (prev - 1 + selectedActivity.images.length) % selectedActivity.images.length);
+  };
 
   // Form State
   const [formName, setFormName] = useState('');
@@ -527,7 +559,10 @@ export default function App() {
                 <div
                   key={act.id}
                   id={`activity-card-${act.id}`}
-                  onClick={() => setSelectedActivity(act)}
+                  onClick={() => {
+                    setSelectedActivity(act);
+                    setModalSlideIndex(0);
+                  }}
                   className="group cursor-pointer border border-white/20 hover:border-white bg-black p-4 sm:p-7 transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 active:border-white/80"
                 >
                   <div className="flex-1 space-y-1.5 sm:space-y-2">
@@ -613,6 +648,84 @@ export default function App() {
                       {selectedActivity.description}
                     </p>
                   </div>
+
+                  {/* Photo Slide Carousel (드릴 목적 아래 사진 슬라이드) */}
+                  {selectedActivity.images && selectedActivity.images.length > 0 && (
+                    <div className="space-y-2 pt-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[11px] tracking-[0.18em] text-white/50 uppercase">
+                          FIELD VISUAL ARCHIVE
+                        </span>
+                        <span className="font-mono text-[11px] tracking-[0.18em] text-white/70">
+                          [ 0{modalSlideIndex + 1} / 0{selectedActivity.images.length} ]
+                        </span>
+                      </div>
+
+                      <div className="relative w-full aspect-[4/3] max-h-[440px] bg-black border border-white/20 overflow-hidden group mx-auto">
+                        {/* Slide Images */}
+                        {selectedActivity.images.map((imgSrc, idx) => (
+                          <div
+                            key={idx}
+                            className={`absolute inset-0 transition-opacity duration-300 ${
+                              idx === modalSlideIndex ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'
+                            }`}
+                          >
+                            <img
+                              src={imgSrc}
+                              alt={`${selectedActivity.title} photo ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                          </div>
+                        ))}
+
+                        {/* Navigation Arrows */}
+                        <div className="absolute inset-y-0 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              prevModalSlide();
+                            }}
+                            className="pointer-events-auto w-8 h-8 sm:w-9 sm:h-9 bg-black/70 hover:bg-white hover:text-black border border-white/40 text-white flex items-center justify-center transition-colors active:scale-95"
+                            aria-label="Previous Photo"
+                          >
+                            <ChevronLeft size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              nextModalSlide();
+                            }}
+                            className="pointer-events-auto w-8 h-8 sm:w-9 sm:h-9 bg-black/70 hover:bg-white hover:text-black border border-white/40 text-white flex items-center justify-center transition-colors active:scale-95"
+                            aria-label="Next Photo"
+                          >
+                            <ChevronRight size={16} />
+                          </button>
+                        </div>
+
+                        {/* Slide Indicators / Dots at Bottom */}
+                        <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/60 px-2.5 py-1 border border-white/20">
+                          {selectedActivity.images.map((_, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setModalSlideIndex(idx);
+                              }}
+                              aria-label={`Go to slide ${idx + 1}`}
+                              className={`h-1.5 transition-all ${
+                                idx === modalSlideIndex ? 'w-5 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Modal Actions */}
                   <div className="border-t border-white/20 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
@@ -737,16 +850,34 @@ export default function App() {
             </div>
 
             {/* Content: 현재 모집 중인 안내 문구 */}
-            <div className="border border-white/20 bg-white/5 p-4 sm:p-6 mb-6 sm:mb-8">
-              <span className="text-[10px] font-mono tracking-[0.25em] text-white/50 uppercase block">
-                ACTIVE RECRUITMENT NOTICE
-              </span>
-              <h3 className="text-base sm:text-xl font-syne font-bold uppercase tracking-tight text-white mt-1 leading-snug">
-                2027 서울 불수사도북 챌린지 및 사전 훈련 세션
-              </h3>
-              <p className="mt-2 text-xs font-mono tracking-[0.12em] sm:tracking-[0.15em] text-white/70 uppercase leading-relaxed">
-                고려대학교 약학대학 산악단체 NAGA™ 공식 필드 챌린지 및 사전 훈련 등록
-              </p>
+            <div className="border border-white/20 bg-white/5 p-4 sm:p-6 mb-6 sm:mb-8 space-y-4">
+              <div>
+                <span className="text-[10px] font-mono tracking-[0.25em] text-white/50 uppercase block">
+                  ACTIVE RECRUITMENT NOTICE
+                </span>
+                <h3 className="text-base sm:text-xl font-syne font-bold uppercase tracking-tight text-white mt-1 leading-snug">
+                  2027 서울 불수사도북 챌린지 및 사전 훈련 세션
+                </h3>
+                <p className="mt-2 text-xs font-mono tracking-[0.12em] sm:tracking-[0.15em] text-white/70 uppercase leading-relaxed">
+                  고려대학교 약학대학 산악단체 NAGA™ 공식 필드 챌린지 및 사전 훈련 등록
+                </p>
+              </div>
+
+              {/* Course Photo (가로 4:3 비율 코스 사진) */}
+              <div className="relative w-full aspect-[4/3] max-h-[440px] bg-black border border-white/20 overflow-hidden">
+                <img
+                  src="/images/activity_04_slide_1.jpg"
+                  alt="2027 서울 불수사도북 챌린지 코스 트레버스"
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute top-3 left-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.2em] text-white uppercase">
+                  COURSE ARCHIVE
+                </div>
+                <div className="absolute bottom-3 right-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.15em] text-white/80 uppercase">
+                  BUL-SU-SA-DO-BUK 45KM TRAVERSE
+                </div>
+              </div>
             </div>
 
             {/* Netlify Forms Compatible Application Form */}
