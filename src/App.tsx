@@ -32,6 +32,48 @@ interface ProductItem {
 
 const ACTIVITIES_DATA: ActivityItem[] = [
   {
+    id: 'act-taebaek',
+    code: '[2027.01]',
+    date: '2027.01',
+    title: '2027 GANGWON TAEBAEK',
+    distance: '12km',
+    keyPoints: '태백산 신년 일출 산행 & 설산 트레일 (사전 훈련 없음)',
+    location: '태백산 국립공원 (유일사 ~ 장군봉 ~ 천제단 ~ 당골계곡)',
+    elevation: '+780m 누적고도',
+    gearRequired: '동계 트레킹 기어, 아이젠(필수), 스패츠(필수), 방한 의류/장갑, 헤드랜턴, 보온병',
+    recoveryProtocol: '하산 후 NAGA™ 핫 리커버리 브루 & 고단백 알파인 식단',
+    description: '태백산 천제단과 장군봉에서 맞이하는 2027 신년 설산 일출 산행. 설경 능선과 환상적인 일출을 조망하며, 별도의 사전 훈련 없이 동계 안전 장비 점검 후 단일 챌린지로 진행됩니다.',
+    images: IMAGE_REGISTRY.activities.taebaekSunrise,
+  },
+  {
+    id: 'act-02',
+    code: '[2027.06]',
+    date: '2027.06',
+    title: 'PRE-TRAINING DRILL 01: NAM-SAN',
+    distance: '10km',
+    keyPoints: '남산 업힐 인터벌 & 프로틴 쉐이크',
+    location: '남산 순환로 및 업힐 트레일 코스',
+    elevation: '+450m 누적고도',
+    gearRequired: '트레킹 기어, 물병',
+    recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
+    description: '남산 업힐 인터벌 훈련을 통한 심폐 지구력 강화 및 가파른 경사로 페이스 조절 능력 훈련.',
+    images: IMAGE_REGISTRY.activities.drill01Namsan,
+  },
+  {
+    id: 'act-03',
+    code: '[2027.06]',
+    date: '2027.06',
+    title: 'PRE-TRAINING DRILL 02: BUK-HAN',
+    distance: '15km',
+    keyPoints: '야간 산행 연습 & 헤드랜턴 적응',
+    location: '북한산 백운대 - 의상능선 테크니컬 암릉',
+    elevation: '+1,280m 누적고도',
+    gearRequired: '트레킹 기어, 물병, 헤드랜턴',
+    recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
+    description: '야간 산행 연습 및 시야가 제한된 어두운 야간 암릉 지형에서의 안전한 보행과 장비 적응 훈련.',
+    images: IMAGE_REGISTRY.activities.drill02Bukhan,
+  },
+  {
     id: 'act-04',
     code: '[2027.07]',
     date: '2027.07',
@@ -45,63 +87,12 @@ const ACTIVITIES_DATA: ActivityItem[] = [
     description: '서울의 5대 암릉 명산을 잇는 총 45km 고난도 알파인 트레버스. 극대화된 내구력과 페이스 관리, 테크니컬 암릉 주파 능력을 검증하는 메인 챌린지.',
     images: IMAGE_REGISTRY.activities.mainChallenge,
   },
-  {
-    id: 'act-03',
-    code: '[2027.06]',
-    date: '2027.06',
-    title: 'PRE-TRAINING DRILL 03: BUK-HAN',
-    distance: '15km',
-    keyPoints: '야간 산행 연습 & 헤드랜턴 적응',
-    location: '북한산 백운대 - 의상능선 테크니컬 암릉',
-    elevation: '+1,280m 누적고도',
-    gearRequired: '트레킹 기어, 물병, 헤드랜턴',
-    recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
-    description: '야간 산행 연습 및 시야가 제한된 어두운 야간 암릉 지형에서의 안전한 보행과 장비 적응 훈련.',
-    images: IMAGE_REGISTRY.activities.drill03Bukhan,
-  },
-  {
-    id: 'act-02',
-    code: '[2027.06]',
-    date: '2027.06',
-    title: 'PRE-TRAINING DRILL 02: NAM-SAN',
-    distance: '10km',
-    keyPoints: '남산 업힐 인터벌 & 프로틴 쉐이크',
-    location: '남산 순환로 및 업힐 트레일 코스',
-    elevation: '+450m 누적고도',
-    gearRequired: '트레킹 기어, 물병',
-    recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
-    description: '남산 업힐 인터벌 훈련을 통한 심폐 지구력 강화 및 가파른 경사로 페이스 조절 능력 훈련.',
-    images: IMAGE_REGISTRY.activities.drill02Namsan,
-  },
-  {
-    id: 'act-01',
-    code: '[2027.06]',
-    date: '2027.06',
-    title: 'PRE-TRAINING DRILL 01: BUL-AM & SU-RAK',
-    distance: '15km',
-    keyPoints: '페이스 분석 & 프로틴 쉐이크',
-    location: '불암산 - 수락산 기차바위 암릉 코스',
-    elevation: '+1,020m 누적고도',
-    gearRequired: '트레킹 기어, 물병',
-    recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
-    description: '메인 챌린지 1단계 페이스 분석과 심폐능력 테스트.',
-    images: IMAGE_REGISTRY.activities.drill01BulamSurak,
-  },
 ];
 
 const PRODUCTS_DATA: ProductItem[] = [
   {
     id: 'prod-01',
     code: '[Product 01]',
-    name: 'NAGA Guard Hydrometer',
-    category: 'TECHNICAL DIAGNOSTICS & HYDRATION',
-    image: IMAGE_REGISTRY.products.hydrometer,
-    spec: '정밀 전해질 침투압 농도 측정기 / 내한성 티타늄 하우징 / IP68 완전 방수',
-    usage: '극한의 알파인 트레일 및 45km 연속 주행 중 체내 수분 손실 및 전해질 밸런스를 측정하는 휴대용 정밀 하이드로미터.',
-  },
-  {
-    id: 'prod-02',
-    code: '[Product 02]',
     name: 'NAGA Alpine Shake',
     category: 'RAPID METABOLIC RECOVERY',
     image: IMAGE_REGISTRY.products.alpineShake,
@@ -109,8 +100,8 @@ const PRODUCTS_DATA: ProductItem[] = [
     usage: '고도 상승 및 암릉 기동 직후 급성 근육 피로를 중화하고 글리코겐을 신속 재충전하는 전문 산악 포뮬러 쉐이크.',
   },
   {
-    id: 'prod-03',
-    code: '[Product 03]',
+    id: 'prod-02',
+    code: '[Product 02]',
     name: 'NAGA Balance Greek Bowl',
     category: 'POST-EXPEDITION NUTRITION',
     image: IMAGE_REGISTRY.products.greekBowl,
@@ -174,11 +165,14 @@ export default function App() {
     setModalSlideIndex((prev) => (prev - 1 + selectedActivity.images.length) % selectedActivity.images.length);
   };
 
+  // Target Expedition for Join Form (현재 강원 태백 단일 세션 전용 접수)
+  const TARGET_EXPEDITION_SESSION = '2027 GANGWON TAEBAEK [2027.01] - 2027 강원 태백 신년 일출 산행 (단일 세션)';
+
   // Form State
   const [formName, setFormName] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formInstagram, setFormInstagram] = useState('');
-  const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
+  const [formGearNote, setFormGearNote] = useState('');
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -233,20 +227,10 @@ export default function App() {
     setActiveSlide((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
   };
 
-  const handleSessionToggle = (sessionName: string) => {
-    setSelectedSessions((prev) =>
-      prev.includes(sessionName) ? prev.filter((s) => s !== sessionName) : [...prev, sessionName]
-    );
-  };
-
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formPhone.trim()) {
       setFormError('이름과 연락처는 필수 입력 항목입니다.');
-      return;
-    }
-    if (selectedSessions.length === 0) {
-      setFormError('신청 세션을 최소 1개 이상 선택해 주세요.');
       return;
     }
 
@@ -264,7 +248,10 @@ export default function App() {
           name: formName.trim(),
           phone: formPhone.trim(),
           instagram: formInstagram.trim() || '(미기재)',
-          sessions: selectedSessions.join(', '),
+          gearNote: formGearNote.trim() || '(특이사항 없음)',
+          targetExpedition: TARGET_EXPEDITION_SESSION,
+          sessions: TARGET_EXPEDITION_SESSION,
+          session: '2027 GANGWON TAEBAEK',
           submittedAt: new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
         }),
       });
@@ -290,7 +277,7 @@ export default function App() {
     setFormName('');
     setFormPhone('');
     setFormInstagram('');
-    setSelectedSessions([]);
+    setFormGearNote('');
     setFormSubmitted(false);
     setFormError('');
     setIsSubmitting(false);
@@ -804,13 +791,16 @@ export default function App() {
             <div className="border border-white/20 bg-white/5 p-4 sm:p-6 mb-6 sm:mb-8 space-y-4">
               <div>
                 <span className="text-[10px] font-mono tracking-[0.25em] text-white/50 uppercase block">
-                  ACTIVE RECRUITMENT NOTICE
+                  UPCOMING EXPEDITION // 2027.01
                 </span>
-                <h3 className="text-base sm:text-xl font-syne font-bold uppercase tracking-tight text-white mt-1 leading-snug">
-                  2027 서울 불수사도북 챌린지 및 사전 훈련 세션
+                <h3 className="text-xl sm:text-3xl font-syne font-bold uppercase tracking-tight text-white mt-1 leading-snug">
+                  2027 GANGWON TAEBAEK
                 </h3>
-                <p className="mt-2 text-xs font-mono tracking-[0.12em] sm:tracking-[0.15em] text-white/70 uppercase leading-relaxed">
-                  고려대학교 약학대학 산악단체 NAGA™ 공식 필드 챌린지 및 사전 훈련 등록
+                <p className="text-xs sm:text-sm font-mono tracking-[0.12em] text-white/80 mt-1">
+                  2027 강원 태백 신년 일출 산행 (단일 챌린지 / 사전 훈련 세션 없음)
+                </p>
+                <p className="mt-2 text-xs font-mono tracking-[0.08em] sm:tracking-[0.12em] text-white/60 uppercase leading-relaxed">
+                  고려대학교 약학대학 산악단체 NAGA™ 공식 신년 설산 일출 산행 및 2027 필드 세션 참가 등록
                 </p>
               </div>
 
@@ -818,15 +808,15 @@ export default function App() {
               <div className="relative w-full aspect-[4/3] max-h-[440px] bg-black border border-white/20 overflow-hidden">
                 <img
                   src={IMAGE_REGISTRY.joinNotice.coursePhoto}
-                  alt="2027 서울 불수사도북 챌린지 코스 트레버스"
+                  alt="2027 강원 태백 신년 일출 산행 코스"
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />
                 <div className="absolute top-3 left-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.2em] text-white uppercase">
-                  COURSE ARCHIVE
+                  TAEBAEKSAN EXPEDITION ARCHIVE
                 </div>
                 <div className="absolute bottom-3 right-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.15em] text-white/80 uppercase">
-                  BUL-SU-SA-DO-BUK 45KM TRAVERSE
+                  GANGWON TAEBAEK 12KM SUNRISE TRAIL
                 </div>
               </div>
             </div>
@@ -848,8 +838,7 @@ export default function App() {
                     APPLICATION SUBMITTED SUCCESSFULLY
                   </h4>
                   <p className="text-xs font-mono tracking-[0.15em] text-white/80 max-w-md mx-auto leading-relaxed">
-                    {formName} 님의 참가 신청서가 접수되었습니다. 기재하신 연락처({formPhone})로 세션별
-                    안내 및 장비 점검 지침이 발송됩니다.
+                    {formName} 님의 2027 강원 태백 신년 일출 산행 참가 신청서가 접수되었습니다. 기재하신 연락처({formPhone})로 세부 일정 안내 및 동계 장비 점검 지침이 발송됩니다.
                   </p>
                 </div>
                 <div className="pt-4 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
@@ -875,6 +864,15 @@ export default function App() {
                 onSubmit={handleFormSubmit}
                 className="border border-white/20 p-4 sm:p-8 space-y-5 sm:space-y-6 bg-black"
               >
+                {/* Form Header (영어 타이틀 / 한글 소제목) */}
+                <div className="border-b border-white/20 pb-3 sm:pb-4">
+                  <h3 className="text-lg sm:text-2xl font-syne font-bold uppercase tracking-tight text-white">
+                    EXPEDITION APPLICATION
+                  </h3>
+                  <p className="text-xs font-mono tracking-[0.15em] text-white/60 mt-1 uppercase">
+                    2027 강원 태백 신년 일출 산행 참가 신청서
+                  </p>
+                </div>
 
                 {formError && (
                   <div className="border border-white bg-white/10 px-4 py-2.5 text-xs font-mono tracking-[0.15em] text-white uppercase">
@@ -883,9 +881,14 @@ export default function App() {
                 )}
 
                 {/* 이름 (Input Text, 필수) */}
-                <div className="space-y-2">
-                  <label htmlFor={nameInputId} className="block text-xs font-mono tracking-[0.2em] uppercase text-white">
-                    이름 <span className="text-white">*</span>
+                <div className="space-y-1.5">
+                  <label htmlFor={nameInputId} className="block">
+                    <span className="block text-xs font-mono font-bold tracking-[0.2em] uppercase text-white">
+                      FULL NAME <span className="text-white">*</span>
+                    </span>
+                    <span className="block text-[11px] font-mono tracking-[0.1em] text-white/50">
+                      이름
+                    </span>
                   </label>
                   <input
                     id={nameInputId}
@@ -900,9 +903,14 @@ export default function App() {
                 </div>
 
                 {/* 연락처 (Input Tel, 필수) */}
-                <div className="space-y-2">
-                  <label htmlFor={phoneInputId} className="block text-xs font-mono tracking-[0.2em] uppercase text-white">
-                    연락처 <span className="text-white">*</span>
+                <div className="space-y-1.5">
+                  <label htmlFor={phoneInputId} className="block">
+                    <span className="block text-xs font-mono font-bold tracking-[0.2em] uppercase text-white">
+                      CONTACT NUMBER <span className="text-white">*</span>
+                    </span>
+                    <span className="block text-[11px] font-mono tracking-[0.1em] text-white/50">
+                      연락처
+                    </span>
                   </label>
                   <input
                     id={phoneInputId}
@@ -917,9 +925,14 @@ export default function App() {
                 </div>
 
                 {/* 인스타그램 계정 (Input Text, 선택) */}
-                <div className="space-y-2">
-                  <label htmlFor={instagramInputId} className="block text-xs font-mono tracking-[0.2em] uppercase text-white/80">
-                    인스타그램 계정 (선택)
+                <div className="space-y-1.5">
+                  <label htmlFor={instagramInputId} className="block">
+                    <span className="block text-xs font-mono font-bold tracking-[0.2em] uppercase text-white">
+                      INSTAGRAM / SOCIAL
+                    </span>
+                    <span className="block text-[11px] font-mono tracking-[0.1em] text-white/50">
+                      인스타그램 계정 (선택)
+                    </span>
                   </label>
                   <input
                     id={instagramInputId}
@@ -932,51 +945,57 @@ export default function App() {
                   />
                 </div>
 
-                {/* 신청 세션 선택 (Checkbox, 필수 중복 선택) */}
-                <div className="space-y-3 pt-1">
-                  <span className="block text-xs font-mono tracking-[0.2em] uppercase text-white">
-                    신청 세션 선택 (필수 중복 선택) <span className="text-white">*</span>
-                  </span>
-
-                  <div className="space-y-2.5">
-                    {[
-                      '6월 1차 사전 훈련',
-                      '6월 2차 사전 훈련',
-                      '6월 3차 사전 훈련',
-                      '7월 메인 챌린지',
-                    ].map((session) => {
-                      const isChecked = selectedSessions.includes(session);
-                      return (
-                        <label
-                          key={session}
-                          className={`flex items-center gap-3 p-3 sm:p-3.5 border transition-all cursor-pointer min-h-[44px] ${
-                            isChecked
-                              ? 'border-white bg-white/10 text-white font-semibold'
-                              : 'border-white/20 hover:border-white/50 text-white/80'
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            name="sessions"
-                            value={session}
-                            checked={isChecked}
-                            onChange={() => handleSessionToggle(session)}
-                            className="sr-only"
-                          />
-                          <div
-                            className={`w-4 h-4 border flex items-center justify-center transition-colors shrink-0 ${
-                              isChecked ? 'border-white bg-white text-black' : 'border-white/40'
-                            }`}
-                          >
-                            {isChecked && <Check size={12} strokeWidth={3} />}
-                          </div>
-                          <span className="font-mono text-xs sm:text-sm tracking-[0.12em] sm:tracking-[0.15em] uppercase select-none">
-                            [ {isChecked ? 'X' : ' '} ] {session}
-                          </span>
-                        </label>
-                      );
-                    })}
+                {/* 고정 신청 세션 안내 박스 (단일 세션 접수) */}
+                <div className="border border-white/20 bg-white/5 p-4 sm:p-5 space-y-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="text-[10px] font-mono tracking-[0.2em] text-white/50 uppercase block">
+                      TARGET EXPEDITION // 신청 대상 세션
+                    </span>
+                    <span className="text-[9px] font-mono tracking-wider px-2 py-0.5 bg-white text-black font-bold uppercase">
+                      ACTIVE REGISTRATION
+                    </span>
                   </div>
+                  <div>
+                    <h4 className="text-base sm:text-lg font-syne font-bold uppercase tracking-tight text-white">
+                      2027 GANGWON TAEBAEK [2027.01]
+                    </h4>
+                    <p className="text-xs font-mono tracking-[0.05em] text-white/80 mt-0.5">
+                      2027 강원 태백 신년 일출 산행 (12km 설산 트레일 // 사전 훈련 세션 없음)
+                    </p>
+                  </div>
+                  <div className="pt-1 text-[11px] font-mono text-white/50">
+                    ※ 현재 2027 강원 태백 신년 일출 산행 단일 세션에 대한 참가 신청을 접수하고 있습니다.
+                  </div>
+                  <input
+                    type="hidden"
+                    name="sessions"
+                    value={TARGET_EXPEDITION_SESSION}
+                  />
+                  <input
+                    type="hidden"
+                    name="targetExpedition"
+                    value="2027 GANGWON TAEBAEK [2027.01]"
+                  />
+                </div>
+
+                {/* 동계 장비 및 건강 특이사항 (Textarea, 선택) */}
+                <div className="space-y-1.5">
+                  <label htmlFor="gear-notes-input" className="block">
+                    <span className="block text-xs font-mono font-bold tracking-[0.2em] uppercase text-white">
+                      GEAR & PHYSICAL NOTES
+                    </span>
+                    <span className="block text-[11px] font-mono tracking-[0.1em] text-white/50">
+                      동계 장비(아이젠/스패츠/헤드랜턴) 보유 여부 및 건강 특이사항 (선택)
+                    </span>
+                  </label>
+                  <textarea
+                    id="gear-notes-input"
+                    rows={2}
+                    value={formGearNote}
+                    onChange={(e) => setFormGearNote(e.target.value)}
+                    placeholder="예: 아이젠/스패츠 보유 중, 겨울 설산 산행 3회 유경험 등"
+                    className="w-full bg-black border border-white/30 focus:border-white px-3.5 sm:px-4 py-2.5 text-xs font-mono text-white placeholder-white/30 focus:outline-none transition-colors resize-none"
+                  />
                 </div>
 
                 {/* 제출 버튼: [ SUBMIT APPLICATION ➔ ] */}
@@ -990,7 +1009,7 @@ export default function App() {
                     {isSubmitting ? (
                       <span className="animate-pulse">[ TRANSMITTING DATA... ]</span>
                     ) : (
-                      <span>[ SUBMIT APPLICATION ➔ ]</span>
+                      <span>[ SUBMIT APPLICATION // 참가 신청하기 ➔ ]</span>
                     )}
                   </button>
                 </div>

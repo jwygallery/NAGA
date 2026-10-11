@@ -43,7 +43,7 @@ export const IMAGE_REGISTRY = {
       title: 'NIGHT RUN & PRE-DRILL',
       tag: 'SA-PAE & DO-BONG RIDGE RECON',
       image: '/images/hero_slide_03.jpg', // 3번 슬라이드: 야간 트레일 런 & 헤드랜턴
-      caption: 'TECHNICAL TRAIL HEADLAMP SYSTEM // HYDROMETER TESTING',
+      caption: 'TECHNICAL TRAIL HEADLAMP SYSTEM // FIELD PREPARATION',
     },
     {
       id: 4,
@@ -56,44 +56,45 @@ export const IMAGE_REGISTRY = {
 
   // [3] 리커버리 제품 카탈로그 (가로 4:3 또는 1:1 비율 권장, 800x600)
   products: {
-    hydrometer: '/images/product_01_hydrometer.jpg',    // [제품 01] NAGA Guard Hydrometer
-    alpineShake: '/images/product_02_alpine_shake.jpg', // [제품 02] NAGA Alpine Shake
-    greekBowl: '/images/product_03_greek_bowl.jpg',     // [제품 03] NAGA Balance Greek Bowl
+    alpineShake: '/images/product_02_alpine_shake.jpg', // [제품 01] NAGA Alpine Shake
+    greekBowl: '/images/product_03_greek_bowl.jpg',     // [제품 02] NAGA Balance Greek Bowl
   },
 
   // [4] 액티비티 상세 모달 슬라이드 (가로 4:3 비율 권장, 각 코스별 3장씩)
+  // 일정 순서: 2027.01 태백산 -> 2027.06 남산 -> 2027.06 북한산 -> 2027.07 불수사도북
   activities: {
-    // 4-1. 메인 챌린지: 2027 서울 불수사도북 45km
-    mainChallenge: [
-      '/images/activity_04_slide_1.jpg', // 슬라이드 1: 45km 불수사도북 능선 트래버스
-      '/images/activity_04_slide_2.jpg', // 슬라이드 2: 알파인 암릉 트레일
-      '/images/activity_04_slide_3.jpg', // 슬라이드 3: 고도 상승 및 정상 파노라마
+    // 4-1. [신규/가장 빠른 일정] 2027 강원 태백: 태백산 신년 일출 산행 (사전 훈련 없음)
+    taebaekSunrise: [
+      '/images/activity_taebaek_slide_1.jpg', // 슬라이드 1: 태백산 설화 능선과 황금빛 일출
+      '/images/activity_taebaek_slide_2.jpg', // 슬라이드 2: 천제단 정상과 운해 파노라마
+      '/images/activity_taebaek_slide_3.jpg', // 슬라이드 3: 동계 설산 아이젠 보행 트레일
     ],
 
-    // 4-2. 드릴 03: 북한산 야간 산행 훈련
-    drill03Bukhan: [
-      '/images/activity_03_slide_1.jpg', // 슬라이드 1: 헤드랜턴 야간 암릉 주행
-      '/images/activity_03_slide_2.jpg', // 슬라이드 2: 야간 능선 보행 테크닉
-      '/images/activity_03_slide_3.jpg', // 슬라이드 3: 칠흑 트레일 및 도심 야경
-    ],
-
-    // 4-3. 드릴 02: 남산 업힐 인터벌 훈련
-    drill02Namsan: [
+    // 4-2. [드릴 01] 남산 업힐 인터벌 훈련 (2027.06)
+    drill01Namsan: [
       '/images/activity_02_slide_1.jpg', // 슬라이드 1: 남산 업힐 인터벌 러닝
       '/images/activity_02_slide_2.jpg', // 슬라이드 2: 남산 순환로 및 일몰 트레일
       '/images/activity_02_slide_3.jpg', // 슬라이드 3: 도심 산악 코스 경사로
     ],
 
-    // 4-4. 드릴 01: 불암산 & 수락산 페이스 분석
-    drill01BulamSurak: [
-      '/images/activity_01_slide_1.jpg', // 슬라이드 1: 수락산 기차바위 암릉
-      '/images/activity_01_slide_2.jpg', // 슬라이드 2: 불암-수락 연결 트레킹
-      '/images/activity_01_slide_3.jpg', // 슬라이드 3: 바위 능선 페이스 측정
+    // 4-3. [드릴 02] 북한산 야간 산행 훈련 (2027.06)
+    drill02Bukhan: [
+      '/images/activity_03_slide_1.jpg', // 슬라이드 1: 헤드랜턴 야간 암릉 주행
+      '/images/activity_03_slide_2.jpg', // 슬라이드 2: 야간 능선 보행 테크닉
+      '/images/activity_03_slide_3.jpg', // 슬라이드 3: 칠흑 트레일 및 도심 야경
+    ],
+
+    // 4-4. [메인 챌린지] 2027 서울 불수사도북 45km (2027.07)
+    mainChallenge: [
+      '/images/activity_04_slide_1.jpg', // 슬라이드 1: 45km 불수사도북 능선 트래버스
+      '/images/activity_04_slide_2.jpg', // 슬라이드 2: 알파인 암릉 트레일
+      '/images/activity_04_slide_3.jpg', // 슬라이드 3: 고도 상승 및 정상 파노라마
     ],
   },
 
-  // [5] JOIN 페이지: 모집 안내 박스 내부 코스 사진 (가로 4:3 비율 권장)
+  // [5] JOIN 페이지 & 팝업: 모집 안내 박스 내부 코스 사진 (가로 4:3 비율 권장)
   joinNotice: {
-    coursePhoto: '/images/activity_04_slide_1.jpg', // 불수사도북 코스 대표 트레버스 사진
+    coursePhoto: '/images/activity_taebaek_slide_1.jpg', // 2027 강원 태백 신년 일출 산행 대표 사진
+    bulsusadobukPhoto: '/images/activity_04_slide_1.jpg', // 서울 불수사도북 대표 사진
   },
 };
