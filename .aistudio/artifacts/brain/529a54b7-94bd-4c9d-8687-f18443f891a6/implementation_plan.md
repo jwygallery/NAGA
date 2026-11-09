@@ -1,21 +1,24 @@
-# NAGA™ Admin Management System & Server Persistence
+# NAGA™ Multi-Session Recruitment, Hero Slide Uploader & Aesthetic Refinement
 
-A secure, high-utility administrative console integrated seamlessly into the NAGA™ web platform. Enables authorized crew managers to authenticate via a discreet bottom-right access point, upload local image files with instant previews, and edit or register activities, main hero banners, and recovery catalog items with permanent server-side database persistence.
+This update decouples the Activity detail modal from the Join application flow, upgrades the Admin Console so organizers can directly upload new Hero Slide photos and manage multiple concurrent recruitment sessions, and introduces a top tab switcher on the Join page alongside subtle typographic and layout refinements.
 
 > [!IMPORTANT]
-> **Confirmed Specifications from Planning Phase**:
-> 1. **Data Storage & Persistence**: Server database persistent storage (`/api/data` backed by server-side structured database storage and local file cache with fallback).
-> 2. **Management Scope**: Full coverage across **Activities (일정 및 코스 상세)**, **Hero Banner Slides (메인 배너 슬라이드)**, and **Recovery Products (리커버리 상품 전체)**.
-> 3. **Image Replacement Method**: Direct file upload from the admin's device with instantaneous image preview and server-side asset handling (`/api/upload` storing to `/public/uploads/`).
-> 4. **Authentication Credentials**: Fixed initial administrative credentials (`ID: admin` / `PW: 1q2w3e4r!!`) with secure session token validation.
+> **Confirmed User Decisions**:
+> 1. **Activity Modal Decoupling**: Remove the `APPLY FOR THIS DRILL` button from the Activity detail modal so `1. ACTIVITIES` serves strictly as a field archive and course protocol viewer.
+> 2. **Hero Slide Photo Addition in Admin**: Add a direct local image file upload trigger (`+ 사진 업로드로 새 슬라이드 추가`) and slide order controls inside the Admin Console's Hero Slides tab.
+> 3. **Concurrent Multi-Session Recruitment**: Upgrade the Join recruitment system to support multiple active recruitment sessions simultaneously. Visitors switch between open sessions via a top tab bar on the `3. JOIN` page, viewing each session's dedicated course notice, 4:3 photo, and application target.
+> 4. **Subtle Aesthetic Polish**: Refine typographic hierarchy, add a minimal slide counter and indicator on the main Hero banner, and polish card spacing and border contrast without altering NAGA's signature monochrome identity.
 
 ---
 
 ### 1. Overview & Core Concept
 
-- **What It Does**: Adds an unobtrusive administrative trigger in the bottom-right corner of the interface. When an organizer logs in using the specified credentials (`admin` / `1q2w3e4r!!`), a comprehensive technical management console appears. From this console, administrators can create new mountaineering activities, update dates and gear lists, replace slide imagery, modify recovery product details, and upload high-resolution images directly from their desktop or mobile device.
-- **Target Audience / Persona**: NAGA crew leads, field organizers, and content managers who need to post upcoming alpine drills, update recruitment banners, and refresh gear requirements without manually editing code or image directories.
-- **Key Value**: Eliminates hardcoded content maintenance bottlenecks. Any changes saved by the admin immediately reflect across the public SPA views (Home, Activities, Recovery, and Join) and persist permanently across server restarts and client reloads.
+- **What It Does**:
+  - Removes the join link button from the Activity popup modal.
+  - Empowers admins in `NAGA™ MANAGEMENT CONSOLE` to add new Hero Banner slides directly by uploading photos from their device, reorder slides, and manage multiple open recruitment sessions (`JOIN RECRUITMENT`) at the same time.
+  - Upgrades `3. JOIN` with an intuitive top session tab selector when two or more recruitment sessions are open, dynamically syncing the recruitment notice card, 4:3 course archive photo, and form submission target.
+- **Target Audience / Persona**: NAGA crew organizers running overlapping pre-training drills and main challenges, and crew applicants browsing activities or registering for specific open sessions.
+- **Key Value**: Full operational flexibility for multi-session recruitment and hero banner curation while keeping the public user journey clean and focused.
 
 ---
 
@@ -23,54 +26,45 @@ A secure, high-utility administrative console integrated seamlessly into the NAG
 
 #### Key User Flows
 
-1. **Discovery & Discreet Login**:
-   - At the bottom-right of every view, a sleek, minimalist floating admin button `[ ⬡ ADMIN ]` is fixed above the layout margin (`fixed bottom-6 right-6 z-40`).
-   - Clicking it summons the **Admin Authentication Modal** featuring high-contrast typography, an ID input, a password input, and an authenticated status indicator.
-   - On entering `admin` and `1q2w3e4r!!`, the session is verified against `/api/auth/login`. An admin badge `[ ADMIN MODE ACTIVE ]` appears, and the management dashboard opens.
+1. **Pure Activity Protocol Modal (`1. ACTIVITIES`)**:
+   - Clicking an activity card opens the detail modal showing specifications (Location, Elevation, Required Gear, Recovery), Drill Objective, and the 4:3 Course Photo Slider.
+   - The bottom footer of the modal now contains only a clean `[ CLOSE ]` action—no `APPLY FOR THIS DRILL` redirect button.
 
-2. **Management Dashboard Experience**:
-   - Structured in NAGA's signature brutalist-alpine aesthetic (deep obsidian `#000000`, crisp alpine white borders, tabular monospace metadata).
-   - **Segmented View Tabs**:
-     - **01. ACTIVITIES**: Chronological activity list with quick "Edit", "Delete", and "Register New Activity" actions.
-     - **02. HERO SLIDES**: Reorder, add, or edit banner titles, subtitles, and uploaded photography.
-     - **03. RECOVERY**: Edit nutritional supplements, shake formulas, and gear protocols.
-     - **04. RECRUITMENT NOTICE**: Update active expedition notice copy and course archive photo.
-   - **Direct File Upload with Real-time Preview**:
-     - Custom drag-and-drop or file selector zone.
-     - Instant thumbnail preview upon selection.
-     - Uploads asynchronously to the server, generating optimized static URLs.
+2. **Hero Banner Slide Photo Addition (`ADMIN > 2. HERO SLIDES`)**:
+   - At the top of the Hero Slides tab, admins have two instant actions:
+     - **`[ + 사진 파일 업로드로 새 슬라이드 추가 ]`**: Selecting an image file from the device immediately uploads it to `/api/upload` and creates a new Hero Slide card with preview.
+     - **`[ + 빈 슬라이드 추가 ]`**: Creates a template slide slot.
+   - Each slide card also includes `▲ / ▼` reorder buttons, direct photo replacement, and a delete button.
 
-3. **Save, Review & Public Synchronization**:
-   - A sticky bottom action dock within the admin console displays "SAVE ALL CHANGES", "DISCARD CHANGES", and "LOGOUT".
-   - Saving dispatches the updated payload to the server database. All client views instantly re-render the refreshed state without requiring a page reload.
+3. **Multi-Session Recruitment Management (`ADMIN > 4. JOIN SESSIONS`)**:
+   - Admins can register multiple recruitment sessions (e.g., *2027 GANGWON TAEBAEK*, *PRE-TRAINING DRILL 01: NAM-SAN*, *2027 SEOUL BUL-SU-SA-DO-BUK 45KM*).
+   - Each session item has:
+     - Active/Hidden toggle (`모집 활성화 / 숨김`)
+     - Reorder controls (`▲ / ▼`)
+     - Schedule Tag (e.g. `UPCOMING EXPEDITION · 2027.01`)
+     - English Title & Korean Subtitle
+     - Detailed Notice Description
+     - 4:3 Course Photo (with local device file upload & preview)
+     - Photo Archive & Trail captions
 
-#### Visual Identity & Theme Tokens
+4. **Tabbed Session Selector on Public Join View (`3. JOIN`)**:
+   - At the top of `3. JOIN`, all currently active recruitment sessions appear as a crisp segmented tab bar (`01. 2027 GANGWON TAEBAEK`, `02. DRILL 01: NAM-SAN`, etc.).
+   - Clicking a tab immediately switches the **Active Recruitment Notice** box (title, subtitle, description, and 4:3 course photo) and locks the **Expedition Application** form below to the selected session.
 
-- **Palette**: Monochromatic technical luxury.
-  - Neutral Canvas: `#000000` (Obsidian Black)
-  - Surface Containers: `rgba(255, 255, 255, 0.04)` with `1px solid rgba(255, 255, 255, 0.2)`
-  - Active & Focus States: Pure White `#FFFFFF` with inverted high-contrast black typography
-  - Alert / Destructive: `#DC2626` (Refined Crimson) for delete confirmations
-- **Typography**:
-  - Headings & Brand Mark: `Syne` (Bold, uppercase, tracking-tight)
-  - Data Labels, Badges & Code: Monospace with `tabular-nums`
-  - Body & Form Placeholders: Sans-serif (`Plus Jakarta Sans` / System clean fallback)
-- **Zero-Pill Discipline**: All status indicators, date ranges, and category tags are rendered as clean, unboxed typographic metadata separated by `//` or `·`.
+5. **Subtle Aesthetic Improvements**:
+   - **Main Hero Banner**: Adds a quiet tabular slide counter (`01 / 04`) and clickable progress bars on the bottom-right of the hero viewport to balance the left/right navigation arrows on the bottom-left.
+   - **Card & Modal Hairlines**: Crisp 1px borders (`border-white/15` transitioning to `border-white/80` on hover), balanced internal padding, and refined optical spacing for Korean and English typography.
 
 ---
 
 ### 3. Key Product Decisions & Trade-Offs
 
-- **Decision 1: Full-Stack Express Server Integration (`server.ts`)**:
-  - *Chosen Approach*: Implement an Express backend running via `tsx server.ts` that mounts Vite middlewares in development and serves API routes (`/api/data`, `/api/upload`, `/api/auth`).
-  - *Why*: Satisfies the user's explicit preference for "서버 데이터베이스 영구 저장 연동" while enabling authentic local file uploads saved directly to `/public/uploads/`.
-  - *Alternative Considered*: Client-only `localStorage`. Rejected because data would be lost across different devices or cleared caches.
-- **Decision 2: File Upload Strategy**:
-  - *Chosen Approach*: Server-side file persistence using Express `express.json({ limit: '25mb' })` and standard file system (`fs/promises`) writes into `/public/uploads/`.
-  - *Why*: Zero third-party cloud storage dependencies, fast local execution, instant preview rendering, and reliable zero-broken-image guarantees.
-- **Decision 3: Seamless Dual State (Default Seed + Server Overrides)**:
-  - *Chosen Approach*: On first launch, the server initializes `data/db.json` from the current rich `ACTIVITIES_DATA`, `HERO_SLIDES`, and `PRODUCTS_DATA`.
-  - *Why*: Guarantees that the site never starts empty and that existing high-quality alpine photography and copywriting are fully preserved.
+- **Decision 1: Backward-Compatible Multi-Session Schema (`joinNotices` + `joinNotice`)**:
+  - *Chosen Approach*: Store `joinNotices: JoinNoticeItem[]` in `NagaAppData`. If existing `data/db.json` only has the legacy single `joinNotice` object, automatically migrate it into `joinNotices[0]` on load.
+  - *Why*: Ensures zero data loss from previously saved admin states while unlocking unlimited concurrent recruitment sessions.
+- **Decision 2: Top Tab Switching in `3. JOIN`**:
+  - *Chosen Approach*: A horizontal segmented tab bar above the recruitment notice box that selects the active session (`selectedJoinSessionId`).
+  - *Why*: Matches the user's confirmed preference ("상단 탭으로 모집 세션을 전환하며 선택한 세션에 신청하기") and keeps the page compact without vertical form clutter.
 
 ---
 
@@ -78,60 +72,27 @@ A secure, high-utility administrative console integrated seamlessly into the NAG
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        NAGA™ CLIENT APPLICATION                       │
+│                        NAGA™ CLIENT & ADMIN FLOW                       │
 │                                                                        │
-│  ┌───────────────────────┐   ┌──────────────────────────────────────┐  │
-│  │ Public SPA Views      │   │ Floating Admin Trigger [⬡ ADMIN]     │  │
-│  │ (Home/Act/Rec/Join)   │   └──────────────────┬───────────────────┘  │
-│  └───────────▲───────────┘                      │ Click                │
-│              │                       ┌──────────▼───────────────────┐  │
-│              │ State Sync            │ Admin Auth Modal             │  │
-│              │                       │ (admin / 1q2w3e4r!!)         │  │
-│  ┌───────────┴───────────┐           └──────────┬───────────────────┘  │
-│  │ React Data Provider / │                      │ Verified Session     │
-│  │ Central App State     │◄─────────────────────┼───────────────────┐  │
-│  └───────────▲───────────┘           ┌──────────▼────────────────┐  │  │
-│              │                       │ NAGA™ Admin Console       │  │  │
-│              │                       │ - Activities Manager      │  │  │
-│              │                       │ - Hero Slides Manager     │  │  │
-│              │                       │ - Products Manager        │  │  │
-│              │                       │ - File Upload & Previews  │  │  │
-│              │                       └──────────┬────────────────┘  │  │
-└──────────────┼──────────────────────────────────┼───────────────────┼──┘
-               │ GET /api/data                    │ POST /api/data    │ POST /api/upload
-               ▼                                  ▼                   ▼
+│  ┌──────────────────────────┐    ┌──────────────────────────────────┐  │
+│  │ 1. ACTIVITIES Modal      │    │ 3. JOIN View                     │  │
+│  │ - Specs & Drill Copy     │    │ - Top Session Tabs (01, 02...)   │  │
+│  │ - 4:3 Photo Carousel     │    │ - Dynamic Notice & 4:3 Photo     │  │
+│  │ - [ CLOSE ] Only         │    │ - Form Bound to Selected Session │  │
+│  └──────────────────────────┘    └─────────────────▲────────────────┘  │
+│                                                    │                   │
+│  ┌─────────────────────────────────────────────────┴────────────────┐  │
+│  │ NAGA™ ADMIN CONSOLE (Discreet Footer Trigger -> Login)           │  │
+│  │ - Tab 1: Activities (CRUD + Reorder + 3x Photo Upload)           │  │
+│  │ - Tab 2: Hero Slides (Direct Photo Upload Add + Reorder + Edit)  │  │
+│  │ - Tab 3: Recovery Products (CRUD + Photo Upload)                 │  │
+│  │ - Tab 4: Join Sessions (Multi-Session CRUD + Active Toggle)      │  │
+│  └─────────────────────────────────┬────────────────────────────────┘  │
+└────────────────────────────────────┼───────────────────────────────────┘
+                                     │ POST /api/data & POST /api/upload
+                                     ▼
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        EXPRESS SERVER (server.ts)                      │
-│                                                                        │
-│  ┌───────────────────────┐   ┌───────────────────┐   ┌──────────────┐  │
-│  │ /api/auth/login       │   │ /api/data         │   │ /api/upload  │  │
-│  │ Password Validation   │   │ Read/Write DB     │   │ File Storage │  │
-│  └───────────────────────┘   └─────────┬─────────┘   └──────┬───────┘  │
-│                                        │                    │          │
-│                                        ▼                    ▼          │
-│                             ┌────────────────────┐   ┌──────────────┐  │
-│                             │ server/db.json     │   │ /public/     │  │
-│                             │ (Persistent Store) │   │ uploads/     │  │
-│                             └────────────────────┘   └──────────────┘  │
+│                    EXPRESS SERVER & PERSISTENT STORE                   │
+│                  data/db.json  +  public/uploads/*                     │
 └────────────────────────────────────────────────────────────────────────┘
 ```
-
-#### Key Components to Build
-
-1. `server.ts`:
-   - Express server configuring Vite middleware in development mode (`npm run dev`).
-   - Authentication endpoint (`/api/auth/login`).
-   - Data endpoints (`GET /api/data`, `POST /api/data`, `POST /api/data/reset`).
-   - File upload endpoint (`POST /api/upload`) saving to `public/uploads/` with mime-type checking and safe file naming.
-2. `src/components/AdminTrigger.tsx`:
-   - Subtle, fixed bottom-right button with smooth hover animation and indicator dot.
-3. `src/components/AdminLoginModal.tsx`:
-   - Modal prompt with ID and password fields, error feedback, and keypress submission (`Enter`).
-4. `src/components/AdminConsoleModal.tsx`:
-   - Full management console with tab navigation (Activities, Hero Slides, Products, Notice).
-   - Activity editor form (Title, Code, Date, Distance, Elevation, Location, Gear, Recovery, Description, 3 course photos).
-   - Image upload dropzone with instant client preview and server upload integration.
-   - Delete confirmation dialog.
-5. Integration in `src/App.tsx`:
-   - Dynamic data fetch from `/api/data` with graceful fallback to initial constants.
-   - Global save notifications and seamless re-render.

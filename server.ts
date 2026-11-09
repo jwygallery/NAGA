@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { DEFAULT_NAGA_DATA } from './src/defaultData.js';
+import { DEFAULT_NAGA_DATA, normalizeNagaData } from './src/defaultData.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,7 +44,8 @@ function readDatabase() {
   try {
     if (fs.existsSync(DB_FILE)) {
       const content = fs.readFileSync(DB_FILE, 'utf-8');
-      return JSON.parse(content);
+      const parsed = JSON.parse(content);
+      return normalizeNagaData(parsed);
     }
   } catch (err) {
     console.error('Error reading db.json:', err);
@@ -55,7 +56,8 @@ function readDatabase() {
 // Helper to write database
 function writeDatabase(data: unknown) {
   try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    const normalized = normalizeNagaData(data as Record<string, unknown>);
+    fs.writeFileSync(DB_FILE, JSON.stringify(normalized, null, 2), 'utf-8');
     return true;
   } catch (err) {
     console.error('Error writing to db.json:', err);

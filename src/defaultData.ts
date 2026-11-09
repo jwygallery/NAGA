@@ -1,5 +1,56 @@
-import { NagaAppData } from './types';
+import { NagaAppData, JoinNoticeItem } from './types';
 import { IMAGE_REGISTRY } from './imageRegistry';
+
+export const DEFAULT_JOIN_NOTICES: JoinNoticeItem[] = [
+  {
+    id: 'join-session-taebaek',
+    isActive: true,
+    tag: 'UPCOMING EXPEDITION · 2027.01',
+    title: '2027 GANGWON TAEBAEK',
+    sub: '2027 강원 태백 신년 일출 산행 (단일 챌린지 · 사전 훈련 세션 없음)',
+    description: '고려대학교 약학대학 산악단체 NAGA™ 공식 신년 설산 일출 산행 및 2027 동계 필드 세션 참가 등록',
+    coursePhoto: IMAGE_REGISTRY.joinNotice.coursePhoto || '/images/activity_taebaek_slide_1.jpg',
+    photoArchiveTag: 'TAEBAEKSAN EXPEDITION ARCHIVE',
+    photoTrailTag: 'GANGWON TAEBAEK 12KM SUNRISE TRAIL',
+    targetSession: '2027 GANGWON TAEBAEK [2027.01] - 2027 강원 태백 신년 일출 산행',
+  },
+  {
+    id: 'join-session-namsan',
+    isActive: true,
+    tag: 'PRE-TRAINING DRILL 01 · 2027.06',
+    title: 'PRE-TRAINING DRILL 01: NAM-SAN',
+    sub: '남산 10km 업힐 인터벌 훈련 & 프로틴 쉐이크 리커버리',
+    description: '불수사도북 45km 메인 챌린지 대비 심폐 지구력 강화 및 가파른 경사로 페이스 조절 능력 배양 사전 훈련 세션',
+    coursePhoto: IMAGE_REGISTRY.activities.drill01Namsan[0] || '/images/activity_02_slide_1.jpg',
+    photoArchiveTag: 'NAM-SAN INTERVAL ARCHIVE',
+    photoTrailTag: 'NAM-SAN 10KM UPHILL CIRCUIT',
+    targetSession: 'PRE-TRAINING DRILL 01: NAM-SAN [2027.06] - 남산 업힐 인터벌 훈련',
+  },
+  {
+    id: 'join-session-bukhan',
+    isActive: false,
+    tag: 'PRE-TRAINING DRILL 02 · 2027.06',
+    title: 'PRE-TRAINING DRILL 02: BUK-HAN',
+    sub: '북한산 15km 야간 암릉 적응 훈련 & 헤드랜턴 기동',
+    description: '시야가 제한된 야간 산악 암릉 지형에서의 안전한 보행 기술 및 헤드랜턴 장비 운용 능력 배양 사전 훈련 세션',
+    coursePhoto: IMAGE_REGISTRY.activities.drill02Bukhan[0] || '/images/activity_03_slide_1.jpg',
+    photoArchiveTag: 'BUK-HAN NIGHT RECON ARCHIVE',
+    photoTrailTag: 'BUK-HAN 15KM TECHNICAL RIDGE',
+    targetSession: 'PRE-TRAINING DRILL 02: BUK-HAN [2027.06] - 북한산 야간 산행 훈련',
+  },
+  {
+    id: 'join-session-bulsusadobuk',
+    isActive: false,
+    tag: 'MAIN CHALLENGE · 2027.07',
+    title: '2027 SEOUL BUL-SU-SA-DO-BUK 45KM',
+    sub: '서울 5대 산악 45km 풀코스 연속 종주 메인 챌린지',
+    description: '불암산·수락산·사패산·도봉산·북한산을 잇는 45km 극한 알파인 트레버스 및 전용 전해질·그릭요거트 리커버리 세션',
+    coursePhoto: IMAGE_REGISTRY.activities.mainChallenge[0] || '/images/activity_04_slide_1.jpg',
+    photoArchiveTag: '5-MOUNTAIN TRAVERSE ARCHIVE',
+    photoTrailTag: 'BUL-SU-SA-DO-BUK 45KM FULL COURSE',
+    targetSession: '2027 SEOUL BUL-SU-SA-DO-BUK 45KM [2027.07] - 불수사도북 45km 메인 챌린지',
+  },
+];
 
 export const DEFAULT_NAGA_DATA: NagaAppData = {
   activities: [
@@ -80,20 +131,20 @@ export const DEFAULT_NAGA_DATA: NagaAppData = {
     {
       id: 'slide-01',
       title: '01. NAM-SAN INTERVAL DRILL',
-      sub: 'TRAINING DRILL // JUNE 2027',
-      image: IMAGE_REGISTRY.heroSlides[0]?.image || '/images/hero_slide_1.jpg',
+      sub: 'TRAINING DRILL · JUNE 2027',
+      image: IMAGE_REGISTRY.heroSlides[0]?.image || '/images/hero_slide_01.jpg',
     },
     {
       id: 'slide-02',
       title: '02. BUK-HAN NIGHT HIKE',
-      sub: 'TRAINING DRILL // JUNE 2027',
-      image: IMAGE_REGISTRY.heroSlides[1]?.image || '/images/hero_slide_2.jpg',
+      sub: 'TRAINING DRILL · JUNE 2027',
+      image: IMAGE_REGISTRY.heroSlides[1]?.image || '/images/hero_slide_02.jpg',
     },
     {
       id: 'slide-03',
       title: '03. BUL-SU-SA-DO-BUK 45KM',
-      sub: 'MAIN CHALLENGE // JULY 2027',
-      image: IMAGE_REGISTRY.heroSlides[2]?.image || '/images/hero_slide_3.jpg',
+      sub: 'MAIN CHALLENGE · JULY 2027',
+      image: IMAGE_REGISTRY.heroSlides[2]?.image || '/images/hero_slide_03.jpg',
     },
   ],
   products: [
@@ -102,7 +153,7 @@ export const DEFAULT_NAGA_DATA: NagaAppData = {
       code: '[Product 01]',
       name: 'NAGA Alpine Shake',
       category: 'RAPID METABOLIC RECOVERY',
-      image: IMAGE_REGISTRY.products.alpineShake || '/images/product_alpine_shake.jpg',
+      image: IMAGE_REGISTRY.products.alpineShake || '/images/product_02_alpine_shake.jpg',
       spec: 'BCAA & 전해질 복합 알파인 포뮬러 / 30g 고밀도 단백질 / 휴대용 파우치 규격',
       usage: '고도 상승 및 암릉 기동 직후 급성 근육 피로를 중화하고 글리코겐을 신속 재충전하는 전문 산악 포뮬러 쉐이크.',
     },
@@ -111,19 +162,60 @@ export const DEFAULT_NAGA_DATA: NagaAppData = {
       code: '[Product 02]',
       name: 'NAGA Balance Greek Bowl',
       category: 'POST-EXPEDITION NUTRITION',
-      image: IMAGE_REGISTRY.products.greekBowl || '/images/product_greek_bowl.jpg',
+      image: IMAGE_REGISTRY.products.greekBowl || '/images/product_03_greek_bowl.jpg',
       spec: '유청 분리 고농축 그릭 요거트 / 고단백 슈퍼푸드 너트 믹스 / 천연 아카시아 꿀',
       usage: '장거리 알파인 활동 후 위장 부담 없이 장시간 단백질을 공급하는 고영양 밸런스 리커버리 볼.',
     },
   ],
-  joinNotice: {
-    tag: 'UPCOMING EXPEDITION // 2027.01',
-    title: '2027 GANGWON TAEBAEK',
-    sub: '2027 강원 태백 신년 일출 산행 (단일 챌린지 / 사전 훈련 세션 없음)',
-    description: '고려대학교 약학대학 산악단체 NAGA™ 공식 신년 설산 일출 산행 및 2027 필드 세션 참가 등록',
-    coursePhoto: IMAGE_REGISTRY.joinNotice.coursePhoto || '/images/activity_taebaek_slide_1.jpg',
-    photoArchiveTag: 'TAEBAEKSAN EXPEDITION ARCHIVE',
-    photoTrailTag: 'GANGWON TAEBAEK 12KM SUNRISE TRAIL',
-    targetSession: '2027 GANGWON TAEBAEK [2027.01] - 2027 강원 태백 신년 일출 산행 (단일 세션)',
-  },
+  joinNotice: DEFAULT_JOIN_NOTICES[0],
+  joinNotices: DEFAULT_JOIN_NOTICES,
 };
+
+export function normalizeNagaData(raw: Partial<NagaAppData> | null | undefined): NagaAppData {
+  if (!raw || typeof raw !== 'object') {
+    return DEFAULT_NAGA_DATA;
+  }
+
+  let joinNotices: JoinNoticeItem[] = [];
+
+  if (Array.isArray(raw.joinNotices) && raw.joinNotices.length > 0) {
+    joinNotices = raw.joinNotices.map((item, idx) => ({
+      id: item.id || `join-session-${idx + 1}`,
+      isActive: item.isActive !== undefined ? item.isActive : true,
+      tag: item.tag || 'UPCOMING EXPEDITION',
+      title: item.title || 'NAGA EXPEDITION',
+      sub: item.sub || '',
+      description: item.description || '',
+      coursePhoto: item.coursePhoto || '/images/activity_taebaek_slide_1.jpg',
+      photoArchiveTag: item.photoArchiveTag || 'EXPEDITION ARCHIVE',
+      photoTrailTag: item.photoTrailTag || 'TRAIL ARCHIVE',
+      targetSession: item.targetSession || item.title || 'NAGA EXPEDITION',
+    }));
+  } else if (raw.joinNotice && typeof raw.joinNotice === 'object') {
+    const primaryFromLegacy: JoinNoticeItem = {
+      id: raw.joinNotice.id || 'join-session-taebaek',
+      isActive: true,
+      tag: raw.joinNotice.tag || DEFAULT_JOIN_NOTICES[0].tag,
+      title: raw.joinNotice.title || DEFAULT_JOIN_NOTICES[0].title,
+      sub: raw.joinNotice.sub || DEFAULT_JOIN_NOTICES[0].sub,
+      description: raw.joinNotice.description || DEFAULT_JOIN_NOTICES[0].description,
+      coursePhoto: raw.joinNotice.coursePhoto || DEFAULT_JOIN_NOTICES[0].coursePhoto,
+      photoArchiveTag: raw.joinNotice.photoArchiveTag || DEFAULT_JOIN_NOTICES[0].photoArchiveTag,
+      photoTrailTag: raw.joinNotice.photoTrailTag || DEFAULT_JOIN_NOTICES[0].photoTrailTag,
+      targetSession: raw.joinNotice.targetSession || DEFAULT_JOIN_NOTICES[0].targetSession,
+    };
+    joinNotices = [primaryFromLegacy, ...DEFAULT_JOIN_NOTICES.slice(1)];
+  } else {
+    joinNotices = DEFAULT_JOIN_NOTICES;
+  }
+
+  const firstActive = joinNotices.find((n) => n.isActive) || joinNotices[0] || DEFAULT_JOIN_NOTICES[0];
+
+  return {
+    activities: Array.isArray(raw.activities) && raw.activities.length > 0 ? raw.activities : DEFAULT_NAGA_DATA.activities,
+    heroSlides: Array.isArray(raw.heroSlides) && raw.heroSlides.length > 0 ? raw.heroSlides : DEFAULT_NAGA_DATA.heroSlides,
+    products: Array.isArray(raw.products) && raw.products.length > 0 ? raw.products : DEFAULT_NAGA_DATA.products,
+    joinNotice: firstActive,
+    joinNotices,
+  };
+}

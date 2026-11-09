@@ -31,6 +31,8 @@ export interface HeroSlideItem {
 }
 
 export interface JoinNoticeData {
+  id?: string;
+  isActive?: boolean;
   tag: string;
   title: string;
   sub: string;
@@ -41,9 +43,15 @@ export interface JoinNoticeData {
   targetSession: string;
 }
 
+export interface JoinNoticeItem extends JoinNoticeData {
+  id: string;
+  isActive: boolean;
+}
+
 export interface NagaAppData {
   activities: ActivityItem[];
   heroSlides: HeroSlideItem[];
   products: ProductItem[];
   joinNotice: JoinNoticeData;
+  joinNotices?: JoinNoticeItem[];
 }

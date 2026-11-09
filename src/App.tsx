@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useId } from 'react';
 import { ChevronLeft, ChevronRight, X, ArrowRight, Check } from 'lucide-react';
 import { IMAGE_REGISTRY } from './imageRegistry';
-import { DEFAULT_NAGA_DATA } from './defaultData';
-import { ActivityItem, ProductItem, HeroSlideItem, JoinNoticeData, NagaAppData } from './types';
+import { DEFAULT_NAGA_DATA, DEFAULT_JOIN_NOTICES, normalizeNagaData } from './defaultData';
+import { ActivityItem, ProductItem, HeroSlideItem, JoinNoticeData, JoinNoticeItem, NagaAppData } from './types';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminConsoleModal } from './components/AdminConsoleModal';
 
@@ -56,7 +56,7 @@ export default function App() {
   const [appData, setAppData] = useState<NagaAppData>(() => {
     try {
       const cached = localStorage.getItem('naga_app_data_cache');
-      if (cached) return JSON.parse(cached);
+      if (cached) return normalizeNagaData(JSON.parse(cached));
     } catch {}
     return DEFAULT_NAGA_DATA;
   });
@@ -66,9 +66,10 @@ export default function App() {
       .then((res) => res.json())
       .then((resData) => {
         if (resData.success && resData.data) {
-          setAppData(resData.data);
+          const normalized = normalizeNagaData(resData.data);
+          setAppData(normalized);
           try {
-            localStorage.setItem('naga_app_data_cache', JSON.stringify(resData.data));
+            localStorage.setItem('naga_app_data_cache', JSON.stringify(normalized));
           } catch {}
         }
       })
@@ -80,7 +81,31 @@ export default function App() {
   const ACTIVITIES_DATA = appData.activities;
   const HERO_SLIDES = appData.heroSlides;
   const PRODUCTS_DATA = appData.products;
-  const joinNotice = appData.joinNotice;
+
+  // Multi-Session Recruitment List (active sessions shown as tabs in 3. JOIN)
+  const allJoinNotices: JoinNoticeItem[] =
+    Array.isArray(appData.joinNotices) && appData.joinNotices.length > 0
+      ? appData.joinNotices
+      : DEFAULT_JOIN_NOTICES;
+  const activeJoinSessions: JoinNoticeItem[] =
+    allJoinNotices.filter((s) => s.isActive !== false).length > 0
+      ? allJoinNotices.filter((s) => s.isActive !== false)
+      : [allJoinNotices[0] || DEFAULT_JOIN_NOTICES[0]];
+
+  const [selectedJoinSessionId, setSelectedJoinSessionId] = useState<string>(
+    () => activeJoinSessions[0]?.id || 'join-session-taebaek'
+  );
+
+  // Keep selectedJoinSessionId valid when sessions are added/toggled
+  const currentJoinSession: JoinNoticeItem =
+    activeJoinSessions.find((s) => s.id === selectedJoinSessionId) || activeJoinSessions[0];
+
+  // Keep activeSlide in bounds if slides are deleted
+  useEffect(() => {
+    if (HERO_SLIDES.length > 0 && activeSlide >= HERO_SLIDES.length) {
+      setActiveSlide(0);
+    }
+  }, [HERO_SLIDES.length, activeSlide]);
 
   // Admin Management State
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
@@ -94,22 +119,23 @@ export default function App() {
   const [isAdminConsoleOpen, setIsAdminConsoleOpen] = useState(false);
 
   const handleSaveAppData = async (updatedData: NagaAppData): Promise<boolean> => {
-    setAppData(updatedData);
+    const normalized = normalizeNagaData(updatedData);
+    setAppData(normalized);
     try {
-      localStorage.setItem('naga_app_data_cache', JSON.stringify(updatedData));
+      localStorage.setItem('naga_app_data_cache', JSON.stringify(normalized));
     } catch {}
 
     try {
       const res = await fetch('/api/data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedData),
+        body: JSON.stringify(normalized),
       });
       const resData = await res.json();
       return !!resData.success;
     } catch (err) {
       console.error('Server save error:', err);
-      return true; // Still saved to local state and cache
+      return true;
     }
   };
 
@@ -123,8 +149,10 @@ export default function App() {
     setModalSlideIndex((prev) => (prev - 1 + selectedActivity.images.length) % selectedActivity.images.length);
   };
 
-  // Target Expedition for Join Form (현재 강원 태백 단일 세션 전용 접수)
-  const TARGET_EXPEDITION_SESSION = joinNotice.targetSession || '2027 GANGWON TAEBAEK [2027.01] - 2027 강원 태백 신년 일출 산행 (단일 세션)';
+  // Selected Target Expedition for Join Form
+  const TARGET_EXPEDITION_SESSION =
+    currentJoinSession.targetSession ||
+    `${currentJoinSession.title} - ${currentJoinSession.sub}`;
 
   // Form State
   const [formName, setFormName] = useState('');
@@ -168,20 +196,22 @@ export default function App() {
 
   // Auto-slide effect for hero banner
   useEffect(() => {
-    if (currentView !== 'home' || isPaused) return;
+    if (currentView !== 'home' || isPaused || HERO_SLIDES.length <= 1) return;
 
     const timer = setInterval(() => {
       setActiveSlide((prev) => (prev + 1) % HERO_SLIDES.length);
     }, 4500);
 
     return () => clearInterval(timer);
-  }, [currentView, isPaused]);
+  }, [currentView, isPaused, HERO_SLIDES.length]);
 
   const nextSlide = () => {
+    if (HERO_SLIDES.length === 0) return;
     setActiveSlide((prev) => (prev + 1) % HERO_SLIDES.length);
   };
 
   const prevSlide = () => {
+    if (HERO_SLIDES.length === 0) return;
     setActiveSlide((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length);
   };
 
@@ -209,7 +239,7 @@ export default function App() {
           gearNote: formGearNote.trim() || '(특이사항 없음)',
           targetExpedition: TARGET_EXPEDITION_SESSION,
           sessions: TARGET_EXPEDITION_SESSION,
-          session: '2027 GANGWON TAEBAEK',
+          session: currentJoinSession.title,
           submittedAt: new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
         }),
       });
@@ -356,18 +386,20 @@ export default function App() {
                     alt={slide.title}
                     className="w-full h-full object-cover object-center"
                     loading={index === 0 ? 'eager' : 'lazy'}
+                    referrerPolicy="no-referrer"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent pointer-events-none" />
                 </div>
               ))}
 
-              {/* Slider Controls Bar: Left & Right Arrow Buttons */}
-              <div className="relative z-20 w-full px-4 sm:px-12 pb-4 sm:pb-6 mt-auto flex items-end justify-between">
+              {/* Slider Controls Bar: Left & Right Arrow Buttons + Slide Index & Progress */}
+              <div className="relative z-20 w-full px-4 sm:px-12 pb-4 sm:pb-6 mt-auto flex items-end justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <button
                     id="hero-slider-prev-btn"
                     onClick={prevSlide}
                     aria-label="Previous Slide"
-                    className="w-11 h-11 sm:w-10 sm:h-10 border border-white/40 bg-black/70 hover:bg-white hover:text-black transition-colors flex items-center justify-center text-white active:scale-95"
+                    className="w-11 h-11 sm:w-10 sm:h-10 border border-white/40 bg-black/75 hover:bg-white hover:text-black transition-colors flex items-center justify-center text-white active:scale-95"
                   >
                     <ChevronLeft size={18} />
                   </button>
@@ -375,11 +407,37 @@ export default function App() {
                     id="hero-slider-next-btn"
                     onClick={nextSlide}
                     aria-label="Next Slide"
-                    className="w-11 h-11 sm:w-10 sm:h-10 border border-white/40 bg-black/70 hover:bg-white hover:text-black transition-colors flex items-center justify-center text-white active:scale-95"
+                    className="w-11 h-11 sm:w-10 sm:h-10 border border-white/40 bg-black/75 hover:bg-white hover:text-black transition-colors flex items-center justify-center text-white active:scale-95"
                   >
                     <ChevronRight size={18} />
                   </button>
                 </div>
+
+                {/* Subtle Slide Counter & Progress Bars */}
+                {HERO_SLIDES.length > 0 && (
+                  <div className="flex flex-col items-end gap-1.5">
+                    <div className="font-mono text-[11px] tabular-nums tracking-[0.2em] text-white/80">
+                      <span>{String((activeSlide % HERO_SLIDES.length) + 1).padStart(2, '0')}</span>
+                      <span className="text-white/40 mx-1">/</span>
+                      <span className="text-white/50">{String(HERO_SLIDES.length).padStart(2, '0')}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      {HERO_SLIDES.map((s, idx) => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => setActiveSlide(idx)}
+                          aria-label={`Slide ${idx + 1}`}
+                          className={`h-1 transition-all duration-300 ${
+                            idx === activeSlide
+                              ? 'w-6 bg-white'
+                              : 'w-2 bg-white/35 hover:bg-white/60'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </section>
 
@@ -445,7 +503,7 @@ export default function App() {
         )}
 
         {/* ==================================================================== */}
-        {/* VIEW 1: 1. ACTIVITIES (시간 역순 활동 목록 페이지) */}
+        {/* VIEW 1: 1. ACTIVITIES (시간순 활동 목록 페이지) */}
         {/* ==================================================================== */}
         {currentView === 'activities' && (
           <div id="activities-view" className="flex-1 flex flex-col max-w-7xl w-full mx-auto px-3.5 sm:px-8 py-6 sm:py-12">
@@ -465,7 +523,7 @@ export default function App() {
               </button>
             </div>
 
-            {/* Reverse Chronological Card List */}
+            {/* Chronological Card List */}
             <div className="space-y-3 sm:space-y-4">
               {ACTIVITIES_DATA.map((act) => (
                 <div
@@ -479,11 +537,15 @@ export default function App() {
                 >
                   <div className="flex-1 space-y-1.5 sm:space-y-2">
                     <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-                      <span className="font-mono text-xs sm:text-sm font-semibold tracking-[0.2em] text-white border border-white/40 px-2 sm:px-2.5 py-0.5 bg-white/5">
+                      <span className="font-mono text-xs sm:text-sm font-semibold tracking-[0.2em] text-white border border-white/40 px-2 sm:px-2.5 py-0.5 bg-white/5 tabular-nums">
                         {act.code}
                       </span>
-                      <span className="font-mono text-xs text-white/50 tracking-[0.15em] uppercase">
+                      <span className="font-mono text-xs text-white/60 tracking-[0.15em] uppercase tabular-nums">
                         {act.distance}
+                      </span>
+                      <span className="text-white/30">·</span>
+                      <span className="font-mono text-xs text-white/50 tracking-[0.1em]">
+                        {act.keyPoints}
                       </span>
                     </div>
 
@@ -514,8 +576,8 @@ export default function App() {
                   {/* Modal Header */}
                   <div className="border-b border-white/20 pb-4 flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <span className="font-mono text-xs tracking-[0.18em] sm:tracking-[0.2em] text-white/60 block uppercase">
-                        ACTIVITY PROTOCOL // {selectedActivity.code}
+                      <span className="font-mono text-xs tracking-[0.18em] sm:tracking-[0.2em] text-white/60 block uppercase tabular-nums">
+                        ACTIVITY PROTOCOL · {selectedActivity.code}
                       </span>
                       <h3 className="text-lg sm:text-2xl font-syne font-bold uppercase tracking-tight mt-1 text-white break-words">
                         {selectedActivity.title}
@@ -532,21 +594,21 @@ export default function App() {
                   </div>
 
                   {/* Modal Specs Table */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs font-mono tracking-[0.14em] sm:tracking-[0.15em] border border-white/20 p-3.5 sm:p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs font-mono tracking-[0.14em] sm:tracking-[0.15em] border border-white/20 p-3.5 sm:p-4 bg-white/[0.02]">
                     <div>
-                      <span className="text-white/50 uppercase block text-[10px] sm:text-xs">LOCATION</span>
+                      <span className="text-white/50 uppercase block text-[10px] sm:text-xs mb-0.5">LOCATION</span>
                       <span className="text-white font-medium break-words">{selectedActivity.location}</span>
                     </div>
                     <div>
-                      <span className="text-white/50 uppercase block text-[10px] sm:text-xs">ELEVATION</span>
+                      <span className="text-white/50 uppercase block text-[10px] sm:text-xs mb-0.5">ELEVATION</span>
                       <span className="text-white font-medium">{selectedActivity.elevation}</span>
                     </div>
                     <div>
-                      <span className="text-white/50 uppercase block text-[10px] sm:text-xs">REQUIRED GEAR</span>
+                      <span className="text-white/50 uppercase block text-[10px] sm:text-xs mb-0.5">REQUIRED GEAR</span>
                       <span className="text-white font-medium break-words">{selectedActivity.gearRequired}</span>
                     </div>
                     <div>
-                      <span className="text-white/50 uppercase block text-[10px] sm:text-xs">RECOVERY</span>
+                      <span className="text-white/50 uppercase block text-[10px] sm:text-xs mb-0.5">RECOVERY</span>
                       <span className="text-white font-medium break-words">{selectedActivity.recoveryProtocol}</span>
                     </div>
                   </div>
@@ -568,7 +630,7 @@ export default function App() {
                         <span className="font-mono text-[11px] tracking-[0.18em] text-white/50 uppercase">
                           FIELD VISUAL ARCHIVE
                         </span>
-                        <span className="font-mono text-[11px] tracking-[0.18em] text-white/70">
+                        <span className="font-mono text-[11px] tracking-[0.18em] text-white/70 tabular-nums">
                           [ 0{modalSlideIndex + 1} / 0{selectedActivity.images.length} ]
                         </span>
                       </div>
@@ -639,22 +701,15 @@ export default function App() {
                     </div>
                   )}
 
-                  {/* Modal Actions */}
-                  <div className="border-t border-white/20 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-                    <button
-                      onClick={() => {
-                        setSelectedActivity(null);
-                        setCurrentView('join');
-                      }}
-                      className="w-full sm:w-auto px-6 py-3.5 bg-white text-black font-mono text-xs font-bold tracking-[0.2em] uppercase hover:bg-white/90 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <span>APPLY FOR THIS DRILL</span>
-                      <ArrowRight size={14} />
-                    </button>
+                  {/* Modal Actions (신청 연동 버튼 제거, 닫기 전용) */}
+                  <div className="border-t border-white/20 pt-4 flex items-center justify-between gap-3">
+                    <span className="font-mono text-[11px] tracking-[0.15em] text-white/40 uppercase">
+                      NAGA™ FIELD ARCHIVE · {selectedActivity.distance}
+                    </span>
 
                     <button
                       onClick={() => setSelectedActivity(null)}
-                      className="w-full sm:w-auto px-5 py-3 border border-white/30 text-white font-mono text-xs tracking-[0.2em] uppercase hover:border-white transition-colors text-center"
+                      className="px-6 py-2.5 border border-white/40 hover:border-white hover:bg-white hover:text-black text-white font-mono text-xs tracking-[0.2em] uppercase transition-colors text-center"
                     >
                       [ CLOSE ]
                     </button>
@@ -782,6 +837,9 @@ export default function App() {
                   <span className="font-sans font-bold tabular-nums">3.</span>
                   <span>JOIN</span>
                 </h2>
+                <p className="text-xs font-mono tracking-[0.18em] text-white/50 mt-1.5 uppercase">
+                  EXPEDITION & PRE-TRAINING REGISTRATION // 참가 세션 선택 및 신청
+                </p>
               </div>
               <button
                 onClick={() => setCurrentView('home')}
@@ -791,41 +849,121 @@ export default function App() {
               </button>
             </div>
 
-            {/* Content: 현재 모집 중인 안내 문구 */}
-            <div className="border border-white/20 bg-white/5 p-4 sm:p-6 mb-6 sm:mb-8 space-y-4">
-              <div>
-                <span className="text-[10px] font-mono tracking-[0.25em] text-white/50 uppercase block">
-                  {joinNotice.tag || 'UPCOMING EXPEDITION // 2027.01'}
+            {/* Multi-Session Selector Tab Bar (동시 모집 세션 전환 탭) */}
+            <div className="mb-6 sm:mb-8">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-mono tracking-[0.22em] text-white/50 uppercase">
+                  SELECT ACTIVE SESSION // 모집 중인 세션 선택 ({activeJoinSessions.length})
                 </span>
-                <h3 className="text-xl sm:text-3xl font-syne font-bold uppercase tracking-tight text-white mt-1 leading-snug">
-                  {joinNotice.title}
+                <span className="text-[10px] font-mono tracking-[0.18em] text-white/40 uppercase hidden sm:inline">
+                  TAB TO SWITCH SESSION
+                </span>
+              </div>
+              <div
+                role="tablist"
+                aria-label="Active Recruitment Sessions"
+                className="grid grid-cols-1 sm:grid-cols-2 gap-2.5"
+              >
+                {activeJoinSessions.map((session, idx) => {
+                  const isSelected = session.id === currentJoinSession.id;
+                  return (
+                    <button
+                      key={session.id}
+                      role="tab"
+                      aria-selected={isSelected}
+                      type="button"
+                      onClick={() => {
+                        setSelectedJoinSessionId(session.id);
+                        setFormSubmitted(false);
+                        setFormError('');
+                      }}
+                      className={`text-left border p-3.5 sm:p-4 transition-all flex flex-col justify-between gap-1.5 ${
+                        isSelected
+                          ? 'bg-white text-black border-white'
+                          : 'bg-black text-white border-white/25 hover:border-white/70 hover:bg-white/[0.03]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2 w-full">
+                        <span
+                          className={`text-[10px] font-mono tracking-[0.2em] uppercase tabular-nums ${
+                            isSelected ? 'text-black/60 font-bold' : 'text-white/45'
+                          }`}
+                        >
+                          SESSION {String(idx + 1).padStart(2, '0')} // {session.tag || 'OPEN'}
+                        </span>
+                        <span
+                          className={`text-[9px] font-mono tracking-[0.18em] px-1.5 py-0.5 uppercase font-bold ${
+                            isSelected
+                              ? 'bg-black text-white'
+                              : 'border border-white/25 text-white/60'
+                          }`}
+                        >
+                          {isSelected ? 'SELECTED' : 'OPEN'}
+                        </span>
+                      </div>
+                      <div className="mt-0.5">
+                        <div
+                          className={`text-sm sm:text-base font-syne font-bold uppercase tracking-tight leading-snug ${
+                            isSelected ? 'text-black' : 'text-white'
+                          }`}
+                        >
+                          {session.title}
+                        </div>
+                        <div
+                          className={`text-[11px] font-mono tracking-[0.06em] mt-0.5 line-clamp-1 ${
+                            isSelected ? 'text-black/75' : 'text-white/60'
+                          }`}
+                        >
+                          {session.sub}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Content: 현재 선택된 모집 세션 안내 문구 */}
+            <div className="border border-white/20 bg-white/[0.03] p-4 sm:p-6 mb-6 sm:mb-8 space-y-4">
+              <div>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <span className="text-[10px] font-mono tracking-[0.25em] text-white/50 uppercase block">
+                    {currentJoinSession.tag || 'UPCOMING EXPEDITION // 2027.01'}
+                  </span>
+                  <span className="text-[10px] font-mono tracking-[0.2em] text-white/40 uppercase tabular-nums">
+                    SESSION {String(activeJoinSessions.findIndex((s) => s.id === currentJoinSession.id) + 1).padStart(2, '0')} / {String(activeJoinSessions.length).padStart(2, '0')}
+                  </span>
+                </div>
+                <h3 className="text-xl sm:text-3xl font-syne font-bold uppercase tracking-tight text-white mt-1.5 leading-snug">
+                  {currentJoinSession.title}
                 </h3>
-                <p className="text-xs sm:text-sm font-mono tracking-[0.12em] text-white/80 mt-1">
-                  {joinNotice.sub}
+                <p className="text-xs sm:text-sm font-mono tracking-[0.12em] text-white/85 mt-1">
+                  {currentJoinSession.sub}
                 </p>
-                <p className="mt-2 text-xs font-mono tracking-[0.08em] sm:tracking-[0.12em] text-white/60 uppercase leading-relaxed">
-                  {joinNotice.description}
+                <p className="mt-2.5 text-xs font-mono tracking-[0.08em] sm:tracking-[0.12em] text-white/60 uppercase leading-relaxed">
+                  {currentJoinSession.description}
                 </p>
               </div>
 
               {/* Course Photo (가로 4:3 비율 코스 사진) */}
               <div className="relative w-full aspect-[4/3] max-h-[440px] bg-black border border-white/20 overflow-hidden">
                 <img
-                  src={joinNotice.coursePhoto}
-                  alt={joinNotice.title}
+                  src={currentJoinSession.coursePhoto}
+                  alt={currentJoinSession.title}
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
                 <div className="absolute top-3 left-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.2em] text-white uppercase">
-                  {joinNotice.photoArchiveTag || 'EXPEDITION ARCHIVE'}
+                  {currentJoinSession.photoArchiveTag || 'EXPEDITION ARCHIVE'}
                 </div>
                 <div className="absolute bottom-3 right-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.15em] text-white/80 uppercase">
-                  {joinNotice.photoTrailTag || 'TRAIL ARCHIVE'}
+                  {currentJoinSession.photoTrailTag || 'TRAIL ARCHIVE'}
                 </div>
               </div>
             </div>
 
-            {/* Netlify Forms Compatible Application Form */}
+            {/* Netlify Forms / Formspree Compatible Application Form */}
             {formSubmitted ? (
               <div
                 id="submission-success-card"
@@ -842,7 +980,7 @@ export default function App() {
                     APPLICATION SUBMITTED SUCCESSFULLY
                   </h4>
                   <p className="text-xs font-mono tracking-[0.15em] text-white/80 max-w-md mx-auto leading-relaxed">
-                    {formName} 님의 2027 강원 태백 신년 일출 산행 참가 신청서가 접수되었습니다. 기재하신 연락처({formPhone})로 세부 일정 안내 및 동계 장비 점검 지침이 발송됩니다.
+                    {formName} 님의 [{currentJoinSession.title} — {currentJoinSession.sub}] 참가 신청서가 접수되었습니다. 기재하신 연락처({formPhone})로 세부 일정 안내 및 장비 점검 지침이 발송됩니다.
                   </p>
                 </div>
                 <div className="pt-4 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
@@ -868,14 +1006,19 @@ export default function App() {
                 onSubmit={handleFormSubmit}
                 className="border border-white/20 p-4 sm:p-8 space-y-5 sm:space-y-6 bg-black"
               >
-                {/* Form Header (영어 타이틀 / 한글 소제목) */}
-                <div className="border-b border-white/20 pb-3 sm:pb-4">
-                  <h3 className="text-lg sm:text-2xl font-syne font-bold uppercase tracking-tight text-white">
-                    EXPEDITION APPLICATION
-                  </h3>
-                  <p className="text-xs font-mono tracking-[0.15em] text-white/60 mt-1 uppercase">
-                    2027 강원 태백 신년 일출 산행 참가 신청서
-                  </p>
+                {/* Form Header (영어 타이틀 / 선택된 세션 한글 소제목) */}
+                <div className="border-b border-white/20 pb-3 sm:pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+                  <div>
+                    <h3 className="text-lg sm:text-2xl font-syne font-bold uppercase tracking-tight text-white">
+                      EXPEDITION APPLICATION
+                    </h3>
+                    <p className="text-xs font-mono tracking-[0.15em] text-white/60 mt-1 uppercase">
+                      {currentJoinSession.title} — {currentJoinSession.sub} 참가 신청서
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-mono tracking-[0.2em] text-white/45 uppercase">
+                    * REQUIRED FIELDS
+                  </span>
                 </div>
 
                 {formError && (
@@ -949,11 +1092,11 @@ export default function App() {
                   />
                 </div>
 
-                {/* 고정 신청 세션 안내 박스 (단일 세션 접수) */}
-                <div className="border border-white/20 bg-white/5 p-4 sm:p-5 space-y-2">
+                {/* 선택된 신청 세션 확인 박스 */}
+                <div className="border border-white/25 bg-white/[0.04] p-4 sm:p-5 space-y-2">
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <span className="text-[10px] font-mono tracking-[0.2em] text-white/50 uppercase block">
-                      TARGET EXPEDITION // 신청 대상 세션
+                      TARGET EXPEDITION // 선택된 신청 세션
                     </span>
                     <span className="text-[9px] font-mono tracking-wider px-2 py-0.5 bg-white text-black font-bold uppercase">
                       ACTIVE REGISTRATION
@@ -961,14 +1104,14 @@ export default function App() {
                   </div>
                   <div>
                     <h4 className="text-base sm:text-lg font-syne font-bold uppercase tracking-tight text-white">
-                      {joinNotice.title}
+                      {currentJoinSession.title}
                     </h4>
                     <p className="text-xs font-mono tracking-[0.05em] text-white/80 mt-0.5">
-                      {joinNotice.sub}
+                      {currentJoinSession.sub}
                     </p>
                   </div>
                   <div className="pt-1 text-[11px] font-mono text-white/50">
-                    ※ 현재 {joinNotice.title} 단일 세션에 대한 참가 신청을 접수하고 있습니다.
+                    ※ 상단 탭에서 다른 모집 세션을 선택하면 신청 대상 세션이 즉시 전환됩니다.
                   </div>
                   <input
                     type="hidden"
@@ -978,18 +1121,18 @@ export default function App() {
                   <input
                     type="hidden"
                     name="targetExpedition"
-                    value={joinNotice.title}
+                    value={currentJoinSession.title}
                   />
                 </div>
 
-                {/* 동계 장비 및 건강 특이사항 (Textarea, 선택) */}
+                {/* 장비 및 건강 특이사항 (Textarea, 선택) */}
                 <div className="space-y-1.5">
                   <label htmlFor="gear-notes-input" className="block">
                     <span className="block text-xs font-mono font-bold tracking-[0.2em] uppercase text-white">
                       GEAR & PHYSICAL NOTES
                     </span>
                     <span className="block text-[11px] font-mono tracking-[0.1em] text-white/50">
-                      동계 장비(아이젠/스패츠/헤드랜턴) 보유 여부 및 건강 특이사항 (선택)
+                      필수 장비 보유 여부 및 산행/건강 특이사항 (선택)
                     </span>
                   </label>
                   <textarea
@@ -997,7 +1140,7 @@ export default function App() {
                     rows={2}
                     value={formGearNote}
                     onChange={(e) => setFormGearNote(e.target.value)}
-                    placeholder="예: 아이젠/스패츠 보유 중, 겨울 설산 산행 3회 유경험 등"
+                    placeholder="예: 필수 산행 장비 보유 여부, 산행 경험 및 컨디션 특이사항 등"
                     className="w-full bg-black border border-white/30 focus:border-white px-3.5 sm:px-4 py-2.5 text-xs font-mono text-white placeholder-white/30 focus:outline-none transition-colors resize-none"
                   />
                 </div>
@@ -1013,7 +1156,7 @@ export default function App() {
                     {isSubmitting ? (
                       <span className="animate-pulse">[ TRANSMITTING DATA... ]</span>
                     ) : (
-                      <span>[ SUBMIT APPLICATION // 참가 신청하기 ➔ ]</span>
+                      <span>[ SUBMIT APPLICATION // {currentJoinSession.title} 참가 신청하기 ➔ ]</span>
                     )}
                   </button>
                 </div>
