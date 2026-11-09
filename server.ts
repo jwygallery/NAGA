@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { DEFAULT_NAGA_DATA, normalizeNagaData } from './src/defaultData.js';
+import type { NagaAppData } from './src/types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,12 +18,114 @@ const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 const PUBLIC_DATA_DIR = path.join(__dirname, 'public', 'data');
 const PUBLIC_DB_FILE = path.join(PUBLIC_DATA_DIR, 'db.json');
+const DEFAULT_DATA_TS_FILE = path.join(__dirname, 'src', 'defaultData.ts');
 const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
 
 for (const dir of [DATA_DIR, PUBLIC_DATA_DIR, UPLOADS_DIR]) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
+}
+
+// Generate valid src/defaultData.ts source code from NagaAppData so static builds on GitHub/Netlify also bake in all comment/text edits permanently
+function generateDefaultDataTsContent(data: NagaAppData): string {
+  const joinNoticesJson = JSON.stringify(data.joinNotices || [data.joinNotice], null, 2);
+  const productsJson = JSON.stringify(data.products || [], null, 2);
+  const activitiesJson = JSON.stringify(data.activities || [], null, 2);
+  const heroSlidesJson = JSON.stringify(data.heroSlides || [], null, 2);
+
+  return `import { NagaAppData, JoinNoticeItem, ProductItem } from './types';
+
+export const DEFAULT_JOIN_NOTICES: JoinNoticeItem[] = ${joinNoticesJson};
+
+export const DEFAULT_PRODUCTS: ProductItem[] = ${productsJson};
+
+export const DEFAULT_NAGA_DATA: NagaAppData = {
+  activities: ${activitiesJson},
+  heroSlides: ${heroSlidesJson},
+  products: DEFAULT_PRODUCTS,
+  joinNotice: DEFAULT_JOIN_NOTICES[0],
+  joinNotices: DEFAULT_JOIN_NOTICES,
+};
+
+export function normalizeNagaData(raw: Partial<NagaAppData> | null | undefined): NagaAppData {
+  if (!raw || typeof raw !== 'object') {
+    return DEFAULT_NAGA_DATA;
+  }
+
+  let joinNotices: JoinNoticeItem[] = [];
+
+  if (Array.isArray(raw.joinNotices) && raw.joinNotices.length > 0) {
+    joinNotices = raw.joinNotices.map((item, idx) => ({
+      id: item.id || \`join-session-\${idx + 1}\`,
+      isActive: item.isActive !== undefined ? item.isActive : true,
+      tag: item.tag ?? 'UPCOMING EXPEDITION',
+      title: item.title ?? 'NAGA EXPEDITION',
+      sub: item.sub ?? '',
+      description: item.description ?? '',
+      coursePhoto: item.coursePhoto || '/images/activity_taebaek_slide_1.jpg',
+      photoArchiveTag: item.photoArchiveTag ?? 'EXPEDITION ARCHIVE',
+      photoTrailTag: item.photoTrailTag ?? 'TRAIL ARCHIVE',
+      targetSession: item.targetSession ?? item.title ?? 'NAGA EXPEDITION',
+    }));
+  } else if (raw.joinNotice && typeof raw.joinNotice === 'object') {
+    const primaryFromLegacy: JoinNoticeItem = {
+      id: raw.joinNotice.id || 'join-session-taebaek',
+      isActive: true,
+      tag: raw.joinNotice.tag ?? DEFAULT_JOIN_NOTICES[0].tag,
+      title: raw.joinNotice.title ?? DEFAULT_JOIN_NOTICES[0].title,
+      sub: raw.joinNotice.sub ?? DEFAULT_JOIN_NOTICES[0].sub,
+      description: raw.joinNotice.description ?? DEFAULT_JOIN_NOTICES[0].description,
+      coursePhoto: raw.joinNotice.coursePhoto || DEFAULT_JOIN_NOTICES[0].coursePhoto,
+      photoArchiveTag: raw.joinNotice.photoArchiveTag ?? DEFAULT_JOIN_NOTICES[0].photoArchiveTag,
+      photoTrailTag: raw.joinNotice.photoTrailTag ?? DEFAULT_JOIN_NOTICES[0].photoTrailTag,
+      targetSession: raw.joinNotice.targetSession ?? DEFAULT_JOIN_NOTICES[0].targetSession,
+    };
+    joinNotices = [primaryFromLegacy, ...DEFAULT_JOIN_NOTICES.slice(1)];
+  } else {
+    joinNotices = DEFAULT_JOIN_NOTICES;
+  }
+
+  const firstActive = joinNotices.find((n) => n.isActive) || joinNotices[0] || DEFAULT_JOIN_NOTICES[0];
+
+  const normalizedProducts: ProductItem[] =
+    Array.isArray(raw.products) && raw.products.length > 0
+      ? raw.products.map((prod, idx) => {
+          const fallbackDefault =
+            DEFAULT_PRODUCTS.find((dp) => dp.id === prod.id) || DEFAULT_PRODUCTS[idx] || DEFAULT_PRODUCTS[0];
+          const rawImages = Array.isArray(prod.images) && prod.images.length > 0 ? prod.images : undefined;
+          const mainImage = prod.image || fallbackDefault.image;
+          return {
+            ...prod,
+            image: mainImage,
+            detailDescription:
+              prod.detailDescription !== undefined
+                ? prod.detailDescription
+                : fallbackDefault?.detailDescription || prod.usage || '',
+            images: rawImages
+              ? rawImages
+              : fallbackDefault && fallbackDefault.id === prod.id && fallbackDefault.images
+              ? [mainImage, ...fallbackDefault.images.slice(1)]
+              : [mainImage],
+          };
+        })
+      : DEFAULT_PRODUCTS;
+
+  return {
+    activities:
+      Array.isArray(raw.activities) && raw.activities.length > 0
+        ? raw.activities
+        : DEFAULT_NAGA_DATA.activities,
+    heroSlides:
+      Array.isArray(raw.heroSlides) && raw.heroSlides.length > 0
+        ? raw.heroSlides
+        : DEFAULT_NAGA_DATA.heroSlides,
+    products: normalizedProducts,
+    joinNotice: firstActive,
+    joinNotices,
+  };
+}
+`;
 }
 
 // Initialize db.json and public/data/db.json if not present
@@ -43,7 +146,7 @@ if (!fs.existsSync(DB_FILE)) {
 }
 
 // ============================================================================
-// GITHUB REPOSITORY SYNC ENGINE (REST Contents API)
+// GITHUB REPOSITORY SYNC ENGINE (Atomic Git Data API + Contents API)
 // ============================================================================
 interface GitHubSyncState {
   lastSyncAt: string | null;
@@ -62,7 +165,6 @@ function getGitHubConfig() {
   const rawRepo = (process.env.GITHUB_REPO || '').trim();
   const branch = (process.env.GITHUB_BRANCH || 'main').trim() || 'main';
 
-  // Normalize "https://github.com/owner/repo.git" or "owner/repo" -> "owner/repo"
   const cleanedRepo = rawRepo
     .replace(/^https?:\/\/github\.com\//i, '')
     .replace(/\.git$/i, '')
@@ -79,9 +181,22 @@ function getGitHubConfig() {
   };
 }
 
-async function upsertFileToGitHub(
-  repoPath: string,
-  contentBuffer: Buffer,
+function getGitHubHeaders(token: string): Record<string, string> {
+  const headers: Record<string, string> = {
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    'User-Agent': 'NAGA-Admin-CMS',
+    'Cache-Control': 'no-cache, no-store',
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+// Atomic multi-file commit via GitHub Git Data API (commits data/db.json, public/data/db.json, and src/defaultData.ts in 1 commit)
+async function commitMultipleTextFilesToGitHub(
+  files: Array<{ repoPath: string; content: string }>,
   commitMessage: string
 ): Promise<{ ok: boolean; commitUrl?: string; message: string }> {
   const { token, repo, branch, canWrite } = getGitHubConfig();
@@ -92,16 +207,131 @@ async function upsertFileToGitHub(
     };
   }
 
-  const apiUrl = `https://api.github.com/repos/${repo}/contents/${repoPath}`;
-  const headers: Record<string, string> = {
-    Accept: 'application/vnd.github+json',
-    Authorization: `Bearer ${token}`,
-    'X-GitHub-Api-Version': '2022-11-28',
-    'User-Agent': 'NAGA-Admin-CMS',
+  const headers = {
+    ...getGitHubHeaders(token),
+    'Content-Type': 'application/json',
   };
 
   try {
-    // 1. Check if file already exists on the branch to get its current SHA
+    // 1. Get latest commit SHA on target branch
+    const refRes = await fetch(
+      `https://api.github.com/repos/${repo}/git/ref/heads/${encodeURIComponent(branch)}`,
+      { method: 'GET', headers }
+    );
+    if (!refRes.ok) {
+      throw new Error(`Failed to fetch branch ref (${refRes.status})`);
+    }
+    const refData = (await refRes.json()) as { object?: { sha?: string } };
+    const latestCommitSha = refData?.object?.sha;
+    if (!latestCommitSha) {
+      throw new Error('Could not resolve latestCommitSha');
+    }
+
+    // 2. Get base tree SHA of that commit
+    const commitRes = await fetch(
+      `https://api.github.com/repos/${repo}/git/commits/${latestCommitSha}`,
+      { method: 'GET', headers }
+    );
+    if (!commitRes.ok) {
+      throw new Error(`Failed to fetch base commit (${commitRes.status})`);
+    }
+    const commitData = (await commitRes.json()) as { tree?: { sha?: string } };
+    const baseTreeSha = commitData?.tree?.sha;
+    if (!baseTreeSha) {
+      throw new Error('Could not resolve baseTreeSha');
+    }
+
+    // 3. Create new tree with all updated files
+    const treeEntries = files.map((f) => ({
+      path: f.repoPath,
+      mode: '100644',
+      type: 'blob',
+      content: f.content,
+    }));
+
+    const createTreeRes = await fetch(`https://api.github.com/repos/${repo}/git/trees`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        base_tree: baseTreeSha,
+        tree: treeEntries,
+      }),
+    });
+    if (!createTreeRes.ok) {
+      const errText = await createTreeRes.text();
+      throw new Error(`Failed to create git tree (${createTreeRes.status}): ${errText.slice(0, 150)}`);
+    }
+    const treeData = (await createTreeRes.json()) as { sha?: string };
+    const newTreeSha = treeData?.sha;
+
+    // 4. Create commit
+    const createCommitRes = await fetch(`https://api.github.com/repos/${repo}/git/commits`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        message: commitMessage,
+        tree: newTreeSha,
+        parents: [latestCommitSha],
+      }),
+    });
+    if (!createCommitRes.ok) {
+      const errText = await createCommitRes.text();
+      throw new Error(`Failed to create commit (${createCommitRes.status}): ${errText.slice(0, 150)}`);
+    }
+    const newCommitData = (await createCommitRes.json()) as { sha?: string; html_url?: string };
+    const newCommitSha = newCommitData?.sha;
+    const commitUrl = newCommitData?.html_url || `https://github.com/${repo}/commit/${newCommitSha}`;
+
+    // 5. Update branch reference to point to new commit
+    const updateRefRes = await fetch(
+      `https://api.github.com/repos/${repo}/git/refs/heads/${encodeURIComponent(branch)}`,
+      {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          sha: newCommitSha,
+          force: true,
+        }),
+      }
+    );
+    if (!updateRefRes.ok) {
+      const errText = await updateRefRes.text();
+      throw new Error(`Failed to update branch ref (${updateRefRes.status}): ${errText.slice(0, 150)}`);
+    }
+
+    githubSyncState.lastSyncAt = new Date().toISOString();
+    githubSyncState.lastCommitUrl = commitUrl;
+    githubSyncState.lastError = null;
+
+    return {
+      ok: true,
+      commitUrl,
+      message: `GitHub (${repo}@${branch}) 저장소에 데이터 및 코멘트 변경사항 푸시 완료`,
+    };
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : 'GitHub 커밋 중 오류';
+    githubSyncState.lastError = errMsg;
+    return { ok: false, message: errMsg };
+  }
+}
+
+async function upsertFileToGitHub(
+  repoPath: string,
+  contentBuffer: Buffer,
+  commitMessage: string
+): Promise<{ ok: boolean; commitUrl?: string; downloadUrl?: string; message: string }> {
+  const { token, repo, branch, canWrite } = getGitHubConfig();
+  if (!canWrite) {
+    return {
+      ok: false,
+      message: 'GITHUB_TOKEN 또는 GITHUB_REPO 환경변수가 설정되지 않아 로컬 서버에만 저장되었습니다.',
+    };
+  }
+
+  const apiUrl = `https://api.github.com/repos/${repo}/contents/${repoPath}`;
+  const headers = getGitHubHeaders(token);
+
+  try {
     let existingSha: string | undefined;
     const getRes = await fetch(`${apiUrl}?ref=${encodeURIComponent(branch)}`, {
       method: 'GET',
@@ -115,7 +345,6 @@ async function upsertFileToGitHub(
       }
     }
 
-    // 2. Commit & push the updated file content
     const putBody: Record<string, unknown> = {
       message: commitMessage,
       content: contentBuffer.toString('base64'),
@@ -141,8 +370,12 @@ async function upsertFileToGitHub(
       return { ok: false, message: errMsg };
     }
 
-    const putData = (await putRes.json()) as { commit?: { html_url?: string } };
+    const putData = (await putRes.json()) as {
+      commit?: { html_url?: string };
+      content?: { download_url?: string };
+    };
     const commitUrl = putData?.commit?.html_url;
+    const downloadUrl = putData?.content?.download_url;
     githubSyncState.lastSyncAt = new Date().toISOString();
     githubSyncState.lastCommitUrl = commitUrl || null;
     githubSyncState.lastError = null;
@@ -150,6 +383,7 @@ async function upsertFileToGitHub(
     return {
       ok: true,
       commitUrl,
+      downloadUrl,
       message: `GitHub (${repo}@${branch}) 저장소에 푸시 완료`,
     };
   } catch (err) {
@@ -159,30 +393,56 @@ async function upsertFileToGitHub(
   }
 }
 
-async function syncDatabaseToGitHub(reason: string) {
+async function syncDatabaseToGitHub(reason: string, includeAppSourceFiles = false) {
   const { canWrite } = getGitHubConfig();
   if (!canWrite) {
     return {
       ok: false,
       configured: false,
-      message: '로컬 서버에 저장 완료 (GitHub 자동 푸시를 사용하려면 환경변수에 GITHUB_TOKEN 및 GITHUB_REPO를 설정하세요)',
+      message:
+        '로컬 서버에 저장 완료 (GitHub 자동 푸시를 사용하려면 환경변수에 GITHUB_TOKEN 및 GITHUB_REPO를 설정하세요)',
     };
   }
 
   try {
-    const dbContent = fs.readFileSync(DB_FILE);
+    const dbText = fs.readFileSync(DB_FILE, 'utf-8');
+    const defaultDataTsText = fs.readFileSync(DEFAULT_DATA_TS_FILE, 'utf-8');
     const timestamp = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
     const commitMessage = `chore(cms): ${reason} (${timestamp})`;
 
-    // Commit both data/db.json and public/data/db.json so both backend & static hosting stay in sync
-    const res1 = await upsertFileToGitHub('data/db.json', dbContent, commitMessage);
-    await upsertFileToGitHub('public/data/db.json', dbContent, commitMessage);
+    const filesToCommit: Array<{ repoPath: string; content: string }> = [
+      { repoPath: 'data/db.json', content: dbText },
+      { repoPath: 'public/data/db.json', content: dbText },
+      { repoPath: 'src/defaultData.ts', content: defaultDataTsText },
+    ];
+
+    if (includeAppSourceFiles) {
+      const extraPaths = [
+        'src/types.ts',
+        'src/App.tsx',
+        'src/components/AdminConsoleModal.tsx',
+        'server.ts',
+        'netlify.toml',
+        'netlify/functions/api.mjs',
+      ];
+      for (const relPath of extraPaths) {
+        const absPath = path.join(__dirname, relPath);
+        if (fs.existsSync(absPath)) {
+          filesToCommit.push({
+            repoPath: relPath,
+            content: fs.readFileSync(absPath, 'utf-8'),
+          });
+        }
+      }
+    }
+
+    const res = await commitMultipleTextFilesToGitHub(filesToCommit, commitMessage);
 
     return {
-      ok: res1.ok,
+      ok: res.ok,
       configured: true,
-      commitUrl: res1.commitUrl,
-      message: res1.message,
+      commitUrl: res.commitUrl,
+      message: res.message,
     };
   } catch (err) {
     return {
@@ -193,21 +453,28 @@ async function syncDatabaseToGitHub(reason: string) {
   }
 }
 
-// Pull latest data/db.json from GitHub on server startup (survives container restarts/redeployments)
+// Pull latest data/db.json from GitHub on server startup using exact commit SHA (bypasses CDN cache)
 async function pullDatabaseFromGitHubOnStartup() {
   const { token, repo, branch, canRead } = getGitHubConfig();
   if (!canRead) return;
 
-  const apiUrl = `https://api.github.com/repos/${repo}/contents/data/db.json?ref=${encodeURIComponent(branch)}`;
-  const headers: Record<string, string> = {
-    Accept: 'application/vnd.github+json',
-    'User-Agent': 'NAGA-Admin-CMS',
-  };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
+  const headers = getGitHubHeaders(token);
 
   try {
+    // Resolve latest commit SHA on branch so GitHub never serves a stale cached ref
+    let targetRef = branch;
+    const refRes = await fetch(
+      `https://api.github.com/repos/${repo}/git/ref/heads/${encodeURIComponent(branch)}`,
+      { method: 'GET', headers }
+    );
+    if (refRes.ok) {
+      const refData = (await refRes.json()) as { object?: { sha?: string } };
+      if (refData?.object?.sha) {
+        targetRef = refData.object.sha;
+      }
+    }
+
+    const apiUrl = `https://api.github.com/repos/${repo}/contents/data/db.json?ref=${encodeURIComponent(targetRef)}`;
     const res = await fetch(apiUrl, { method: 'GET', headers });
     if (!res.ok) return;
     const fileObj = (await res.json()) as { content?: string; encoding?: string };
@@ -218,8 +485,9 @@ async function pullDatabaseFromGitHubOnStartup() {
       const formatted = JSON.stringify(normalized, null, 2);
       fs.writeFileSync(DB_FILE, formatted, 'utf-8');
       fs.writeFileSync(PUBLIC_DB_FILE, formatted, 'utf-8');
+      fs.writeFileSync(DEFAULT_DATA_TS_FILE, generateDefaultDataTsContent(normalized), 'utf-8');
       githubSyncState.lastSyncAt = new Date().toISOString();
-      console.log(`[NAGA Server] Pulled latest data/db.json from GitHub (${repo}@${branch})`);
+      console.log(`[NAGA Server] Pulled latest data/db.json from GitHub (${repo}@${targetRef.slice(0, 7)})`);
     }
   } catch (err) {
     console.warn('[NAGA Server] Could not pull initial db.json from GitHub:', err);
@@ -248,13 +516,14 @@ function readDatabase() {
   return DEFAULT_NAGA_DATA;
 }
 
-// Helper to write database (writes both data/db.json and public/data/db.json)
+// Helper to write database (writes data/db.json, public/data/db.json, AND src/defaultData.ts)
 function writeDatabase(data: unknown) {
   try {
     const normalized = normalizeNagaData(data as Record<string, unknown>);
     const jsonString = JSON.stringify(normalized, null, 2);
     fs.writeFileSync(DB_FILE, jsonString, 'utf-8');
     fs.writeFileSync(PUBLIC_DB_FILE, jsonString, 'utf-8');
+    fs.writeFileSync(DEFAULT_DATA_TS_FILE, generateDefaultDataTsContent(normalized), 'utf-8');
     return true;
   } catch (err) {
     console.error('Error writing to db.json:', err);
@@ -286,6 +555,7 @@ app.post('/api/auth/login', (req, res) => {
 app.get('/api/data', (req, res) => {
   const data = readDatabase();
   const gh = getGitHubConfig();
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.json({
     success: true,
     data,
@@ -299,7 +569,7 @@ app.get('/api/data', (req, res) => {
   });
 });
 
-// 3. Update Site Data (+ Auto GitHub Commit & Push)
+// 3. Update Site Data (+ Atomic GitHub Commit & Push of db.json, public/data/db.json, and src/defaultData.ts)
 app.post('/api/data', async (req, res) => {
   const newData = req.body;
   if (!newData || typeof newData !== 'object') {
@@ -311,7 +581,7 @@ app.post('/api/data', async (req, res) => {
     return res.status(500).json({ success: false, message: '데이터베이스 저장에 실패했습니다.' });
   }
 
-  const ghResult = await syncDatabaseToGitHub('Update NAGA site content via Admin Console');
+  const ghResult = await syncDatabaseToGitHub('Update NAGA site content & comments via Admin Console', true);
 
   return res.json({
     success: true,
@@ -333,7 +603,7 @@ app.post('/api/data/reset', async (req, res) => {
     return res.status(500).json({ success: false, message: '데이터 초기화에 실패했습니다.' });
   }
 
-  const ghResult = await syncDatabaseToGitHub('Reset NAGA site content to default');
+  const ghResult = await syncDatabaseToGitHub('Reset NAGA site content to default', false);
   return res.json({
     success: true,
     data: DEFAULT_NAGA_DATA,
@@ -373,9 +643,9 @@ app.post('/api/upload', async (req, res) => {
     const buffer = Buffer.from(base64Data, 'base64');
     fs.writeFileSync(targetPath, buffer);
 
-    // Also push the uploaded image file to GitHub repository if configured
     const { canWrite } = getGitHubConfig();
     let githubUploaded = false;
+    let downloadUrl: string | undefined;
     if (canWrite) {
       const ghUpload = await upsertFileToGitHub(
         `public/uploads/${finalFilename}`,
@@ -383,9 +653,10 @@ app.post('/api/upload', async (req, res) => {
         `chore(cms): Upload asset ${finalFilename}`
       );
       githubUploaded = ghUpload.ok;
+      downloadUrl = ghUpload.downloadUrl;
     }
 
-    const publicUrl = `/uploads/${finalFilename}`;
+    const publicUrl = downloadUrl || `/uploads/${finalFilename}`;
     return res.json({
       success: true,
       url: publicUrl,
@@ -429,42 +700,20 @@ app.post('/api/github/push', async (req, res) => {
     });
   }
 
-  // Optionally save incoming data body first if provided
   if (req.body && req.body.data && typeof req.body.data === 'object') {
     writeDatabase(req.body.data);
   }
 
-  // Push db.json and public/data/db.json
-  const dbSync = await syncDatabaseToGitHub('Manual push from NAGA Admin Console');
-
-  // Also ensure any uploaded images in public/uploads/ are pushed
-  let uploadedCount = 0;
-  try {
-    const files = fs.readdirSync(UPLOADS_DIR).filter((f) => !f.startsWith('.'));
-    for (const file of files) {
-      const filePath = path.join(UPLOADS_DIR, file);
-      if (fs.statSync(filePath).isFile()) {
-        const buf = fs.readFileSync(filePath);
-        const upRes = await upsertFileToGitHub(
-          `public/uploads/${file}`,
-          buf,
-          `chore(cms): Sync uploaded asset ${file}`
-        );
-        if (upRes.ok) uploadedCount++;
-      }
-    }
-  } catch (err) {
-    console.warn('Error syncing upload directory to GitHub:', err);
-  }
+  // Push db.json, public/data/db.json, src/defaultData.ts, and app source files atomically
+  const dbSync = await syncDatabaseToGitHub('Sync NAGA site data, comments & source from Admin Console', true);
 
   if (dbSync.ok) {
     return res.json({
       success: true,
       configured: true,
       commitUrl: dbSync.commitUrl || null,
-      uploadedCount,
       lastSyncAt: githubSyncState.lastSyncAt,
-      message: `${dbSync.message} (데이터베이스 및 업로드 이미지 ${uploadedCount}건 동기화 완료)`,
+      message: dbSync.message,
     });
   }
 
@@ -479,7 +728,6 @@ app.post('/api/github/push', async (req, res) => {
 // SERVER INITIALIZATION (Vite in dev, static in prod)
 // ============================================================================
 async function startServer() {
-  // Pull latest committed db.json from GitHub on startup if GITHUB_REPO is set
   await pullDatabaseFromGitHubOnStartup();
 
   if (!isProduction) {

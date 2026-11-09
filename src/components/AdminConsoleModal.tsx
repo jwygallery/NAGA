@@ -159,11 +159,52 @@ export function AdminConsoleModal({
   // --------------------------------------------------------------------------
   // Global Save, GitHub Push & Reset
   // --------------------------------------------------------------------------
+  const buildFullActivityFromForm = (form: Partial<ActivityItem>): ActivityItem => {
+    const updatedImages =
+      form.images && form.images.length > 0
+        ? form.images
+        : [
+            '/images/activity_02_slide_1.jpg',
+            '/images/activity_02_slide_2.jpg',
+            '/images/activity_02_slide_3.jpg',
+          ];
+
+    return {
+      id: form.id || `act-${Date.now()}`,
+      code: form.code || '[2027.01]',
+      date: form.date || '2027.01',
+      title: (form.title || 'NEW ALPINE ACTIVITY').trim(),
+      distance: form.distance || '10km',
+      elevation: form.elevation || '+500m',
+      location: form.location || '서울 산악 코스',
+      keyPoints: form.keyPoints || '',
+      gearRequired: form.gearRequired || '트레킹 기어, 물병',
+      recoveryProtocol: form.recoveryProtocol || '프로틴 쉐이크 지급',
+      description: form.description || '',
+      images: updatedImages,
+    };
+  };
+
   const buildCurrentPayload = (): NagaAppData => {
+    let finalActivities = [...data.activities];
+
+    // If an Activity create/edit form is currently open, automatically include its latest text/comment edits!
+    if (isCreatingNewActivity && activityForm.id) {
+      const created = buildFullActivityFromForm(activityForm);
+      const exists = finalActivities.some((a) => a.id === created.id);
+      finalActivities = exists
+        ? finalActivities.map((a) => (a.id === created.id ? created : a))
+        : [created, ...finalActivities];
+    } else if (editingActivityId && activityForm.id) {
+      const updated = buildFullActivityFromForm(activityForm);
+      finalActivities = finalActivities.map((a) => (a.id === editingActivityId ? updated : a));
+    }
+
     const activeFirst =
       joinNoticesList.find((n) => n.isActive) || joinNoticesList[0] || DEFAULT_JOIN_NOTICES[0];
     return {
       ...data,
+      activities: finalActivities,
       joinNotice: activeFirst,
       joinNotices: joinNoticesList,
     };
@@ -173,6 +214,9 @@ export function AdminConsoleModal({
     setIsSaving(true);
     setSaveStatus('서버 및 GitHub 저장소에 변경사항을 저장하는 중...');
     const payload = buildCurrentPayload();
+    setData(payload);
+    setEditingActivityId(null);
+    setIsCreatingNewActivity(false);
     const success = await onSaveData(payload);
     setIsSaving(false);
 
@@ -210,6 +254,9 @@ export function AdminConsoleModal({
     setIsPushingGitHub(true);
     setSaveStatus('변경사항과 업로드된 사진을 GitHub 원격 저장소에 커밋·푸시하는 중...');
     const payload = buildCurrentPayload();
+    setData(payload);
+    setEditingActivityId(null);
+    setIsCreatingNewActivity(false);
     await onSaveData(payload);
 
     try {
@@ -307,35 +354,29 @@ export function AdminConsoleModal({
     setIsCreatingNewActivity(false);
   };
 
+  const updateActivityForm = (updates: Partial<ActivityItem>) => {
+    setActivityForm((prevForm) => {
+      const nextForm = { ...prevForm, ...updates };
+      if (editingActivityId) {
+        const fullUpdated = buildFullActivityFromForm(nextForm);
+        setData((prevData) => ({
+          ...prevData,
+          activities: prevData.activities.map((a) =>
+            a.id === editingActivityId ? fullUpdated : a
+          ),
+        }));
+      }
+      return nextForm;
+    });
+  };
+
   const handleSaveActivityForm = () => {
     if (!activityForm.title?.trim()) {
       alert('액티비티 제목을 입력해 주세요.');
       return;
     }
 
-    const updatedImages =
-      activityForm.images && activityForm.images.length > 0
-        ? activityForm.images
-        : [
-            '/images/activity_02_slide_1.jpg',
-            '/images/activity_02_slide_2.jpg',
-            '/images/activity_02_slide_3.jpg',
-          ];
-
-    const fullActivity: ActivityItem = {
-      id: activityForm.id || `act-${Date.now()}`,
-      code: activityForm.code || '[2027.01]',
-      date: activityForm.date || '2027.01',
-      title: activityForm.title.trim(),
-      distance: activityForm.distance || '10km',
-      elevation: activityForm.elevation || '+500m',
-      location: activityForm.location || '서울 산악 코스',
-      keyPoints: activityForm.keyPoints || '핵심 훈련 포인트',
-      gearRequired: activityForm.gearRequired || '트레킹 기어, 물병',
-      recoveryProtocol: activityForm.recoveryProtocol || '프로틴 쉐이크 지급',
-      description: activityForm.description || '',
-      images: updatedImages,
-    };
+    const fullActivity = buildFullActivityFromForm(activityForm);
 
     if (isCreatingNewActivity) {
       setData((prev) => ({
@@ -832,7 +873,7 @@ export function AdminConsoleModal({
                     <input
                       type="text"
                       value={activityForm.code || ''}
-                      onChange={(e) => setActivityForm({ ...activityForm, code: e.target.value })}
+                      onChange={(e) => updateActivityForm({ code: e.target.value })}
                       className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white"
                     />
                   </div>
@@ -841,7 +882,7 @@ export function AdminConsoleModal({
                     <input
                       type="text"
                       value={activityForm.date || ''}
-                      onChange={(e) => setActivityForm({ ...activityForm, date: e.target.value })}
+                      onChange={(e) => updateActivityForm({ date: e.target.value })}
                       className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white"
                     />
                   </div>
@@ -850,7 +891,7 @@ export function AdminConsoleModal({
                     <input
                       type="text"
                       value={activityForm.distance || ''}
-                      onChange={(e) => setActivityForm({ ...activityForm, distance: e.target.value })}
+                      onChange={(e) => updateActivityForm({ distance: e.target.value })}
                       className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white"
                     />
                   </div>
@@ -859,7 +900,7 @@ export function AdminConsoleModal({
                     <input
                       type="text"
                       value={activityForm.elevation || ''}
-                      onChange={(e) => setActivityForm({ ...activityForm, elevation: e.target.value })}
+                      onChange={(e) => updateActivityForm({ elevation: e.target.value })}
                       className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white"
                     />
                   </div>
@@ -871,7 +912,7 @@ export function AdminConsoleModal({
                     <input
                       type="text"
                       value={activityForm.title || ''}
-                      onChange={(e) => setActivityForm({ ...activityForm, title: e.target.value })}
+                      onChange={(e) => updateActivityForm({ title: e.target.value })}
                       placeholder="2027 GANGWON TAEBAEK"
                       className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white text-sm font-syne font-bold"
                     />
@@ -882,7 +923,7 @@ export function AdminConsoleModal({
                     <input
                       type="text"
                       value={activityForm.keyPoints || ''}
-                      onChange={(e) => setActivityForm({ ...activityForm, keyPoints: e.target.value })}
+                      onChange={(e) => updateActivityForm({ keyPoints: e.target.value })}
                       className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white"
                     />
                   </div>
@@ -892,7 +933,7 @@ export function AdminConsoleModal({
                     <input
                       type="text"
                       value={activityForm.location || ''}
-                      onChange={(e) => setActivityForm({ ...activityForm, location: e.target.value })}
+                      onChange={(e) => updateActivityForm({ location: e.target.value })}
                       className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white"
                     />
                   </div>
@@ -903,9 +944,7 @@ export function AdminConsoleModal({
                       <textarea
                         rows={2}
                         value={activityForm.gearRequired || ''}
-                        onChange={(e) =>
-                          setActivityForm({ ...activityForm, gearRequired: e.target.value })
-                        }
+                        onChange={(e) => updateActivityForm({ gearRequired: e.target.value })}
                         className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white resize-none"
                       />
                     </div>
@@ -914,9 +953,7 @@ export function AdminConsoleModal({
                       <textarea
                         rows={2}
                         value={activityForm.recoveryProtocol || ''}
-                        onChange={(e) =>
-                          setActivityForm({ ...activityForm, recoveryProtocol: e.target.value })
-                        }
+                        onChange={(e) => updateActivityForm({ recoveryProtocol: e.target.value })}
                         className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white resize-none"
                       />
                     </div>
@@ -927,9 +964,7 @@ export function AdminConsoleModal({
                     <textarea
                       rows={3}
                       value={activityForm.description || ''}
-                      onChange={(e) =>
-                        setActivityForm({ ...activityForm, description: e.target.value })
-                      }
+                      onChange={(e) => updateActivityForm({ description: e.target.value })}
                       className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white resize-none"
                     />
                   </div>
@@ -974,7 +1009,7 @@ export function AdminConsoleModal({
                                     (newUrl) => {
                                       const nextImages = [...(activityForm.images || [])];
                                       nextImages[slotIdx] = newUrl;
-                                      setActivityForm({ ...activityForm, images: nextImages });
+                                      updateActivityForm({ images: nextImages });
                                     },
                                     fieldId
                                   )
@@ -988,7 +1023,7 @@ export function AdminConsoleModal({
                               onChange={(e) => {
                                 const nextImages = [...(activityForm.images || [])];
                                 nextImages[slotIdx] = e.target.value;
-                                setActivityForm({ ...activityForm, images: nextImages });
+                                updateActivityForm({ images: nextImages });
                               }}
                               placeholder="/images/photo.jpg or URL"
                               className="w-full bg-black border border-white/20 p-1.5 text-[10px] text-white/70"
