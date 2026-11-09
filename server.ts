@@ -27,6 +27,15 @@ for (const dir of [DATA_DIR, PUBLIC_DATA_DIR, UPLOADS_DIR]) {
   }
 }
 
+function getMimeTypeFromFilename(filename: string): string {
+  const ext = path.extname(filename).toLowerCase();
+  if (ext === '.png') return 'image/png';
+  if (ext === '.webp') return 'image/webp';
+  if (ext === '.gif') return 'image/gif';
+  if (ext === '.svg') return 'image/svg+xml';
+  return 'image/jpeg';
+}
+
 // Generate valid src/defaultData.ts source code from NagaAppData so static builds on GitHub/Netlify also bake in all comment/text edits permanently
 function generateDefaultDataTsContent(data: NagaAppData): string {
   const joinNoticesJson = JSON.stringify(data.joinNotices || [data.joinNotice], null, 2);
@@ -35,6 +44,24 @@ function generateDefaultDataTsContent(data: NagaAppData): string {
   const heroSlidesJson = JSON.stringify(data.heroSlides || [], null, 2);
 
   return `import { NagaAppData, JoinNoticeItem, ProductItem } from './types';
+
+export function normalizeImageUrl(url: string | undefined | null): string {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  const ghRawMatch = trimmed.match(
+    /^https?:\\/\\/raw\\.githubusercontent\\.com\\/[^/]+\\/[^/]+\\/[^/]+\\/(?:public\\/)?uploads\\/([^?#]+)(?:\\?.*)?$/i
+  );
+  if (ghRawMatch && ghRawMatch[1]) {
+    return \`/uploads/\${decodeURIComponent(ghRawMatch[1])}\`;
+  }
+  const ghBlobMatch = trimmed.match(
+    /^https?:\\/\\/github\\.com\\/[^/]+\\/[^/]+\\/(?:raw|blob)\\/[^/]+\\/(?:public\\/)?uploads\\/([^?#]+)(?:\\?.*)?$/i
+  );
+  if (ghBlobMatch && ghBlobMatch[1]) {
+    return \`/uploads/\${decodeURIComponent(ghBlobMatch[1])}\`;
+  }
+  return trimmed;
+}
 
 export const DEFAULT_JOIN_NOTICES: JoinNoticeItem[] = ${joinNoticesJson};
 
@@ -63,7 +90,7 @@ export function normalizeNagaData(raw: Partial<NagaAppData> | null | undefined):
       title: item.title ?? 'NAGA EXPEDITION',
       sub: item.sub ?? '',
       description: item.description ?? '',
-      coursePhoto: item.coursePhoto || '/images/activity_taebaek_slide_1.jpg',
+      coursePhoto: normalizeImageUrl(item.coursePhoto) || '/images/activity_taebaek_slide_1.jpg',
       photoArchiveTag: item.photoArchiveTag ?? 'EXPEDITION ARCHIVE',
       photoTrailTag: item.photoTrailTag ?? 'TRAIL ARCHIVE',
       targetSession: item.targetSession ?? item.title ?? 'NAGA EXPEDITION',
@@ -76,7 +103,7 @@ export function normalizeNagaData(raw: Partial<NagaAppData> | null | undefined):
       title: raw.joinNotice.title ?? DEFAULT_JOIN_NOTICES[0].title,
       sub: raw.joinNotice.sub ?? DEFAULT_JOIN_NOTICES[0].sub,
       description: raw.joinNotice.description ?? DEFAULT_JOIN_NOTICES[0].description,
-      coursePhoto: raw.joinNotice.coursePhoto || DEFAULT_JOIN_NOTICES[0].coursePhoto,
+      coursePhoto: normalizeImageUrl(raw.joinNotice.coursePhoto) || DEFAULT_JOIN_NOTICES[0].coursePhoto,
       photoArchiveTag: raw.joinNotice.photoArchiveTag ?? DEFAULT_JOIN_NOTICES[0].photoArchiveTag,
       photoTrailTag: raw.joinNotice.photoTrailTag ?? DEFAULT_JOIN_NOTICES[0].photoTrailTag,
       targetSession: raw.joinNotice.targetSession ?? DEFAULT_JOIN_NOTICES[0].targetSession,
@@ -93,8 +120,11 @@ export function normalizeNagaData(raw: Partial<NagaAppData> | null | undefined):
       ? raw.products.map((prod, idx) => {
           const fallbackDefault =
             DEFAULT_PRODUCTS.find((dp) => dp.id === prod.id) || DEFAULT_PRODUCTS[idx] || DEFAULT_PRODUCTS[0];
-          const rawImages = Array.isArray(prod.images) && prod.images.length > 0 ? prod.images : undefined;
-          const mainImage = prod.image || fallbackDefault.image;
+          const rawImages =
+            Array.isArray(prod.images) && prod.images.length > 0
+              ? prod.images.map((img) => normalizeImageUrl(img)).filter(Boolean)
+              : undefined;
+          const mainImage = normalizeImageUrl(prod.image) || fallbackDefault.image;
           return {
             ...prod,
             image: mainImage,
@@ -102,24 +132,36 @@ export function normalizeNagaData(raw: Partial<NagaAppData> | null | undefined):
               prod.detailDescription !== undefined
                 ? prod.detailDescription
                 : fallbackDefault?.detailDescription || prod.usage || '',
-            images: rawImages
+            images: rawImages && rawImages.length > 0
               ? rawImages
               : fallbackDefault && fallbackDefault.id === prod.id && fallbackDefault.images
-              ? [mainImage, ...fallbackDefault.images.slice(1)]
+              ? [mainImage, ...fallbackDefault.images.slice(1).map((img) => normalizeImageUrl(img))]
               : [mainImage],
           };
         })
       : DEFAULT_PRODUCTS;
 
+  const normalizedActivities =
+    Array.isArray(raw.activities) && raw.activities.length > 0
+      ? raw.activities.map((act) => ({
+          ...act,
+          images: Array.isArray(act.images)
+            ? act.images.map((img) => normalizeImageUrl(img)).filter(Boolean)
+            : [],
+        }))
+      : DEFAULT_NAGA_DATA.activities;
+
+  const normalizedHeroSlides =
+    Array.isArray(raw.heroSlides) && raw.heroSlides.length > 0
+      ? raw.heroSlides.map((slide) => ({
+          ...slide,
+          image: normalizeImageUrl(slide.image),
+        }))
+      : DEFAULT_NAGA_DATA.heroSlides;
+
   return {
-    activities:
-      Array.isArray(raw.activities) && raw.activities.length > 0
-        ? raw.activities
-        : DEFAULT_NAGA_DATA.activities,
-    heroSlides:
-      Array.isArray(raw.heroSlides) && raw.heroSlides.length > 0
-        ? raw.heroSlides
-        : DEFAULT_NAGA_DATA.heroSlides,
+    activities: normalizedActivities,
+    heroSlides: normalizedHeroSlides,
     products: normalizedProducts,
     joinNotice: firstActive,
     joinNotices,
@@ -192,6 +234,40 @@ function getGitHubHeaders(token: string): Record<string, string> {
     headers.Authorization = `Bearer ${token}`;
   }
   return headers;
+}
+
+// Fetch binary file (e.g. public/uploads/<filename>) directly from GitHub API using GITHUB_TOKEN
+async function fetchBinaryFileFromGitHub(repoPath: string): Promise<Buffer | null> {
+  const { token, repo, branch, canRead } = getGitHubConfig();
+  if (!canRead) return null;
+
+  try {
+    const rawHeaders: Record<string, string> = {
+      ...getGitHubHeaders(token),
+      Accept: 'application/vnd.github.raw+json',
+    };
+
+    const apiUrl = `https://api.github.com/repos/${repo}/contents/${repoPath}?ref=${encodeURIComponent(branch)}`;
+    const res = await fetch(apiUrl, { method: 'GET', headers: rawHeaders });
+    if (!res.ok) return null;
+
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const jsonObj = (await res.json()) as { content?: string; encoding?: string };
+      if (jsonObj?.content && jsonObj.encoding === 'base64') {
+        const buf = Buffer.from(jsonObj.content.replace(/\n/g, ''), 'base64');
+        return buf.length > 0 ? buf : null;
+      }
+      return null;
+    }
+
+    const arrayBuffer = await res.arrayBuffer();
+    const buf = Buffer.from(arrayBuffer);
+    return buf.length > 0 ? buf : null;
+  } catch (err) {
+    console.warn(`[NAGA Server] Failed to fetch binary ${repoPath} from GitHub:`, err);
+    return null;
+  }
 }
 
 // Atomic multi-file commit via GitHub Git Data API (commits data/db.json, public/data/db.json, and src/defaultData.ts in 1 commit)
@@ -453,7 +529,7 @@ async function syncDatabaseToGitHub(reason: string, includeAppSourceFiles = fals
   }
 }
 
-// Pull latest data/db.json from GitHub on server startup using exact commit SHA (bypasses CDN cache)
+// Pull latest data/db.json and any missing/0-byte uploaded images from GitHub on server startup
 async function pullDatabaseFromGitHubOnStartup() {
   const { token, repo, branch, canRead } = getGitHubConfig();
   if (!canRead) return;
@@ -476,27 +552,87 @@ async function pullDatabaseFromGitHubOnStartup() {
 
     const apiUrl = `https://api.github.com/repos/${repo}/contents/data/db.json?ref=${encodeURIComponent(targetRef)}`;
     const res = await fetch(apiUrl, { method: 'GET', headers });
-    if (!res.ok) return;
-    const fileObj = (await res.json()) as { content?: string; encoding?: string };
-    if (fileObj?.content && fileObj.encoding === 'base64') {
-      const decoded = Buffer.from(fileObj.content.replace(/\n/g, ''), 'base64').toString('utf-8');
-      const parsed = JSON.parse(decoded);
-      const normalized = normalizeNagaData(parsed);
-      const formatted = JSON.stringify(normalized, null, 2);
-      fs.writeFileSync(DB_FILE, formatted, 'utf-8');
-      fs.writeFileSync(PUBLIC_DB_FILE, formatted, 'utf-8');
-      fs.writeFileSync(DEFAULT_DATA_TS_FILE, generateDefaultDataTsContent(normalized), 'utf-8');
-      githubSyncState.lastSyncAt = new Date().toISOString();
-      console.log(`[NAGA Server] Pulled latest data/db.json from GitHub (${repo}@${targetRef.slice(0, 7)})`);
+    if (res.ok) {
+      const fileObj = (await res.json()) as { content?: string; encoding?: string };
+      if (fileObj?.content && fileObj.encoding === 'base64') {
+        const decoded = Buffer.from(fileObj.content.replace(/\n/g, ''), 'base64').toString('utf-8');
+        const parsed = JSON.parse(decoded);
+        const normalized = normalizeNagaData(parsed);
+        const formatted = JSON.stringify(normalized, null, 2);
+        fs.writeFileSync(DB_FILE, formatted, 'utf-8');
+        fs.writeFileSync(PUBLIC_DB_FILE, formatted, 'utf-8');
+        fs.writeFileSync(DEFAULT_DATA_TS_FILE, generateDefaultDataTsContent(normalized), 'utf-8');
+        githubSyncState.lastSyncAt = new Date().toISOString();
+        console.log(`[NAGA Server] Pulled latest data/db.json from GitHub (${repo}@${targetRef.slice(0, 7)})`);
+      }
+    }
+
+    // Also hydrate any missing or 0-byte uploaded images in public/uploads from GitHub
+    const uploadsListUrl = `https://api.github.com/repos/${repo}/contents/public/uploads?ref=${encodeURIComponent(targetRef)}`;
+    const uploadsRes = await fetch(uploadsListUrl, { method: 'GET', headers });
+    if (uploadsRes.ok) {
+      const items = (await uploadsRes.json()) as Array<{ name?: string; type?: string; size?: number }>;
+      if (Array.isArray(items)) {
+        for (const item of items) {
+          if (item.type === 'file' && item.name && (item.size ?? 0) > 0) {
+            const safeName = path.basename(item.name);
+            const localPath = path.join(UPLOADS_DIR, safeName);
+            const needsDownload = !fs.existsSync(localPath) || fs.statSync(localPath).size === 0;
+            if (needsDownload) {
+              const buf = await fetchBinaryFileFromGitHub(`public/uploads/${safeName}`);
+              if (buf && buf.length > 0) {
+                fs.writeFileSync(localPath, buf);
+                console.log(`[NAGA Server] Hydrated uploaded image from GitHub: /uploads/${safeName} (${buf.length} bytes)`);
+              }
+            }
+          }
+        }
+      }
     }
   } catch (err) {
-    console.warn('[NAGA Server] Could not pull initial db.json from GitHub:', err);
+    console.warn('[NAGA Server] Could not pull initial db.json or uploads from GitHub:', err);
   }
 }
 
 // Middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Dynamic proxy + local disk cache for /uploads/:filename
+// Ensures uploaded images never break on reconnect even if the container restarts or had a 0-byte file
+app.get('/uploads/:filename', async (req, res) => {
+  const filename = path.basename(req.params.filename || '');
+  if (!filename) {
+    return res.status(404).end();
+  }
+
+  const mimeType = getMimeTypeFromFilename(filename);
+  const localPath = path.join(UPLOADS_DIR, filename);
+
+  try {
+    if (fs.existsSync(localPath) && fs.statSync(localPath).size > 0) {
+      res.setHeader('Content-Type', mimeType);
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+      return res.sendFile(localPath);
+    }
+
+    const remoteBuffer = await fetchBinaryFileFromGitHub(`public/uploads/${filename}`);
+    if (remoteBuffer && remoteBuffer.length > 0) {
+      try {
+        fs.writeFileSync(localPath, remoteBuffer);
+      } catch (writeErr) {
+        console.warn('[NAGA Server] Could not cache remote upload to disk:', writeErr);
+      }
+      res.setHeader('Content-Type', mimeType);
+      res.setHeader('Cache-Control', 'public, max-age=31536000');
+      return res.send(remoteBuffer);
+    }
+  } catch (err) {
+    console.error(`[NAGA Server] Error serving /uploads/${filename}:`, err);
+  }
+
+  return res.status(404).end();
+});
 
 // Serve static uploads and static data
 app.use('/uploads', express.static(UPLOADS_DIR));
@@ -613,6 +749,7 @@ app.post('/api/data/reset', async (req, res) => {
 });
 
 // 5. Upload Image File (Base64) (+ Auto GitHub Commit & Push to public/uploads/)
+// Always returns permanent `/uploads/<filename>` path (never expiring ?token=... URLs)
 app.post('/api/upload', async (req, res) => {
   try {
     const { imageBase64, filename } = req.body || {};
@@ -645,7 +782,6 @@ app.post('/api/upload', async (req, res) => {
 
     const { canWrite } = getGitHubConfig();
     let githubUploaded = false;
-    let downloadUrl: string | undefined;
     if (canWrite) {
       const ghUpload = await upsertFileToGitHub(
         `public/uploads/${finalFilename}`,
@@ -653,17 +789,17 @@ app.post('/api/upload', async (req, res) => {
         `chore(cms): Upload asset ${finalFilename}`
       );
       githubUploaded = ghUpload.ok;
-      downloadUrl = ghUpload.downloadUrl;
     }
 
-    const publicUrl = downloadUrl || `/uploads/${finalFilename}`;
+    // Always use permanent relative path `/uploads/<filename>` so private repo tokens never expire
+    const publicUrl = `/uploads/${finalFilename}`;
     return res.json({
       success: true,
       url: publicUrl,
       filename: finalFilename,
       githubUploaded,
       message: githubUploaded
-        ? '이미지가 업로드되었으며 GitHub 저장소에도 푸시되었습니다.'
+        ? '이미지가 업로드되었으며 GitHub 저장소에도 영구 반영되었습니다.'
         : '이미지가 성공적으로 업로드되었습니다.',
     });
   } catch (err) {

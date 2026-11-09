@@ -1,5 +1,6 @@
 // Netlify Serverless Function for NAGA™ Admin CMS & GitHub Auto-Push
 // Atomically commits data/db.json, public/data/db.json, and src/defaultData.ts to GitHub
+// Also serves /uploads/:filename directly from GitHub so private repo raw tokens never expire
 
 function getGitHubConfig() {
   const token = (process.env.GITHUB_TOKEN || '').trim();
@@ -35,6 +36,67 @@ function getHeaders(token) {
   return headers;
 }
 
+function getMimeTypeFromFilename(filename) {
+  const lower = (filename || '').toLowerCase();
+  if (lower.endsWith('.png')) return 'image/png';
+  if (lower.endsWith('.webp')) return 'image/webp';
+  if (lower.endsWith('.gif')) return 'image/gif';
+  if (lower.endsWith('.svg')) return 'image/svg+xml';
+  return 'image/jpeg';
+}
+
+function normalizeImageUrl(url) {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  const ghRawMatch = trimmed.match(
+    /^https?:\/\/raw\.githubusercontent\.com\/[^/]+\/[^/]+\/[^/]+\/(?:public\/)?uploads\/([^?#]+)(?:\?.*)?$/i
+  );
+  if (ghRawMatch && ghRawMatch[1]) {
+    return `/uploads/${decodeURIComponent(ghRawMatch[1])}`;
+  }
+  const ghBlobMatch = trimmed.match(
+    /^https?:\/\/github\.com\/[^/]+\/[^/]+\/(?:raw|blob)\/[^/]+\/(?:public\/)?uploads\/([^?#]+)(?:\?.*)?$/i
+  );
+  if (ghBlobMatch && ghBlobMatch[1]) {
+    return `/uploads/${decodeURIComponent(ghBlobMatch[1])}`;
+  }
+  return trimmed;
+}
+
+function sanitizePayloadUrls(data) {
+  if (!data || typeof data !== 'object') return data;
+  const copy = JSON.parse(JSON.stringify(data));
+  if (Array.isArray(copy.heroSlides)) {
+    copy.heroSlides = copy.heroSlides.map((s) => ({
+      ...s,
+      image: normalizeImageUrl(s.image),
+    }));
+  }
+  if (Array.isArray(copy.activities)) {
+    copy.activities = copy.activities.map((a) => ({
+      ...a,
+      images: Array.isArray(a.images) ? a.images.map((img) => normalizeImageUrl(img)).filter(Boolean) : [],
+    }));
+  }
+  if (Array.isArray(copy.products)) {
+    copy.products = copy.products.map((p) => ({
+      ...p,
+      image: normalizeImageUrl(p.image),
+      images: Array.isArray(p.images) ? p.images.map((img) => normalizeImageUrl(img)).filter(Boolean) : [],
+    }));
+  }
+  if (Array.isArray(copy.joinNotices)) {
+    copy.joinNotices = copy.joinNotices.map((j) => ({
+      ...j,
+      coursePhoto: normalizeImageUrl(j.coursePhoto),
+    }));
+  }
+  if (copy.joinNotice && typeof copy.joinNotice === 'object') {
+    copy.joinNotice.coursePhoto = normalizeImageUrl(copy.joinNotice.coursePhoto);
+  }
+  return copy;
+}
+
 function generateDefaultDataTsContent(data) {
   const joinNoticesJson = JSON.stringify(data.joinNotices || [data.joinNotice], null, 2);
   const productsJson = JSON.stringify(data.products || [], null, 2);
@@ -42,6 +104,24 @@ function generateDefaultDataTsContent(data) {
   const heroSlidesJson = JSON.stringify(data.heroSlides || [], null, 2);
 
   return `import { NagaAppData, JoinNoticeItem, ProductItem } from './types';
+
+export function normalizeImageUrl(url: string | undefined | null): string {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  const ghRawMatch = trimmed.match(
+    /^https?:\\/\\/raw\\.githubusercontent\\.com\\/[^/]+\\/[^/]+\\/[^/]+\\/(?:public\\/)?uploads\\/([^?#]+)(?:\\?.*)?$/i
+  );
+  if (ghRawMatch && ghRawMatch[1]) {
+    return \`/uploads/\${decodeURIComponent(ghRawMatch[1])}\`;
+  }
+  const ghBlobMatch = trimmed.match(
+    /^https?:\\/\\/github\\.com\\/[^/]+\\/[^/]+\\/(?:raw|blob)\\/[^/]+\\/(?:public\\/)?uploads\\/([^?#]+)(?:\\?.*)?$/i
+  );
+  if (ghBlobMatch && ghBlobMatch[1]) {
+    return \`/uploads/\${decodeURIComponent(ghBlobMatch[1])}\`;
+  }
+  return trimmed;
+}
 
 export const DEFAULT_JOIN_NOTICES: JoinNoticeItem[] = ${joinNoticesJson};
 
@@ -70,7 +150,7 @@ export function normalizeNagaData(raw: Partial<NagaAppData> | null | undefined):
       title: item.title ?? 'NAGA EXPEDITION',
       sub: item.sub ?? '',
       description: item.description ?? '',
-      coursePhoto: item.coursePhoto || '/images/activity_taebaek_slide_1.jpg',
+      coursePhoto: normalizeImageUrl(item.coursePhoto) || '/images/activity_taebaek_slide_1.jpg',
       photoArchiveTag: item.photoArchiveTag ?? 'EXPEDITION ARCHIVE',
       photoTrailTag: item.photoTrailTag ?? 'TRAIL ARCHIVE',
       targetSession: item.targetSession ?? item.title ?? 'NAGA EXPEDITION',
@@ -83,7 +163,7 @@ export function normalizeNagaData(raw: Partial<NagaAppData> | null | undefined):
       title: raw.joinNotice.title ?? DEFAULT_JOIN_NOTICES[0].title,
       sub: raw.joinNotice.sub ?? DEFAULT_JOIN_NOTICES[0].sub,
       description: raw.joinNotice.description ?? DEFAULT_JOIN_NOTICES[0].description,
-      coursePhoto: raw.joinNotice.coursePhoto || DEFAULT_JOIN_NOTICES[0].coursePhoto,
+      coursePhoto: normalizeImageUrl(raw.joinNotice.coursePhoto) || DEFAULT_JOIN_NOTICES[0].coursePhoto,
       photoArchiveTag: raw.joinNotice.photoArchiveTag ?? DEFAULT_JOIN_NOTICES[0].photoArchiveTag,
       photoTrailTag: raw.joinNotice.photoTrailTag ?? DEFAULT_JOIN_NOTICES[0].photoTrailTag,
       targetSession: raw.joinNotice.targetSession ?? DEFAULT_JOIN_NOTICES[0].targetSession,
@@ -100,8 +180,11 @@ export function normalizeNagaData(raw: Partial<NagaAppData> | null | undefined):
       ? raw.products.map((prod, idx) => {
           const fallbackDefault =
             DEFAULT_PRODUCTS.find((dp) => dp.id === prod.id) || DEFAULT_PRODUCTS[idx] || DEFAULT_PRODUCTS[0];
-          const rawImages = Array.isArray(prod.images) && prod.images.length > 0 ? prod.images : undefined;
-          const mainImage = prod.image || fallbackDefault.image;
+          const rawImages =
+            Array.isArray(prod.images) && prod.images.length > 0
+              ? prod.images.map((img) => normalizeImageUrl(img)).filter(Boolean)
+              : undefined;
+          const mainImage = normalizeImageUrl(prod.image) || fallbackDefault.image;
           return {
             ...prod,
             image: mainImage,
@@ -109,24 +192,36 @@ export function normalizeNagaData(raw: Partial<NagaAppData> | null | undefined):
               prod.detailDescription !== undefined
                 ? prod.detailDescription
                 : fallbackDefault?.detailDescription || prod.usage || '',
-            images: rawImages
+            images: rawImages && rawImages.length > 0
               ? rawImages
               : fallbackDefault && fallbackDefault.id === prod.id && fallbackDefault.images
-              ? [mainImage, ...fallbackDefault.images.slice(1)]
+              ? [mainImage, ...fallbackDefault.images.slice(1).map((img) => normalizeImageUrl(img))]
               : [mainImage],
           };
         })
       : DEFAULT_PRODUCTS;
 
+  const normalizedActivities =
+    Array.isArray(raw.activities) && raw.activities.length > 0
+      ? raw.activities.map((act) => ({
+          ...act,
+          images: Array.isArray(act.images)
+            ? act.images.map((img) => normalizeImageUrl(img)).filter(Boolean)
+            : [],
+        }))
+      : DEFAULT_NAGA_DATA.activities;
+
+  const normalizedHeroSlides =
+    Array.isArray(raw.heroSlides) && raw.heroSlides.length > 0
+      ? raw.heroSlides.map((slide) => ({
+          ...slide,
+          image: normalizeImageUrl(slide.image),
+        }))
+      : DEFAULT_NAGA_DATA.heroSlides;
+
   return {
-    activities:
-      Array.isArray(raw.activities) && raw.activities.length > 0
-        ? raw.activities
-        : DEFAULT_NAGA_DATA.activities,
-    heroSlides:
-      Array.isArray(raw.heroSlides) && raw.heroSlides.length > 0
-        ? raw.heroSlides
-        : DEFAULT_NAGA_DATA.heroSlides,
+    activities: normalizedActivities,
+    heroSlides: normalizedHeroSlides,
     products: normalizedProducts,
     joinNotice: firstActive,
     joinNotices,
@@ -166,9 +261,38 @@ async function fetchJsonFromGitHub(repoPath) {
   const fileObj = await res.json();
   if (fileObj && fileObj.content && fileObj.encoding === 'base64') {
     const decoded = Buffer.from(fileObj.content.replace(/\n/g, ''), 'base64').toString('utf-8');
-    return JSON.parse(decoded);
+    return sanitizePayloadUrls(JSON.parse(decoded));
   }
   return null;
+}
+
+// Fetch binary image from GitHub public/uploads/<filename>
+async function fetchBinaryFromGitHub(repoPath) {
+  const { token, repo, branch, canRead } = getGitHubConfig();
+  if (!canRead) return null;
+
+  const headers = {
+    ...getHeaders(token),
+    Accept: 'application/vnd.github.raw+json',
+  };
+
+  const apiUrl = `https://api.github.com/repos/${repo}/contents/${repoPath}?ref=${encodeURIComponent(branch)}`;
+  const res = await fetch(apiUrl, { method: 'GET', headers });
+  if (!res.ok) return null;
+
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    const jsonObj = await res.json();
+    if (jsonObj && jsonObj.content && jsonObj.encoding === 'base64') {
+      const buf = Buffer.from(jsonObj.content.replace(/\n/g, ''), 'base64');
+      return buf.length > 0 ? buf : null;
+    }
+    return null;
+  }
+
+  const arrayBuffer = await res.arrayBuffer();
+  const buf = Buffer.from(arrayBuffer);
+  return buf.length > 0 ? buf : null;
 }
 
 // Atomic multi-file commit via GitHub Git Data API
@@ -361,6 +485,29 @@ export const handler = async (event) => {
     .replace(/^\/api/, '');
   const method = (event.httpMethod || 'GET').toUpperCase();
 
+  // 0. Serve uploaded images directly from GitHub on /uploads/:filename
+  if (route.startsWith('/uploads/') && method === 'GET') {
+    const rawFilename = route.replace(/^\/uploads\//, '').split('/')[0];
+    const filename = decodeURIComponent(rawFilename || '');
+    if (!filename) {
+      return { statusCode: 404, body: 'Not Found' };
+    }
+
+    const buffer = await fetchBinaryFromGitHub(`public/uploads/${filename}`);
+    if (buffer && buffer.length > 0) {
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': getMimeTypeFromFilename(filename),
+          'Cache-Control': 'public, max-age=31536000',
+        },
+        body: buffer.toString('base64'),
+        isBase64Encoded: true,
+      };
+    }
+    return { statusCode: 404, body: 'Image Not Found' };
+  }
+
   let body = {};
   if (event.body) {
     try {
@@ -425,11 +572,12 @@ export const handler = async (event) => {
 
   // 4. Save Site Data & Atomically Push data/db.json, public/data/db.json, and src/defaultData.ts to GitHub
   if ((route === '/data' || route === '/github/push') && method === 'POST') {
-    const payloadData = route === '/github/push' && body.data ? body.data : body;
-    if (!payloadData || typeof payloadData !== 'object') {
+    const rawPayload = route === '/github/push' && body.data ? body.data : body;
+    if (!rawPayload || typeof rawPayload !== 'object') {
       return jsonResponse(400, { success: false, message: '유효하지 않은 데이터입니다.' });
     }
 
+    const payloadData = sanitizePayloadUrls(rawPayload);
     const dbText = JSON.stringify(payloadData, null, 2);
     const defaultDataTsText = generateDefaultDataTsContent(payloadData);
     const timestamp = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
@@ -462,6 +610,7 @@ export const handler = async (event) => {
   }
 
   // 5. Upload Image & Push to GitHub public/uploads/
+  // Always returns permanent `/uploads/<filename>` path (never expiring ?token=... URLs)
   if (route === '/upload' && method === 'POST') {
     const { imageBase64, filename } = body;
     if (!imageBase64) {
@@ -494,15 +643,16 @@ export const handler = async (event) => {
       `chore(cms): Upload image ${finalFilename}`
     );
 
-    const immediateUrl = ghUpload.downloadUrl || `/uploads/${finalFilename}`;
+    // Always return permanent `/uploads/<filename>` path
+    const permanentUrl = `/uploads/${finalFilename}`;
 
     return jsonResponse(200, {
       success: true,
-      url: immediateUrl,
+      url: permanentUrl,
       filename: finalFilename,
       githubUploaded: ghUpload.ok,
       message: ghUpload.ok
-        ? '사진이 GitHub 저장소에 커밋·푸시되었습니다.'
+        ? '사진이 GitHub 저장소에 영구 커밋·푸시되었습니다.'
         : '사진이 임시 적용되었습니다.',
     });
   }

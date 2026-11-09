@@ -70,7 +70,7 @@
     },
     {
       "id": "slide-1794243198810",
-      "image": "https://raw.githubusercontent.com/iamcoolkorean/NAGA/main/public/uploads/1794243196785_IMG_3224_jpeg.jpg?token=CE34ZTPWBXHKKW4XFJXOWLDK6H5LW"
+      "image": "/uploads/1794243196785_IMG_3224_jpeg.jpg"
     }
   ],
   "products": [
@@ -79,12 +79,12 @@
       "code": "[Product 01]",
       "name": "NAGA Alpine Shake",
       "category": "RAPID METABOLIC RECOVERY",
-      "image": "https://raw.githubusercontent.com/iamcoolkorean/NAGA/main/public/uploads/1794243418898_IMG_5445_jpeg.jpg?token=CE34ZTPWTQRIISIF52QQWQTK6H5ZQ",
+      "image": "/uploads/1794243418898_IMG_5445_jpeg.jpg",
       "spec": "BCAA & 전해질 복합 알파인 포뮬러 / 30g 고밀도 단백질 / 휴대용 파우치 규격",
       "usage": "고도 상승 및 암릉 기동 직후 급성 근육 피로를 중화하고 글리코겐을 신속 재충전하는 전문 산악 포뮬러 쉐이크.",
       "detailDescription": "브루클린 버거",
       "images": [
-        "https://raw.githubusercontent.com/iamcoolkorean/NAGA/main/public/uploads/1794243418898_IMG_5445_jpeg.jpg?token=CE34ZTPWTQRIISIF52QQWQTK6H5ZQ",
+        "/uploads/1794243418898_IMG_5445_jpeg.jpg",
         "/images/product_02_alpine_shake.jpg",
         "/images/hero_slide_02.jpg"
       ]
