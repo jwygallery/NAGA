@@ -1,4 +1,4 @@
-import { NagaAppData, JoinNoticeItem } from './types';
+import { NagaAppData, JoinNoticeItem, ProductItem } from './types';
 import { IMAGE_REGISTRY } from './imageRegistry';
 
 export const DEFAULT_JOIN_NOTICES: JoinNoticeItem[] = [
@@ -49,6 +49,41 @@ export const DEFAULT_JOIN_NOTICES: JoinNoticeItem[] = [
     photoArchiveTag: '5-MOUNTAIN TRAVERSE ARCHIVE',
     photoTrailTag: 'BUL-SU-SA-DO-BUK 45KM FULL COURSE',
     targetSession: '2027 SEOUL BUL-SU-SA-DO-BUK 45KM [2027.07] - 불수사도북 45km 메인 챌린지',
+  },
+];
+
+export const DEFAULT_PRODUCTS: ProductItem[] = [
+  {
+    id: 'prod-01',
+    code: '[Product 01]',
+    name: 'NAGA Alpine Shake',
+    category: 'RAPID METABOLIC RECOVERY',
+    image: IMAGE_REGISTRY.products.alpineShake || '/images/product_02_alpine_shake.jpg',
+    spec: 'BCAA & 전해질 복합 알파인 포뮬러 / 30g 고밀도 단백질 / 휴대용 파우치 규격',
+    usage: '고도 상승 및 암릉 기동 직후 급성 근육 피로를 중화하고 글리코겐을 신속 재충전하는 전문 산악 포뮬러 쉐이크.',
+    detailDescription:
+      'NAGA™ 약학 리커버리 연구팀이 고강도 업힐 인터벌과 장거리 산악 트레일 환경에 맞춰 설계한 고밀도 프로틴 & 전해질 복합 포뮬러입니다.\n\n• 핵심 배합: 분리유청단백(WPI) 및 식물성 단백질 30g + 필수 아미노산(BCAA 2:1:1) + 고산지대 발한 손실을 보충하는 나트륨·칼륨·마그네슘 전해질 매트릭스\n• 섭취 프로토콜: 산행 직후 30분 이내(Metabolic Window) 물 250~300ml를 파우치 표시선까지 채워 흔들어 섭취합니다.\n• 필드 휴대성: 배낭 카라비너에 결착하거나 사이드 포켓에 수납 가능한 경량 방수 파우치 패키징으로 별도 쉐이커 없이 현장에서 즉시 음용할 수 있습니다.',
+    images: [
+      IMAGE_REGISTRY.products.alpineShake || '/images/product_02_alpine_shake.jpg',
+      '/images/activity_02_slide_1.jpg',
+      '/images/hero_slide_02.jpg',
+    ],
+  },
+  {
+    id: 'prod-02',
+    code: '[Product 02]',
+    name: 'NAGA Balance Greek Bowl',
+    category: 'POST-EXPEDITION NUTRITION',
+    image: IMAGE_REGISTRY.products.greekBowl || '/images/product_03_greek_bowl.jpg',
+    spec: '유청 분리 고농축 그릭 요거트 / 고단백 슈퍼푸드 너트 믹스 / 천연 아카시아 꿀',
+    usage: '장거리 알파인 활동 후 위장 부담 없이 장시간 단백질을 공급하는 고영양 밸런스 리커버리 볼.',
+    detailDescription:
+      '45km 종주 및 장시간 야간 산행 완료 후 지친 소화기관에 부담을 주지 않으면서 서방형(Slow-Release) 단백질과 항산화 영양소를 공급하는 수제 그릭 요거트 리커버리 볼입니다.\n\n• 핵심 배합: 3단계 유청 분리 공정을 거친 꾸덕한 고농축 카제인·유청 그릭 요거트 + 로스팅 아몬드·호두·호박씨·치아씨드 슈퍼푸드 토핑 + 천연 아카시아 벌꿀\n• 리커버리 효능: 산행 중 고갈된 근육 글리코겐을 완만하게 회복시키며, 유산균과 식이섬유가 장시간 산행 후 신체 컨디션 정상화를 돕습니다.\n• 제공 세션: 메인 종주 챌린지 및 특별 리커버리 세션 완주 대원에게 베이스캠프에서 신선 냉장 상태로 즉시 제공됩니다.',
+    images: [
+      IMAGE_REGISTRY.products.greekBowl || '/images/product_03_greek_bowl.jpg',
+      '/images/activity_04_slide_1.jpg',
+      '/images/activity_taebaek_slide_1.jpg',
+    ],
   },
 ];
 
@@ -130,43 +165,18 @@ export const DEFAULT_NAGA_DATA: NagaAppData = {
   heroSlides: [
     {
       id: 'slide-01',
-      title: '01. NAM-SAN INTERVAL DRILL',
-      sub: 'TRAINING DRILL · JUNE 2027',
       image: IMAGE_REGISTRY.heroSlides[0]?.image || '/images/hero_slide_01.jpg',
     },
     {
       id: 'slide-02',
-      title: '02. BUK-HAN NIGHT HIKE',
-      sub: 'TRAINING DRILL · JUNE 2027',
       image: IMAGE_REGISTRY.heroSlides[1]?.image || '/images/hero_slide_02.jpg',
     },
     {
       id: 'slide-03',
-      title: '03. BUL-SU-SA-DO-BUK 45KM',
-      sub: 'MAIN CHALLENGE · JULY 2027',
       image: IMAGE_REGISTRY.heroSlides[2]?.image || '/images/hero_slide_03.jpg',
     },
   ],
-  products: [
-    {
-      id: 'prod-01',
-      code: '[Product 01]',
-      name: 'NAGA Alpine Shake',
-      category: 'RAPID METABOLIC RECOVERY',
-      image: IMAGE_REGISTRY.products.alpineShake || '/images/product_02_alpine_shake.jpg',
-      spec: 'BCAA & 전해질 복합 알파인 포뮬러 / 30g 고밀도 단백질 / 휴대용 파우치 규격',
-      usage: '고도 상승 및 암릉 기동 직후 급성 근육 피로를 중화하고 글리코겐을 신속 재충전하는 전문 산악 포뮬러 쉐이크.',
-    },
-    {
-      id: 'prod-02',
-      code: '[Product 02]',
-      name: 'NAGA Balance Greek Bowl',
-      category: 'POST-EXPEDITION NUTRITION',
-      image: IMAGE_REGISTRY.products.greekBowl || '/images/product_03_greek_bowl.jpg',
-      spec: '유청 분리 고농축 그릭 요거트 / 고단백 슈퍼푸드 너트 믹스 / 천연 아카시아 꿀',
-      usage: '장거리 알파인 활동 후 위장 부담 없이 장시간 단백질을 공급하는 고영양 밸런스 리커버리 볼.',
-    },
-  ],
+  products: DEFAULT_PRODUCTS,
   joinNotice: DEFAULT_JOIN_NOTICES[0],
   joinNotices: DEFAULT_JOIN_NOTICES,
 };
@@ -211,10 +221,39 @@ export function normalizeNagaData(raw: Partial<NagaAppData> | null | undefined):
 
   const firstActive = joinNotices.find((n) => n.isActive) || joinNotices[0] || DEFAULT_JOIN_NOTICES[0];
 
+  const normalizedProducts: ProductItem[] =
+    Array.isArray(raw.products) && raw.products.length > 0
+      ? raw.products.map((prod, idx) => {
+          const fallbackDefault =
+            DEFAULT_PRODUCTS.find((dp) => dp.id === prod.id) || DEFAULT_PRODUCTS[idx] || DEFAULT_PRODUCTS[0];
+          const rawImages = Array.isArray(prod.images) && prod.images.length > 0 ? prod.images : undefined;
+          const mainImage = prod.image || fallbackDefault.image;
+          return {
+            ...prod,
+            image: mainImage,
+            detailDescription:
+              prod.detailDescription !== undefined && prod.detailDescription.trim() !== ''
+                ? prod.detailDescription
+                : fallbackDefault?.detailDescription || prod.usage || '',
+            images: rawImages
+              ? rawImages
+              : fallbackDefault && fallbackDefault.id === prod.id && fallbackDefault.images
+              ? [mainImage, ...fallbackDefault.images.slice(1)]
+              : [mainImage],
+          };
+        })
+      : DEFAULT_PRODUCTS;
+
   return {
-    activities: Array.isArray(raw.activities) && raw.activities.length > 0 ? raw.activities : DEFAULT_NAGA_DATA.activities,
-    heroSlides: Array.isArray(raw.heroSlides) && raw.heroSlides.length > 0 ? raw.heroSlides : DEFAULT_NAGA_DATA.heroSlides,
-    products: Array.isArray(raw.products) && raw.products.length > 0 ? raw.products : DEFAULT_NAGA_DATA.products,
+    activities:
+      Array.isArray(raw.activities) && raw.activities.length > 0
+        ? raw.activities
+        : DEFAULT_NAGA_DATA.activities,
+    heroSlides:
+      Array.isArray(raw.heroSlides) && raw.heroSlides.length > 0
+        ? raw.heroSlides
+        : DEFAULT_NAGA_DATA.heroSlides,
+    products: normalizedProducts,
     joinNotice: firstActive,
     joinNotices,
   };

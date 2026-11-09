@@ -21,13 +21,15 @@ export interface ProductItem {
   image: string;
   spec: string;
   usage: string;
+  detailDescription?: string;
+  images?: string[];
 }
 
 export interface HeroSlideItem {
   id: string;
-  title: string;
-  sub: string;
   image: string;
+  title?: string;
+  sub?: string;
 }
 
 export interface JoinNoticeData {

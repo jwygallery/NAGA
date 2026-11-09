@@ -51,6 +51,8 @@ export default function App() {
   const [isPaused, setIsPaused] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
   const [modalSlideIndex, setModalSlideIndex] = useState(0);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [productPhotoIndex, setProductPhotoIndex] = useState(0);
 
   // Central Application Data with Server & Cache Sync
   const [appData, setAppData] = useState<NagaAppData>(() => {
@@ -81,6 +83,8 @@ export default function App() {
   const ACTIVITIES_DATA = appData.activities;
   const HERO_SLIDES = appData.heroSlides;
   const PRODUCTS_DATA = appData.products;
+  const selectedProduct: ProductItem | null =
+    PRODUCTS_DATA.find((p) => p.id === selectedProductId) || null;
 
   // Multi-Session Recruitment List (active sessions shown as tabs in 3. JOIN)
   const allJoinNotices: JoinNoticeItem[] =
@@ -324,7 +328,11 @@ export default function App() {
 
             <button
               id="nav-recovery-btn"
-              onClick={() => setCurrentView('recovery')}
+              onClick={() => {
+                setCurrentView('recovery');
+                setSelectedProductId(null);
+                setProductPhotoIndex(0);
+              }}
               className={`px-2 sm:px-4 py-1.5 sm:py-2 uppercase transition-all border border-transparent min-h-[38px] flex items-center ${
                 currentView === 'recovery'
                   ? 'bg-white text-black font-semibold border-white'
@@ -383,7 +391,7 @@ export default function App() {
                 >
                   <img
                     src={slide.image}
-                    alt={slide.title}
+                    alt={`NAGA Exhibition Slide ${index + 1}`}
                     className="w-full h-full object-cover object-center"
                     loading={index === 0 ? 'eager' : 'lazy'}
                     referrerPolicy="no-referrer"
@@ -742,65 +750,323 @@ export default function App() {
         )}
 
         {/* ==================================================================== */}
-        {/* VIEW 2: 2. RECOVERY (2열 제품 카탈로그 페이지) */}
+        {/* VIEW 2: 2. RECOVERY (2열 제품 카탈로그 & 상품 클릭 시 상세 페이지) */}
         {/* ==================================================================== */}
         {currentView === 'recovery' && (
           <div id="recovery-view" className="flex-1 flex flex-col max-w-7xl w-full mx-auto px-3.5 sm:px-8 py-6 sm:py-12">
-            {/* View Header */}
-            <div className="border-b border-white/20 pb-4 mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-              <div>
-                <h2 className="text-2xl sm:text-4xl font-syne font-bold uppercase tracking-tight text-white inline-flex items-baseline gap-2.5">
-                  <span className="font-sans font-bold tabular-nums">2.</span>
-                  <span>RECOVERY</span>
-                </h2>
-              </div>
-              <button
-                onClick={() => setCurrentView('home')}
-                className="text-xs font-mono tracking-[0.2em] uppercase text-white/60 hover:text-white border border-white/20 px-3.5 py-2 self-start sm:self-auto hover:border-white transition-colors min-h-[38px] flex items-center"
-              >
-                [ ← BACK TO HOME ]
-              </button>
-            </div>
+            {selectedProduct ? (
+              /* ============================================================== */
+              /* RECOVERY PRODUCT DETAIL PAGE (상품 클릭 시 추가 사진 & 상세 설명) */
+              /* ============================================================== */
+              (() => {
+                const productGallery =
+                  Array.isArray(selectedProduct.images) && selectedProduct.images.length > 0
+                    ? selectedProduct.images
+                    : [selectedProduct.image];
+                const safePhotoIndex =
+                  productPhotoIndex < productGallery.length ? productPhotoIndex : 0;
 
-            {/* 2-Column Grid Layout: Photo on top, Name below */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
-              {PRODUCTS_DATA.map((prod) => (
-                <div
-                  key={prod.id}
-                  id={`product-card-${prod.id}`}
-                  className="border border-white/20 hover:border-white bg-black flex flex-col transition-all duration-300 group"
-                >
-                  {/* Photo on Top (사진 상단 배치) */}
-                  <div className="relative w-full aspect-[4/3] bg-black overflow-hidden border-b border-white/20">
-                    <img
-                      src={prod.image}
-                      alt={prod.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute top-3 left-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.2em] text-white uppercase">
-                      {prod.code}
+                const nextProductPhoto = () => {
+                  setProductPhotoIndex((prev) => (prev + 1) % productGallery.length);
+                };
+                const prevProductPhoto = () => {
+                  setProductPhotoIndex(
+                    (prev) => (prev - 1 + productGallery.length) % productGallery.length
+                  );
+                };
+
+                return (
+                  <div id="recovery-product-detail" className="flex-1 flex flex-col">
+                    {/* Detail View Header */}
+                    <div className="border-b border-white/20 pb-4 mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                      <div>
+                        <span className="text-[10px] sm:text-xs font-mono tracking-[0.22em] text-white/50 uppercase block mb-1">
+                          2. RECOVERY // {selectedProduct.code} · {selectedProduct.category}
+                        </span>
+                        <h2 className="text-2xl sm:text-4xl font-syne font-bold uppercase tracking-tight text-white">
+                          {selectedProduct.name}
+                        </h2>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedProductId(null);
+                          setProductPhotoIndex(0);
+                        }}
+                        className="text-xs font-mono tracking-[0.2em] uppercase text-white/80 hover:text-black hover:bg-white border border-white/30 px-4 py-2 self-start sm:self-auto hover:border-white transition-colors min-h-[38px] flex items-center"
+                      >
+                        [ ← BACK TO RECOVERY ]
+                      </button>
+                    </div>
+
+                    {/* Product Detail Main Content: Left Photo Gallery / Right Detailed Specs & Description */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10">
+                      {/* Left 7 Cols: Interactive Photo Slider + Thumbnail Strip */}
+                      <div className="lg:col-span-7 space-y-3 sm:space-y-4">
+                        <div className="flex items-center justify-between font-mono text-[11px] tracking-[0.18em] text-white/60 uppercase">
+                          <span>PRODUCT VISUAL ARCHIVE</span>
+                          <span className="tabular-nums">
+                            [ {String(safePhotoIndex + 1).padStart(2, '0')} /{' '}
+                            {String(productGallery.length).padStart(2, '0')} ]
+                          </span>
+                        </div>
+
+                        {/* Main 4:3 Image Viewer */}
+                        <div className="relative w-full aspect-[4/3] bg-black border border-white/25 overflow-hidden group">
+                          {productGallery.map((imgSrc, idx) => (
+                            <div
+                              key={idx}
+                              className={`absolute inset-0 transition-opacity duration-300 ${
+                                idx === safePhotoIndex
+                                  ? 'opacity-100 z-10'
+                                  : 'opacity-0 pointer-events-none z-0'
+                              }`}
+                            >
+                              <img
+                                src={imgSrc}
+                                alt={`${selectedProduct.name} photo ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+                            </div>
+                          ))}
+
+                          <div className="absolute top-3 left-3 z-20 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.2em] text-white uppercase">
+                            {selectedProduct.code}
+                          </div>
+
+                          {productGallery.length > 1 && (
+                            <>
+                              <div className="absolute inset-y-0 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
+                                <button
+                                  type="button"
+                                  onClick={prevProductPhoto}
+                                  aria-label="Previous Product Photo"
+                                  className="pointer-events-auto w-9 h-9 sm:w-10 sm:h-10 bg-black/75 hover:bg-white hover:text-black border border-white/40 text-white flex items-center justify-center transition-colors active:scale-95"
+                                >
+                                  <ChevronLeft size={18} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={nextProductPhoto}
+                                  aria-label="Next Product Photo"
+                                  className="pointer-events-auto w-9 h-9 sm:w-10 sm:h-10 bg-black/75 hover:bg-white hover:text-black border border-white/40 text-white flex items-center justify-center transition-colors active:scale-95"
+                                >
+                                  <ChevronRight size={18} />
+                                </button>
+                              </div>
+
+                              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/70 px-2.5 py-1 border border-white/20">
+                                {productGallery.map((_, idx) => (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => setProductPhotoIndex(idx)}
+                                    aria-label={`Photo ${idx + 1}`}
+                                    className={`h-1.5 transition-all ${
+                                      idx === safePhotoIndex
+                                        ? 'w-5 bg-white'
+                                        : 'w-1.5 bg-white/40 hover:bg-white/70'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Additional Photos Thumbnail Strip */}
+                        {productGallery.length > 1 && (
+                          <div className="space-y-2 pt-1">
+                            <span className="block font-mono text-[10px] tracking-[0.2em] text-white/45 uppercase">
+                              ADDITIONAL PHOTOS // 클릭하여 사진 전환 ({productGallery.length}장)
+                            </span>
+                            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2.5">
+                              {productGallery.map((thumbUrl, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => setProductPhotoIndex(idx)}
+                                  className={`relative aspect-[4/3] bg-black border overflow-hidden transition-all ${
+                                    idx === safePhotoIndex
+                                      ? 'border-white ring-1 ring-white'
+                                      : 'border-white/20 opacity-60 hover:opacity-100 hover:border-white/60'
+                                  }`}
+                                >
+                                  <img
+                                    src={thumbUrl}
+                                    alt={`${selectedProduct.name} thumbnail ${idx + 1}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                  <span className="absolute bottom-1 right-1 bg-black/80 px-1 text-[9px] font-mono text-white/80 tabular-nums">
+                                    0{idx + 1}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right 5 Cols: Detailed Specifications & Description */}
+                      <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
+                        <div className="space-y-6">
+                          {/* Product Summary Box */}
+                          <div className="border border-white/20 bg-white/[0.03] p-4 sm:p-6 space-y-3">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <span className="text-[10px] font-mono tracking-[0.22em] text-white/50 uppercase">
+                                {selectedProduct.category}
+                              </span>
+                              <span className="text-[10px] font-mono tracking-[0.18em] px-2 py-0.5 bg-white text-black font-bold uppercase">
+                                NAGA™ FORMULA
+                              </span>
+                            </div>
+                            <h3 className="text-xl sm:text-2xl font-syne font-bold uppercase tracking-tight text-white">
+                              {selectedProduct.name}
+                            </h3>
+                            <p className="text-xs sm:text-sm font-sans text-white/85 leading-relaxed">
+                              {selectedProduct.usage}
+                            </p>
+                          </div>
+
+                          {/* Technical Specification */}
+                          <div className="border border-white/20 bg-black p-4 sm:p-5 space-y-2">
+                            <span className="block font-mono text-[10px] sm:text-[11px] tracking-[0.2em] text-white/50 uppercase">
+                              TECH SPECIFICATION // 핵심 규격 및 배합
+                            </span>
+                            <p className="font-mono text-xs sm:text-sm text-white/90 leading-relaxed">
+                              {selectedProduct.spec}
+                            </p>
+                          </div>
+
+                          {/* Full Detailed Description */}
+                          <div className="border border-white/20 bg-black p-4 sm:p-6 space-y-3">
+                            <div className="border-b border-white/15 pb-2.5 flex items-center justify-between">
+                              <span className="font-mono text-xs tracking-[0.2em] text-white font-bold uppercase">
+                                DETAILED DESCRIPTION // 상세 설명
+                              </span>
+                              <span className="font-mono text-[10px] tracking-[0.15em] text-white/40 uppercase">
+                                FIELD NUTRITION
+                              </span>
+                            </div>
+                            <div className="text-xs sm:text-sm font-sans text-white/85 leading-relaxed whitespace-pre-line break-words">
+                              {selectedProduct.detailDescription || selectedProduct.usage}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Back to Catalog Button */}
+                        <div className="pt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedProductId(null);
+                              setProductPhotoIndex(0);
+                            }}
+                            className="w-full py-3.5 px-5 border border-white/40 hover:border-white hover:bg-white hover:text-black text-white font-mono text-xs font-bold tracking-[0.2em] uppercase transition-colors flex items-center justify-center gap-2"
+                          >
+                            <span>[ ← BACK TO RECOVERY CATALOG // 목록으로 돌아가기 ]</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-
-                  {/* Name and Details Below (명칭 하단 배치) */}
-                  <div className="p-4 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
-                    <div>
-                      <h3 className="text-xl sm:text-2xl font-syne font-bold uppercase tracking-tight text-white">
-                        {prod.name}
-                      </h3>
-                      <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm font-sans text-white/80 leading-relaxed">
-                        {prod.usage}
-                      </p>
-                    </div>
-
-                    <div className="pt-3 sm:pt-4 border-t border-white/10 font-mono text-[11px] tracking-[0.15em] text-white/60 space-y-1">
-                      <span className="block text-white/40 uppercase text-[10px] sm:text-[11px]">TECH SPECIFICATION</span>
-                      <span className="block text-white/90">{prod.spec}</span>
-                    </div>
+                );
+              })()
+            ) : (
+              /* ============================================================== */
+              /* RECOVERY 2-COLUMN CATALOG LIST (상품 클릭 시 상세 페이지 이동) */
+              /* ============================================================== */
+              <>
+                {/* View Header */}
+                <div className="border-b border-white/20 pb-4 mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl sm:text-4xl font-syne font-bold uppercase tracking-tight text-white inline-flex items-baseline gap-2.5">
+                      <span className="font-sans font-bold tabular-nums">2.</span>
+                      <span>RECOVERY</span>
+                    </h2>
+                    <p className="text-xs font-mono tracking-[0.16em] text-white/50 mt-1.5 uppercase">
+                      SELECT A PRODUCT TO VIEW ADDITIONAL PHOTOS & DETAILED SPECIFICATION
+                    </p>
                   </div>
+                  <button
+                    onClick={() => setCurrentView('home')}
+                    className="text-xs font-mono tracking-[0.2em] uppercase text-white/60 hover:text-white border border-white/20 px-3.5 py-2 self-start sm:self-auto hover:border-white transition-colors min-h-[38px] flex items-center"
+                  >
+                    [ ← BACK TO HOME ]
+                  </button>
                 </div>
-              ))}
-            </div>
+
+                {/* 2-Column Grid Layout: Clickable Product Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
+                  {PRODUCTS_DATA.map((prod) => {
+                    const photoCount =
+                      Array.isArray(prod.images) && prod.images.length > 0
+                        ? prod.images.length
+                        : 1;
+                    return (
+                      <div
+                        key={prod.id}
+                        id={`product-card-${prod.id}`}
+                        onClick={() => {
+                          setSelectedProductId(prod.id);
+                          setProductPhotoIndex(0);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="cursor-pointer border border-white/20 hover:border-white bg-black flex flex-col transition-all duration-300 group"
+                      >
+                        {/* Photo on Top (사진 상단 배치) */}
+                        <div className="relative w-full aspect-[4/3] bg-black overflow-hidden border-b border-white/20">
+                          <img
+                            src={prod.image}
+                            alt={prod.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="absolute top-3 left-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.2em] text-white uppercase">
+                            {prod.code}
+                          </div>
+                          <div className="absolute bottom-3 right-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.15em] text-white/80 uppercase tabular-nums">
+                            PHOTOS ({photoCount})
+                          </div>
+                        </div>
+
+                        {/* Name and Details Below (명칭 하단 배치) */}
+                        <div className="p-4 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
+                          <div>
+                            <span className="text-[10px] font-mono tracking-[0.2em] text-white/45 uppercase block mb-1">
+                              {prod.category}
+                            </span>
+                            <h3 className="text-xl sm:text-2xl font-syne font-bold uppercase tracking-tight text-white group-hover:text-white/90">
+                              {prod.name}
+                            </h3>
+                            <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm font-sans text-white/80 leading-relaxed">
+                              {prod.usage}
+                            </p>
+                          </div>
+
+                          <div className="space-y-3 pt-3 sm:pt-4 border-t border-white/10">
+                            <div className="font-mono text-[11px] tracking-[0.15em] text-white/60 space-y-1">
+                              <span className="block text-white/40 uppercase text-[10px] sm:text-[11px]">
+                                TECH SPECIFICATION
+                              </span>
+                              <span className="block text-white/90 line-clamp-2">{prod.spec}</span>
+                            </div>
+
+                            <div className="pt-2 flex items-center justify-between font-mono text-xs tracking-[0.18em] uppercase text-white/70 group-hover:text-white">
+                              <span>[ VIEW DETAILS & PHOTOS ]</span>
+                              <ArrowRight
+                                size={15}
+                                className="group-hover:translate-x-1 transition-transform"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
 
             {/* View Sub-footer */}
             <div className="mt-10 sm:mt-12 pt-6 border-t border-white/20 text-xs font-mono tracking-[0.15em] sm:tracking-[0.18em] text-white/50 flex flex-col sm:flex-row justify-between gap-2">
