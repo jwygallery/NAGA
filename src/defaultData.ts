@@ -170,6 +170,10 @@ export const DEFAULT_NAGA_DATA: NagaAppData = {
   {
     "id": "slide-03",
     "image": "/images/hero_slide_03.jpg"
+  },
+  {
+    "id": "slide-1794243198810",
+    "image": "https://raw.githubusercontent.com/iamcoolkorean/NAGA/main/public/uploads/1794243196785_IMG_3224_jpeg.jpg?token=CE34ZTPWBXHKKW4XFJXOWLDK6H5LW"
   }
 ],
   products: DEFAULT_PRODUCTS,
