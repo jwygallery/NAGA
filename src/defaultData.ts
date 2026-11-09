@@ -72,7 +72,6 @@ export const DEFAULT_PRODUCTS: ProductItem[] = [
     "detailDescription": "45km 종주 및 장시간 야간 산행 완료 후 지친 소화기관에 부담을 주지 않으면서 서방형(Slow-Release) 단백질과 항산화 영양소를 공급하는 수제 그릭 요거트 리커버리 볼입니다.\n\n• 핵심 배합: 3단계 유청 분리 공정을 거친 꾸덕한 고농축 카제인·유청 그릭 요거트 + 로스팅 아몬드·호두·호박씨·치아씨드 슈퍼푸드 토핑 + 천연 아카시아 벌꿀\n• 리커버리 효능: 산행 중 고갈된 근육 글리코겐을 완만하게 회복시키며, 유산균과 식이섬유가 장시간 산행 후 신체 컨디션 정상화를 돕습니다.\n• 제공 세션: 메인 종주 챌린지 및 특별 리커버리 세션 완주 대원에게 베이스캠프에서 신선 냉장 상태로 즉시 제공됩니다.",
     "images": [
       "/images/product_03_greek_bowl.jpg",
-      "/images/activity_04_slide_1.jpg",
       "/images/activity_taebaek_slide_1.jpg"
     ]
   }
@@ -86,9 +85,9 @@ export const DEFAULT_NAGA_DATA: NagaAppData = {
     "date": "2027.06",
     "title": "PRE-TRAINING DRILL 01: NAM-SAN",
     "distance": "10km",
-    "keyPoints": "남산 업힐 인터벌 & 프로틴 쉐이크",
-    "location": "남산 순환로 및 업힐 트레일 코스",
     "elevation": "+450m 누적고도",
+    "location": "남산 순환로 및 업힐 트레일 코스",
+    "keyPoints": "남산 업힐 인터벌 & 프로틴 쉐이크",
     "gearRequired": "트레킹 기어, 물병",
     "recoveryProtocol": "운동 후 프로틴 쉐이크 지급",
     "description": "남산 업힐 인터벌 훈련을 통한 심폐 지구력 강화 및 가파른 경사로 페이스 조절 능력 훈련.",
