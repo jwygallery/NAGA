@@ -15,6 +15,8 @@ import {
   Eye,
   EyeOff,
   CopyPlus,
+  GitBranch,
+  Download,
 } from 'lucide-react';
 import { ActivityItem, HeroSlideItem, ProductItem, JoinNoticeItem, NagaAppData } from '../types';
 import { DEFAULT_JOIN_NOTICES } from '../defaultData';
@@ -44,6 +46,20 @@ export function AdminConsoleModal({
   const [activityForm, setActivityForm] = useState<Partial<ActivityItem>>({});
   const [isCreatingNewActivity, setIsCreatingNewActivity] = useState(false);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
+  const [isPushingGitHub, setIsPushingGitHub] = useState(false);
+  const [githubStatus, setGithubStatus] = useState<{
+    configured: boolean;
+    repo: string | null;
+    branch: string;
+    lastSyncAt: string | null;
+    lastCommitUrl: string | null;
+  }>({
+    configured: false,
+    repo: null,
+    branch: 'main',
+    lastSyncAt: null,
+    lastCommitUrl: null,
+  });
 
   // Sync with initialData when opened or updated
   React.useEffect(() => {
@@ -63,6 +79,25 @@ export function AdminConsoleModal({
           : DEFAULT_JOIN_NOTICES,
     });
   }, [initialData]);
+
+  // Fetch GitHub Repository Sync Status when console opens
+  React.useEffect(() => {
+    if (!isOpen) return;
+    fetch('/api/github/status')
+      .then((res) => res.json())
+      .then((info) => {
+        if (info && info.success) {
+          setGithubStatus({
+            configured: !!info.configured,
+            repo: info.repo || null,
+            branch: info.branch || 'main',
+            lastSyncAt: info.lastSyncAt || null,
+            lastCommitUrl: info.lastCommitUrl || null,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -122,26 +157,98 @@ export function AdminConsoleModal({
   };
 
   // --------------------------------------------------------------------------
-  // Global Save & Reset
+  // Global Save, GitHub Push & Reset
   // --------------------------------------------------------------------------
-  const handleSaveAll = async () => {
-    setIsSaving(true);
-    setSaveStatus('서버에 변경사항을 저장하는 중...');
+  const buildCurrentPayload = (): NagaAppData => {
     const activeFirst =
       joinNoticesList.find((n) => n.isActive) || joinNoticesList[0] || DEFAULT_JOIN_NOTICES[0];
-    const payload: NagaAppData = {
+    return {
       ...data,
       joinNotice: activeFirst,
       joinNotices: joinNoticesList,
     };
+  };
+
+  const handleSaveAll = async () => {
+    setIsSaving(true);
+    setSaveStatus('서버 및 GitHub 저장소에 변경사항을 저장하는 중...');
+    const payload = buildCurrentPayload();
     const success = await onSaveData(payload);
     setIsSaving(false);
+
     if (success) {
+      // Refresh GitHub sync status
+      try {
+        const stRes = await fetch('/api/github/status');
+        const stData = await stRes.json();
+        if (stData?.success) {
+          setGithubStatus({
+            configured: !!stData.configured,
+            repo: stData.repo || null,
+            branch: stData.branch || 'main',
+            lastSyncAt: stData.lastSyncAt || null,
+            lastCommitUrl: stData.lastCommitUrl || null,
+          });
+          if (stData.configured && stData.lastSyncAt) {
+            setSaveStatus(
+              `저장 완료! GitHub (${stData.repo}@${stData.branch}) 원격 저장소에도 자동 커밋·푸시되었습니다.`
+            );
+            setTimeout(() => setSaveStatus(null), 5000);
+            return;
+          }
+        }
+      } catch {}
+
       setSaveStatus('모든 변경사항이 영구 데이터베이스에 성공적으로 저장되었습니다!');
       setTimeout(() => setSaveStatus(null), 4000);
     } else {
       setSaveStatus('저장 중 오류가 발생했습니다. 다시 시도해 주세요.');
     }
+  };
+
+  const handlePushToGitHub = async () => {
+    setIsPushingGitHub(true);
+    setSaveStatus('변경사항과 업로드된 사진을 GitHub 원격 저장소에 커밋·푸시하는 중...');
+    const payload = buildCurrentPayload();
+    await onSaveData(payload);
+
+    try {
+      const res = await fetch('/api/github/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: payload }),
+      });
+      const resData = await res.json();
+      if (res.ok && resData.success) {
+        setGithubStatus((prev) => ({
+          ...prev,
+          configured: true,
+          lastSyncAt: resData.lastSyncAt || new Date().toISOString(),
+          lastCommitUrl: resData.commitUrl || prev.lastCommitUrl,
+        }));
+        setSaveStatus(`✓ ${resData.message}`);
+      } else {
+        setSaveStatus(`※ ${resData.message || 'GitHub 푸시 중 오류가 발생했습니다.'}`);
+      }
+    } catch {
+      setSaveStatus('※ 서버와 통신할 수 없습니다. 로컬 저장소에는 반영되었습니다.');
+    } finally {
+      setIsPushingGitHub(false);
+    }
+  };
+
+  const handleDownloadJsonBackup = () => {
+    const payload = buildCurrentPayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'db.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setSaveStatus('최신 데이터베이스(db.json) 파일이 다운로드되었습니다.');
   };
 
   const handleResetToDefault = async () => {
@@ -562,14 +669,28 @@ export function AdminConsoleModal({
         </div>
 
         {/* Global Action Buttons */}
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap justify-end">
           <button
             onClick={handleSaveAll}
-            disabled={isSaving}
+            disabled={isSaving || isPushingGitHub}
             className="px-3.5 sm:px-5 py-2 bg-white text-black font-mono text-xs font-bold tracking-[0.18em] uppercase hover:bg-white/90 disabled:opacity-50 transition-all flex items-center gap-2 border border-white active:scale-95 whitespace-nowrap shrink-0"
           >
             <Save size={14} />
             <span>{isSaving ? 'SAVING...' : 'SAVE ALL (전체 저장)'}</span>
+          </button>
+
+          <button
+            onClick={handlePushToGitHub}
+            disabled={isSaving || isPushingGitHub}
+            title={
+              githubStatus.configured
+                ? `GitHub (${githubStatus.repo}@${githubStatus.branch}) 원격 저장소로 즉시 푸시`
+                : '배포 환경변수(GITHUB_TOKEN, GITHUB_REPO)가 설정된 경우 GitHub 원격 저장소로 즉시 커밋·푸시합니다'
+            }
+            className="px-3 sm:px-4 py-2 border border-white/40 hover:border-white bg-white/10 hover:bg-white hover:text-black text-white font-mono text-xs font-bold tracking-[0.15em] uppercase disabled:opacity-50 transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0"
+          >
+            <GitBranch size={14} />
+            <span>{isPushingGitHub ? 'PUSHING...' : 'GITHUB PUSH'}</span>
           </button>
 
           <button
@@ -1682,15 +1803,47 @@ export function AdminConsoleModal({
       {/* CONSOLE FOOTER */}
       {/* ==================================================================== */}
       <footer className="border-t border-white/20 bg-black px-4 sm:px-8 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 text-xs font-mono text-white/50 tracking-wider">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span>NAGA™ ADMIN CONSOLE</span>
           <span>·</span>
-          <span>ACTIVE RECRUITMENT SESSIONS: {activeJoinCount}</span>
+          <span>ACTIVE SESSIONS: {activeJoinCount}</span>
+          <span>·</span>
+          {githubStatus.configured ? (
+            <span className="text-white/80 flex items-center gap-1.5">
+              <GitBranch size={12} />
+              <span>
+                GITHUB CONNECTED ({githubStatus.repo}@{githubStatus.branch})
+              </span>
+              {githubStatus.lastCommitUrl && (
+                <a
+                  href={githubStatus.lastCommitUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline text-white hover:text-white/80 ml-1"
+                >
+                  [최근 커밋 보기]
+                </a>
+              )}
+            </span>
+          ) : (
+            <span className="text-white/40" title="배포 환경변수에 GITHUB_TOKEN 및 GITHUB_REPO(owner/repo)를 설정하면 저장 시 GitHub로 자동 푸시됩니다.">
+              GITHUB AUTO-PUSH: 환경변수(GITHUB_TOKEN, GITHUB_REPO) 설정 시 활성화
+            </span>
+          )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleDownloadJsonBackup}
+            title="현재 수정된 전체 데이터를 db.json 파일로 다운로드합니다"
+            className="px-3 py-1.5 border border-white/25 hover:border-white text-white/75 hover:text-white uppercase flex items-center gap-1.5 transition-colors"
+          >
+            <Download size={12} />
+            <span>db.json 백업</span>
+          </button>
           <button
             onClick={handleSaveAll}
-            disabled={isSaving}
+            disabled={isSaving || isPushingGitHub}
             className="px-4 py-1.5 bg-white text-black font-bold uppercase hover:bg-white/90 disabled:opacity-50"
           >
             {isSaving ? 'SAVING...' : 'SAVE ALL CHANGES'}

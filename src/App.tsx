@@ -64,20 +64,46 @@ export default function App() {
   });
 
   useEffect(() => {
-    fetch('/api/data')
-      .then((res) => res.json())
-      .then((resData) => {
-        if (resData.success && resData.data) {
-          const normalized = normalizeNagaData(resData.data);
-          setAppData(normalized);
-          try {
-            localStorage.setItem('naga_app_data_cache', JSON.stringify(normalized));
-          } catch {}
+    let isMounted = true;
+    const loadRemoteData = async () => {
+      try {
+        const res = await fetch(`/api/data?t=${Date.now()}`, { cache: 'no-store' });
+        if (res.ok) {
+          const resData = await res.json();
+          if (resData?.success && resData?.data && isMounted) {
+            const normalized = normalizeNagaData(resData.data);
+            setAppData(normalized);
+            try {
+              localStorage.setItem('naga_app_data_cache', JSON.stringify(normalized));
+            } catch {}
+            return;
+          }
         }
-      })
-      .catch((err) => {
+      } catch {
+        // Fallback to static /data/db.json if deployed on static hosting (e.g. Netlify / GitHub Pages)
+      }
+
+      try {
+        const staticRes = await fetch(`/data/db.json?t=${Date.now()}`, { cache: 'no-store' });
+        if (staticRes.ok) {
+          const staticData = await staticRes.json();
+          if (staticData && typeof staticData === 'object' && isMounted) {
+            const normalized = normalizeNagaData(staticData);
+            setAppData(normalized);
+            try {
+              localStorage.setItem('naga_app_data_cache', JSON.stringify(normalized));
+            } catch {}
+          }
+        }
+      } catch (err) {
         console.log('[NAGA Client] Running in local/cache mode:', err);
-      });
+      }
+    };
+
+    loadRemoteData();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const ACTIVITIES_DATA = appData.activities;
