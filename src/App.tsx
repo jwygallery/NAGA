@@ -1,116 +1,13 @@
 import React, { useState, useEffect, useId } from 'react';
 import { ChevronLeft, ChevronRight, X, ArrowRight, Check } from 'lucide-react';
 import { IMAGE_REGISTRY } from './imageRegistry';
+import { DEFAULT_NAGA_DATA } from './defaultData';
+import { ActivityItem, ProductItem, HeroSlideItem, JoinNoticeData, NagaAppData } from './types';
+import { AdminLoginModal } from './components/AdminLoginModal';
+import { AdminConsoleModal } from './components/AdminConsoleModal';
 
 // View type definition for SPA View Swap
 type ViewMode = 'home' | 'activities' | 'recovery' | 'join';
-
-interface ActivityItem {
-  id: string;
-  code: string;
-  date: string;
-  title: string;
-  distance: string;
-  keyPoints: string;
-  location: string;
-  elevation: string;
-  gearRequired: string;
-  recoveryProtocol: string;
-  description: string;
-  images: string[];
-}
-
-interface ProductItem {
-  id: string;
-  code: string;
-  name: string;
-  category: string;
-  image: string;
-  spec: string;
-  usage: string;
-}
-
-const ACTIVITIES_DATA: ActivityItem[] = [
-  {
-    id: 'act-taebaek',
-    code: '[2027.01]',
-    date: '2027.01',
-    title: '2027 GANGWON TAEBAEK',
-    distance: '12km',
-    keyPoints: '태백산 신년 일출 산행 & 설산 트레일 (사전 훈련 없음)',
-    location: '태백산 국립공원 (유일사 ~ 장군봉 ~ 천제단 ~ 당골계곡)',
-    elevation: '+780m 누적고도',
-    gearRequired: '동계 트레킹 기어, 아이젠(필수), 스패츠(필수), 방한 의류/장갑, 헤드랜턴, 보온병',
-    recoveryProtocol: '하산 후 NAGA™ 핫 리커버리 브루 & 고단백 알파인 식단',
-    description: '태백산 천제단과 장군봉에서 맞이하는 2027 신년 설산 일출 산행. 설경 능선과 환상적인 일출을 조망하며, 별도의 사전 훈련 없이 동계 안전 장비 점검 후 단일 챌린지로 진행됩니다.',
-    images: IMAGE_REGISTRY.activities.taebaekSunrise,
-  },
-  {
-    id: 'act-02',
-    code: '[2027.06]',
-    date: '2027.06',
-    title: 'PRE-TRAINING DRILL 01: NAM-SAN',
-    distance: '10km',
-    keyPoints: '남산 업힐 인터벌 & 프로틴 쉐이크',
-    location: '남산 순환로 및 업힐 트레일 코스',
-    elevation: '+450m 누적고도',
-    gearRequired: '트레킹 기어, 물병',
-    recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
-    description: '남산 업힐 인터벌 훈련을 통한 심폐 지구력 강화 및 가파른 경사로 페이스 조절 능력 훈련.',
-    images: IMAGE_REGISTRY.activities.drill01Namsan,
-  },
-  {
-    id: 'act-03',
-    code: '[2027.06]',
-    date: '2027.06',
-    title: 'PRE-TRAINING DRILL 02: BUK-HAN',
-    distance: '15km',
-    keyPoints: '야간 산행 연습 & 헤드랜턴 적응',
-    location: '북한산 백운대 - 의상능선 테크니컬 암릉',
-    elevation: '+1,280m 누적고도',
-    gearRequired: '트레킹 기어, 물병, 헤드랜턴',
-    recoveryProtocol: '운동 후 프로틴 쉐이크 지급',
-    description: '야간 산행 연습 및 시야가 제한된 어두운 야간 암릉 지형에서의 안전한 보행과 장비 적응 훈련.',
-    images: IMAGE_REGISTRY.activities.drill02Bukhan,
-  },
-  {
-    id: 'act-04',
-    code: '[2027.07]',
-    date: '2027.07',
-    title: '2027 SEOUL BUL-SU-SA-DO-BUK 45KM MAIN CHALLENGE',
-    distance: '45km',
-    keyPoints: '45km 종주 풀코스 & 전해질 음료, 수제 그릭요거트',
-    location: '불암산 ~ 북한산 종주 트레일',
-    elevation: '+3,850m 누적고도',
-    gearRequired: '트레킹 기어, 물병, 헤드랜턴 (필수), 비상 보온 의류',
-    recoveryProtocol: 'NAGA™ 전해질 음료 & 운동 후 수제 그릭요거트 제공',
-    description: '서울의 5대 암릉 명산을 잇는 총 45km 고난도 알파인 트레버스. 극대화된 내구력과 페이스 관리, 테크니컬 암릉 주파 능력을 검증하는 메인 챌린지.',
-    images: IMAGE_REGISTRY.activities.mainChallenge,
-  },
-];
-
-const PRODUCTS_DATA: ProductItem[] = [
-  {
-    id: 'prod-01',
-    code: '[Product 01]',
-    name: 'NAGA Alpine Shake',
-    category: 'RAPID METABOLIC RECOVERY',
-    image: IMAGE_REGISTRY.products.alpineShake,
-    spec: 'BCAA & 전해질 복합 알파인 포뮬러 / 30g 고밀도 단백질 / 휴대용 파우치 규격',
-    usage: '고도 상승 및 암릉 기동 직후 급성 근육 피로를 중화하고 글리코겐을 신속 재충전하는 전문 산악 포뮬러 쉐이크.',
-  },
-  {
-    id: 'prod-02',
-    code: '[Product 02]',
-    name: 'NAGA Balance Greek Bowl',
-    category: 'POST-EXPEDITION NUTRITION',
-    image: IMAGE_REGISTRY.products.greekBowl,
-    spec: '유청 분리 고농축 그릭 요거트 / 고단백 슈퍼푸드 너트 믹스 / 천연 아카시아 꿀',
-    usage: '장거리 알파인 활동 후 위장 부담 없이 장시간 단백질을 공급하는 고영양 밸런스 리커버리 볼.',
-  },
-];
-
-const HERO_SLIDES = IMAGE_REGISTRY.heroSlides;
 
 function BrandLogo() {
   const [candidateIndex, setCandidateIndex] = useState(0);
@@ -155,6 +52,67 @@ export default function App() {
   const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
   const [modalSlideIndex, setModalSlideIndex] = useState(0);
 
+  // Central Application Data with Server & Cache Sync
+  const [appData, setAppData] = useState<NagaAppData>(() => {
+    try {
+      const cached = localStorage.getItem('naga_app_data_cache');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return DEFAULT_NAGA_DATA;
+  });
+
+  useEffect(() => {
+    fetch('/api/data')
+      .then((res) => res.json())
+      .then((resData) => {
+        if (resData.success && resData.data) {
+          setAppData(resData.data);
+          try {
+            localStorage.setItem('naga_app_data_cache', JSON.stringify(resData.data));
+          } catch {}
+        }
+      })
+      .catch((err) => {
+        console.log('[NAGA Client] Running in local/cache mode:', err);
+      });
+  }, []);
+
+  const ACTIVITIES_DATA = appData.activities;
+  const HERO_SLIDES = appData.heroSlides;
+  const PRODUCTS_DATA = appData.products;
+  const joinNotice = appData.joinNotice;
+
+  // Admin Management State
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
+    try {
+      return !!sessionStorage.getItem('naga_admin_token');
+    } catch {
+      return false;
+    }
+  });
+  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+  const [isAdminConsoleOpen, setIsAdminConsoleOpen] = useState(false);
+
+  const handleSaveAppData = async (updatedData: NagaAppData): Promise<boolean> => {
+    setAppData(updatedData);
+    try {
+      localStorage.setItem('naga_app_data_cache', JSON.stringify(updatedData));
+    } catch {}
+
+    try {
+      const res = await fetch('/api/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedData),
+      });
+      const resData = await res.json();
+      return !!resData.success;
+    } catch (err) {
+      console.error('Server save error:', err);
+      return true; // Still saved to local state and cache
+    }
+  };
+
   const nextModalSlide = () => {
     if (!selectedActivity?.images?.length) return;
     setModalSlideIndex((prev) => (prev + 1) % selectedActivity.images.length);
@@ -166,7 +124,7 @@ export default function App() {
   };
 
   // Target Expedition for Join Form (현재 강원 태백 단일 세션 전용 접수)
-  const TARGET_EXPEDITION_SESSION = '2027 GANGWON TAEBAEK [2027.01] - 2027 강원 태백 신년 일출 산행 (단일 세션)';
+  const TARGET_EXPEDITION_SESSION = joinNotice.targetSession || '2027 GANGWON TAEBAEK [2027.01] - 2027 강원 태백 신년 일출 산행 (단일 세션)';
 
   // Form State
   const [formName, setFormName] = useState('');
@@ -463,6 +421,22 @@ export default function App() {
                       </a>
                     </div>
                     <div>SEOUL, KOREA</div>
+                    <div className="pt-0.5">
+                      <button
+                        id="footer-admin-trigger-btn"
+                        onClick={() => {
+                          if (isAdminLoggedIn) {
+                            setIsAdminConsoleOpen(true);
+                          } else {
+                            setIsAdminLoginOpen(true);
+                          }
+                        }}
+                        className="text-[9px] font-mono tracking-[0.25em] text-white/20 hover:text-white/60 transition-colors uppercase cursor-pointer"
+                        title="ADMINISTRATION"
+                      >
+                        {isAdminLoggedIn ? '[ CONSOLE ]' : '[ ADMIN ]'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -691,7 +665,22 @@ export default function App() {
 
             {/* View Sub-footer */}
             <div className="mt-10 sm:mt-12 pt-6 border-t border-white/20 text-xs font-mono tracking-[0.15em] sm:tracking-[0.18em] text-white/50 flex flex-col sm:flex-row justify-between gap-2">
-              <div>ORGANIZER: JWY | SEOUL, KOREA</div>
+              <div className="flex items-center gap-2">
+                <span>ORGANIZER: JWY | SEOUL, KOREA</span>
+                <button
+                  onClick={() => {
+                    if (isAdminLoggedIn) {
+                      setIsAdminConsoleOpen(true);
+                    } else {
+                      setIsAdminLoginOpen(true);
+                    }
+                  }}
+                  className="text-[9px] font-mono tracking-[0.2em] text-white/20 hover:text-white/60 transition-colors uppercase cursor-pointer"
+                  title="ADMINISTRATION"
+                >
+                  {isAdminLoggedIn ? '[CONSOLE]' : '[ADMIN]'}
+                </button>
+              </div>
               <div>2026 NAGA™. ALL RIGHTS RESERVED.</div>
             </div>
           </div>
@@ -760,7 +749,22 @@ export default function App() {
 
             {/* View Sub-footer */}
             <div className="mt-10 sm:mt-12 pt-6 border-t border-white/20 text-xs font-mono tracking-[0.15em] sm:tracking-[0.18em] text-white/50 flex flex-col sm:flex-row justify-between gap-2">
-              <div>ORGANIZER: JWY | SEOUL, KOREA</div>
+              <div className="flex items-center gap-2">
+                <span>ORGANIZER: JWY | SEOUL, KOREA</span>
+                <button
+                  onClick={() => {
+                    if (isAdminLoggedIn) {
+                      setIsAdminConsoleOpen(true);
+                    } else {
+                      setIsAdminLoginOpen(true);
+                    }
+                  }}
+                  className="text-[9px] font-mono tracking-[0.2em] text-white/20 hover:text-white/60 transition-colors uppercase cursor-pointer"
+                  title="ADMINISTRATION"
+                >
+                  {isAdminLoggedIn ? '[CONSOLE]' : '[ADMIN]'}
+                </button>
+              </div>
               <div>2026 NAGA™. ALL RIGHTS RESERVED.</div>
             </div>
           </div>
@@ -791,32 +795,32 @@ export default function App() {
             <div className="border border-white/20 bg-white/5 p-4 sm:p-6 mb-6 sm:mb-8 space-y-4">
               <div>
                 <span className="text-[10px] font-mono tracking-[0.25em] text-white/50 uppercase block">
-                  UPCOMING EXPEDITION // 2027.01
+                  {joinNotice.tag || 'UPCOMING EXPEDITION // 2027.01'}
                 </span>
                 <h3 className="text-xl sm:text-3xl font-syne font-bold uppercase tracking-tight text-white mt-1 leading-snug">
-                  2027 GANGWON TAEBAEK
+                  {joinNotice.title}
                 </h3>
                 <p className="text-xs sm:text-sm font-mono tracking-[0.12em] text-white/80 mt-1">
-                  2027 강원 태백 신년 일출 산행 (단일 챌린지 / 사전 훈련 세션 없음)
+                  {joinNotice.sub}
                 </p>
                 <p className="mt-2 text-xs font-mono tracking-[0.08em] sm:tracking-[0.12em] text-white/60 uppercase leading-relaxed">
-                  고려대학교 약학대학 산악단체 NAGA™ 공식 신년 설산 일출 산행 및 2027 필드 세션 참가 등록
+                  {joinNotice.description}
                 </p>
               </div>
 
               {/* Course Photo (가로 4:3 비율 코스 사진) */}
               <div className="relative w-full aspect-[4/3] max-h-[440px] bg-black border border-white/20 overflow-hidden">
                 <img
-                  src={IMAGE_REGISTRY.joinNotice.coursePhoto}
-                  alt="2027 강원 태백 신년 일출 산행 코스"
+                  src={joinNotice.coursePhoto}
+                  alt={joinNotice.title}
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />
                 <div className="absolute top-3 left-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.2em] text-white uppercase">
-                  TAEBAEKSAN EXPEDITION ARCHIVE
+                  {joinNotice.photoArchiveTag || 'EXPEDITION ARCHIVE'}
                 </div>
                 <div className="absolute bottom-3 right-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.15em] text-white/80 uppercase">
-                  GANGWON TAEBAEK 12KM SUNRISE TRAIL
+                  {joinNotice.photoTrailTag || 'TRAIL ARCHIVE'}
                 </div>
               </div>
             </div>
@@ -957,14 +961,14 @@ export default function App() {
                   </div>
                   <div>
                     <h4 className="text-base sm:text-lg font-syne font-bold uppercase tracking-tight text-white">
-                      2027 GANGWON TAEBAEK [2027.01]
+                      {joinNotice.title}
                     </h4>
                     <p className="text-xs font-mono tracking-[0.05em] text-white/80 mt-0.5">
-                      2027 강원 태백 신년 일출 산행 (12km 설산 트레일 // 사전 훈련 세션 없음)
+                      {joinNotice.sub}
                     </p>
                   </div>
                   <div className="pt-1 text-[11px] font-mono text-white/50">
-                    ※ 현재 2027 강원 태백 신년 일출 산행 단일 세션에 대한 참가 신청을 접수하고 있습니다.
+                    ※ 현재 {joinNotice.title} 단일 세션에 대한 참가 신청을 접수하고 있습니다.
                   </div>
                   <input
                     type="hidden"
@@ -974,7 +978,7 @@ export default function App() {
                   <input
                     type="hidden"
                     name="targetExpedition"
-                    value="2027 GANGWON TAEBAEK [2027.01]"
+                    value={joinNotice.title}
                   />
                 </div>
 
@@ -1018,12 +1022,59 @@ export default function App() {
 
             {/* View Sub-footer */}
             <div className="mt-10 sm:mt-12 pt-6 border-t border-white/20 text-xs font-mono tracking-[0.15em] sm:tracking-[0.18em] text-white/50 flex flex-col sm:flex-row justify-between gap-2">
-              <div>ORGANIZER: JWY | SEOUL, KOREA</div>
+              <div className="flex items-center gap-2">
+                <span>ORGANIZER: JWY | SEOUL, KOREA</span>
+                <button
+                  onClick={() => {
+                    if (isAdminLoggedIn) {
+                      setIsAdminConsoleOpen(true);
+                    } else {
+                      setIsAdminLoginOpen(true);
+                    }
+                  }}
+                  className="text-[9px] font-mono tracking-[0.2em] text-white/20 hover:text-white/60 transition-colors uppercase cursor-pointer"
+                  title="ADMINISTRATION"
+                >
+                  {isAdminLoggedIn ? '[CONSOLE]' : '[ADMIN]'}
+                </button>
+              </div>
               <div>2026 NAGA™. ALL RIGHTS RESERVED.</div>
             </div>
           </div>
         )}
       </main>
+
+      {/* ==================================================================== */}
+      {/* ADMIN AUTHENTICATION MODAL (ID: admin, PW: 1q2w3e4r!!) */}
+      {/* ==================================================================== */}
+      <AdminLoginModal
+        isOpen={isAdminLoginOpen}
+        onClose={() => setIsAdminLoginOpen(false)}
+        onLoginSuccess={(token) => {
+          setIsAdminLoggedIn(true);
+          try {
+            sessionStorage.setItem('naga_admin_token', token);
+          } catch {}
+          setIsAdminConsoleOpen(true);
+        }}
+      />
+
+      {/* ==================================================================== */}
+      {/* ADMIN MANAGEMENT CONSOLE MODAL */}
+      {/* ==================================================================== */}
+      <AdminConsoleModal
+        isOpen={isAdminConsoleOpen}
+        onClose={() => setIsAdminConsoleOpen(false)}
+        onLogout={() => {
+          setIsAdminLoggedIn(false);
+          try {
+            sessionStorage.removeItem('naga_admin_token');
+          } catch {}
+          setIsAdminConsoleOpen(false);
+        }}
+        initialData={appData}
+        onSaveData={handleSaveAppData}
+      />
     </div>
   );
 }
