@@ -57,12 +57,11 @@ export const DEFAULT_PRODUCTS: ProductItem[] = [
     "code": "[Product 01]",
     "name": "NAGA Alpine Shake",
     "category": "RAPID METABOLIC RECOVERY",
-    "image": "https://raw.githubusercontent.com/iamcoolkorean/NAGA/main/public/uploads/1794242142688_IMG_5445_jpeg.jpg?token=CE34ZTNSIDCBWN43UA5M6L3K6H3JY",
+    "image": "/images/product_02_alpine_shake.jpg",
     "spec": "BCAA & 전해질 복합 알파인 포뮬러 / 30g 고밀도 단백질 / 휴대용 파우치 규격",
     "usage": "고도 상승 및 암릉 기동 직후 급성 근육 피로를 중화하고 글리코겐을 신속 재충전하는 전문 산악 포뮬러 쉐이크.",
     "detailDescription": "NAGA™ 약학 리커버리 연구팀이 고강도 업힐 인터벌과 장거리 산악 트레일 환경에 맞춰 설계한 고밀도 프로틴 & 전해질 복합 포뮬러입니다.\n\n• 핵심 배합: 분리유청단백(WPI) 및 식물성 단백질 30g + 필수 아미노산(BCAA 2:1:1) + 고산지대 발한 손실을 보충하는 나트륨·칼륨·마그네슘 전해질 매트릭스\n• 섭취 프로토콜: 산행 직후 30분 이내(Metabolic Window) 물 250~300ml를 파우치 표시선까지 채워 흔들어 섭취합니다.\n• 필드 휴대성: 배낭 카라비너에 결착하거나 사이드 포켓에 수납 가능한 경량 방수 파우치 패키징으로 별도 쉐이커 없이 현장에서 즉시 음용할 수 있습니다.",
     "images": [
-      "https://raw.githubusercontent.com/iamcoolkorean/NAGA/main/public/uploads/1794242142688_IMG_5445_jpeg.jpg?token=CE34ZTNSIDCBWN43UA5M6L3K6H3JY",
       "/images/product_02_alpine_shake.jpg",
       "/images/hero_slide_02.jpg"
     ]
@@ -148,7 +147,7 @@ export const DEFAULT_NAGA_DATA: NagaAppData = {
     "distance": "45km",
     "elevation": "+3,850m 누적고도",
     "location": "불암산 ~ 북한산 종주 트레일",
-    "keyPoints": "45km 종주 풀코스 & 전해질 음료, 수제 그릭요거트",
+    "keyPoints": "종주 풀코스 & 전해질 음료, 수제 그릭요거트",
     "gearRequired": "트레킹 기어, 물병, 헤드랜턴 (필수), 비상 보온 의류",
     "recoveryProtocol": "NAGA™ 전해질 음료 & 운동 후 수제 그릭요거트 제공",
     "description": "극대화된 내구력과 페이스 관리, 테크니컬 암릉 주파 능력을 검증하는 메인 챌린지.",
@@ -171,10 +170,6 @@ export const DEFAULT_NAGA_DATA: NagaAppData = {
   {
     "id": "slide-03",
     "image": "/images/hero_slide_03.jpg"
-  },
-  {
-    "id": "slide-1794242052097",
-    "image": "https://raw.githubusercontent.com/iamcoolkorean/NAGA/main/public/uploads/1794242050197_IMG_3224_jpeg.jpg?token=CE34ZTO5Q4CXKFH2Z3AVUZLK6H3D6"
   }
 ],
   products: DEFAULT_PRODUCTS,
