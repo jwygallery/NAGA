@@ -1,24 +1,6 @@
 {
   "activities": [
     {
-      "id": "act-taebaek",
-      "code": "[2027.01]",
-      "date": "2027.01",
-      "title": "2027 GANGWON TAEBAEK",
-      "distance": "12km",
-      "elevation": "+780m 누적고도",
-      "location": "태백산 국립공원 (유일사 ~ 장군봉 ~ 천제단 ~ 당골계곡)",
-      "keyPoints": "태백산 신년 일출 산행 & 설산 트레일",
-      "gearRequired": "동계 트레킹 기어, 아이젠(필수), 스패츠(필수), 방한 의류/장갑, 헤드랜턴, 보온병",
-      "recoveryProtocol": "하산 후 NAGA™ 핫 리커버리 브루 & 고단백 알파인 식단",
-      "description": "태백산 천제단과 장군봉에서 맞이하는 2027 신년 설산 일출 산행. 설경 능선과 환상적인 일출을 조망하며, 별도의 사전 훈련 없이 동계 안전 장비 점검 후 단일 챌린지로 진행됩니다.",
-      "images": [
-        "/images/activity_taebaek_slide_1.jpg",
-        "/images/activity_taebaek_slide_2.jpg",
-        "/images/activity_taebaek_slide_3.jpg"
-      ]
-    },
-    {
       "id": "act-02",
       "code": "[2027.06]",
       "date": "2027.06",
@@ -137,54 +119,6 @@
   },
   "joinNotices": [
     {
-      "id": "join-session-taebaek",
-      "isActive": false,
-      "tag": "UPCOMING EXPEDITION · 2027.01",
-      "title": "2027 GANGWON TAEBAEK",
-      "sub": "2027 강원 태백 신년 일출 산행 (단일 챌린지 · 사전 훈련 세션 없음)",
-      "description": "고려대학교 약학대학 산악단체 NAGA™ 공식 신년 설산 일출 산행 및 2027 동계 필드 세션 참가 등록",
-      "coursePhoto": "/images/activity_taebaek_slide_1.jpg",
-      "photoArchiveTag": "TAEBAEKSAN EXPEDITION ARCHIVE",
-      "photoTrailTag": "GANGWON TAEBAEK 12KM SUNRISE TRAIL",
-      "targetSession": "2027 GANGWON TAEBAEK [2027.01] - 2027 강원 태백 신년 일출 산행"
-    },
-    {
-      "id": "join-session-namsan",
-      "isActive": false,
-      "tag": "PRE-TRAINING DRILL 01 · 2027.06",
-      "title": "PRE-TRAINING DRILL 01: NAM-SAN",
-      "sub": "남산 10km 업힐 인터벌 훈련 & 프로틴 쉐이크 리커버리",
-      "description": "불수사도북 45km 메인 챌린지 대비 심폐 지구력 강화 및 가파른 경사로 페이스 조절 능력 배양 사전 훈련 세션",
-      "coursePhoto": "/images/activity_02_slide_1.jpg",
-      "photoArchiveTag": "NAM-SAN INTERVAL ARCHIVE",
-      "photoTrailTag": "NAM-SAN 10KM UPHILL CIRCUIT",
-      "targetSession": "PRE-TRAINING DRILL 01: NAM-SAN [2027.06] - 남산 업힐 인터벌 훈련"
-    },
-    {
-      "id": "join-session-bukhan",
-      "isActive": false,
-      "tag": "PRE-TRAINING DRILL 02 · 2027.06",
-      "title": "PRE-TRAINING DRILL 02: BUK-HAN",
-      "sub": "북한산 15km 야간 암릉 적응 훈련 & 헤드랜턴 기동",
-      "description": "시야가 제한된 야간 산악 암릉 지형에서의 안전한 보행 기술 및 헤드랜턴 장비 운용 능력 배양 사전 훈련 세션",
-      "coursePhoto": "/images/activity_03_slide_1.jpg",
-      "photoArchiveTag": "BUK-HAN NIGHT RECON ARCHIVE",
-      "photoTrailTag": "BUK-HAN 15KM TECHNICAL RIDGE",
-      "targetSession": "PRE-TRAINING DRILL 02: BUK-HAN [2027.06] - 북한산 야간 산행 훈련"
-    },
-    {
-      "id": "join-session-bulsusadobuk",
-      "isActive": false,
-      "tag": "MAIN CHALLENGE · 2027.07",
-      "title": "2027 SEOUL BUL-SU-SA-DO-BUK 45KM",
-      "sub": "서울 5대 산악 45km 풀코스 연속 종주 메인 챌린지",
-      "description": "불암산·수락산·사패산·도봉산·북한산을 잇는 45km 극한 알파인 트레버스 및 전용 전해질·그릭요거트 리커버리 세션",
-      "coursePhoto": "/images/activity_04_slide_1.jpg",
-      "photoArchiveTag": "5-MOUNTAIN TRAVERSE ARCHIVE",
-      "photoTrailTag": "BUL-SU-SA-DO-BUK 45KM FULL COURSE",
-      "targetSession": "2027 SEOUL BUL-SU-SA-DO-BUK 45KM [2027.07] - 불수사도북 45km 메인 챌린지"
-    },
-    {
       "id": "join-from-act-03-1794243474799",
       "isActive": true,
       "tag": "OPEN RECRUITMENT · 2027.06",
@@ -195,6 +129,18 @@
       "photoArchiveTag": "COURSE ARCHIVE",
       "photoTrailTag": "PRE-TRAINING DRILL 02: BUK-HAN-SAN · 15km",
       "targetSession": "PRE-TRAINING DRILL 02: BUK-HAN-SAN [2027.06] - 야간 산행 연습 & 헤드랜턴 적응"
+    },
+    {
+      "id": "join-from-act-04-1794243622900",
+      "isActive": true,
+      "tag": "OPEN RECRUITMENT · 2027.07",
+      "title": "2027 SEOUL DO-BUK MAIN CHALLENGE",
+      "sub": "종주 풀코스 & 전해질 음료, 수제 그릭요거트 (45km · +3,850m 누적고도)",
+      "description": "극대화된 내구력과 페이스 관리, 테크니컬 암릉 주파 능력을 검증하는 메인 챌린지.",
+      "coursePhoto": "/images/activity_04_slide_1.jpg",
+      "photoArchiveTag": "COURSE ARCHIVE",
+      "photoTrailTag": "2027 SEOUL DO-BUK MAIN CHALLENGE · 45km",
+      "targetSession": "2027 SEOUL DO-BUK MAIN CHALLENGE [2027.07] - 종주 풀코스 & 전해질 음료, 수제 그릭요거트"
     }
   ]
 }
