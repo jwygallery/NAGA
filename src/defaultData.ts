@@ -3,7 +3,7 @@ import { NagaAppData, JoinNoticeItem, ProductItem } from './types';
 export const DEFAULT_JOIN_NOTICES: JoinNoticeItem[] = [
   {
     "id": "join-session-taebaek",
-    "isActive": true,
+    "isActive": false,
     "tag": "UPCOMING EXPEDITION · 2027.01",
     "title": "2027 GANGWON TAEBAEK",
     "sub": "2027 강원 태백 신년 일출 산행 (단일 챌린지 · 사전 훈련 세션 없음)",
@@ -15,7 +15,7 @@ export const DEFAULT_JOIN_NOTICES: JoinNoticeItem[] = [
   },
   {
     "id": "join-session-namsan",
-    "isActive": true,
+    "isActive": false,
     "tag": "PRE-TRAINING DRILL 01 · 2027.06",
     "title": "PRE-TRAINING DRILL 01: NAM-SAN",
     "sub": "남산 10km 업힐 인터벌 훈련 & 프로틴 쉐이크 리커버리",
@@ -39,7 +39,7 @@ export const DEFAULT_JOIN_NOTICES: JoinNoticeItem[] = [
   },
   {
     "id": "join-session-bulsusadobuk",
-    "isActive": true,
+    "isActive": false,
     "tag": "MAIN CHALLENGE · 2027.07",
     "title": "2027 SEOUL BUL-SU-SA-DO-BUK 45KM",
     "sub": "서울 5대 산악 45km 풀코스 연속 종주 메인 챌린지",
@@ -48,6 +48,18 @@ export const DEFAULT_JOIN_NOTICES: JoinNoticeItem[] = [
     "photoArchiveTag": "5-MOUNTAIN TRAVERSE ARCHIVE",
     "photoTrailTag": "BUL-SU-SA-DO-BUK 45KM FULL COURSE",
     "targetSession": "2027 SEOUL BUL-SU-SA-DO-BUK 45KM [2027.07] - 불수사도북 45km 메인 챌린지"
+  },
+  {
+    "id": "join-from-act-03-1794243474799",
+    "isActive": true,
+    "tag": "OPEN RECRUITMENT · 2027.06",
+    "title": "PRE-TRAINING DRILL 02: BUK-HAN-SAN",
+    "sub": "야간 산행 연습 & 헤드랜턴 적응 (15km · +1,280m 누적고도)",
+    "description": "야간 산행 연습 및 시야가 제한된 어두운 야간 암릉 지형에서의 안전한 보행과 장비 적응 훈련.",
+    "coursePhoto": "/images/activity_03_slide_1.jpg",
+    "photoArchiveTag": "COURSE ARCHIVE",
+    "photoTrailTag": "PRE-TRAINING DRILL 02: BUK-HAN-SAN · 15km",
+    "targetSession": "PRE-TRAINING DRILL 02: BUK-HAN-SAN [2027.06] - 야간 산행 연습 & 헤드랜턴 적응"
   }
 ];
 
