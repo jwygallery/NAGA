@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import http from 'http';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -207,10 +208,14 @@ function getGitHubConfig() {
   const rawRepo = (process.env.GITHUB_REPO || '').trim();
   const branch = (process.env.GITHUB_BRANCH || 'main').trim() || 'main';
 
-  const cleanedRepo = rawRepo
+  let cleanedRepo = rawRepo
     .replace(/^https?:\/\/github\.com\//i, '')
     .replace(/\.git$/i, '')
     .replace(/^\/+|\/+$/g, '');
+
+  if (/^iamcoolkorean\//i.test(cleanedRepo)) {
+    cleanedRepo = cleanedRepo.replace(/^iamcoolkorean\//i, 'jwygallery/');
+  }
 
   const isValidRepo = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(cleanedRepo);
 
@@ -865,11 +870,16 @@ app.post('/api/github/push', async (req, res) => {
 // ============================================================================
 async function startServer() {
   await pullDatabaseFromGitHubOnStartup();
+  const httpServer = http.createServer(app);
 
   if (!isProduction) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: process.env.DISABLE_HMR !== 'true',
+        ws: { server: httpServer },
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
@@ -880,7 +890,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`[NAGA Server] Server running on http://0.0.0.0:${PORT}`);
   });
 }

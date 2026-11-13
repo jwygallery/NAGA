@@ -487,21 +487,19 @@ export function AdminConsoleModal({
     const defaultImg = '/images/product_02_alpine_shake.jpg';
     const newProd: ProductItem = {
       id: `prod-${Date.now()}`,
-      code: `[Product 0${data.products.length + 1}]`,
-      name: 'NEW NAGA RECOVERY ITEM',
-      category: 'POST-TRAINING NUTRITION',
+      name: 'NEW RECOVERY ITEM',
+      category: '편의점 / 리커버리 리뷰',
       image: defaultImg,
-      spec: '고단백 / 전해질 / 기능성 보충 포뮬러',
-      usage: '격렬한 산행 후 근육 피로를 즉각 회복하는 전문 알파인 제품.',
+      usage: '제품의 핵심 특징이나 한줄 요약 설명을 입력하세요.',
       detailDescription:
-        '상품 클릭 시 상세 페이지에 표시되는 세부 설명입니다.\n\n• 핵심 배합 및 영양 성분\n• 권장 섭취 타이밍 및 음용 방법\n• 산악 필드 휴대 및 보관 안내',
+        '제품 소개, 맛·식감 리뷰, 영양 성분, 구매 팁 등 상세 설명을 자유롭게 작성하세요.',
       images: [defaultImg],
     };
     setData((prev) => ({
       ...prev,
       products: [...prev.products, newProd],
     }));
-    setSaveStatus('새 리커버리 상품이 추가되었습니다. 상세 설명과 추가 사진을 등록해 보세요.');
+    setSaveStatus('새 리커버리 상품이 추가되었습니다. 사진과 설명을 입력한 뒤 [전체 저장]을 눌러주세요.');
   };
 
   const handleDeleteProduct = (id: string) => {
@@ -1296,14 +1294,14 @@ export function AdminConsoleModal({
                     {/* Product Header */}
                     <div className="flex items-center justify-between border-b border-white/15 pb-3">
                       <div className="flex items-center gap-3 flex-wrap">
-                        <span className="font-mono text-xs font-bold text-white border border-white/30 px-2.5 py-1 bg-white/5 tracking-[0.2em]">
-                          {prod.code}
+                        <span className="font-mono text-xs text-white/70 border border-white/30 px-2.5 py-1 bg-white/5 tracking-[0.15em] uppercase">
+                          {prod.category || 'RECOVERY'}
                         </span>
                         <span className="font-syne font-bold text-base sm:text-lg text-white uppercase">
                           {prod.name}
                         </span>
                         <span className="text-[11px] font-mono text-white/45">
-                          (등록된 사진 {gallery.length}장)
+                          (사진 {gallery.length}장)
                         </span>
                       </div>
                       <button
@@ -1317,31 +1315,19 @@ export function AdminConsoleModal({
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 font-mono text-xs">
-                      {/* Left 6 Cols: Text Information & Detail Description */}
+                      {/* Left 6 Cols: Category, Product Name, Summary & Detail Description */}
                       <div className="lg:col-span-6 space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-white/50 mb-1">상품 코드 (CODE)</label>
-                            <input
-                              type="text"
-                              value={prod.code}
-                              onChange={(e) =>
-                                handleUpdateProduct(prod.id, { code: e.target.value })
-                              }
-                              className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-white/50 mb-1">카테고리 (CATEGORY)</label>
-                            <input
-                              type="text"
-                              value={prod.category}
-                              onChange={(e) =>
-                                handleUpdateProduct(prod.id, { category: e.target.value })
-                              }
-                              className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white"
-                            />
-                          </div>
+                        <div>
+                          <label className="block text-white/50 mb-1">카테고리 (CATEGORY)</label>
+                          <input
+                            type="text"
+                            value={prod.category}
+                            onChange={(e) =>
+                              handleUpdateProduct(prod.id, { category: e.target.value })
+                            }
+                            placeholder="예: 편의점 닭가슴살 리뷰 / PROTEIN SNACK"
+                            className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white"
+                          />
                         </div>
 
                         <div>
@@ -1352,13 +1338,14 @@ export function AdminConsoleModal({
                             onChange={(e) =>
                               handleUpdateProduct(prod.id, { name: e.target.value })
                             }
+                            placeholder="예: CU 한끼 닭가슴살 블랙페퍼"
                             className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white text-sm font-syne font-bold"
                           />
                         </div>
 
                         <div>
                           <label className="block text-white/50 mb-1">
-                            카탈로그 요약 설명 (USAGE / SUMMARY)
+                            요약 설명 (SUMMARY · 목록 카드에 표시)
                           </label>
                           <textarea
                             rows={2}
@@ -1366,40 +1353,27 @@ export function AdminConsoleModal({
                             onChange={(e) =>
                               handleUpdateProduct(prod.id, { usage: e.target.value })
                             }
-                            className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white resize-none"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-white/50 mb-1">
-                            핵심 규격 및 배합 스펙 (TECH SPECIFICATION)
-                          </label>
-                          <textarea
-                            rows={2}
-                            value={prod.spec}
-                            onChange={(e) =>
-                              handleUpdateProduct(prod.id, { spec: e.target.value })
-                            }
+                            placeholder="리커버리 목록 카드에 보이는 간단한 한줄/두줄 요약을 입력하세요."
                             className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white resize-none"
                           />
                         </div>
 
                         <div>
                           <label className="block text-white font-bold mb-1">
-                            상세 페이지 본문 설명 (DETAIL DESCRIPTION · 상품 클릭 시 표시)
+                            상세 설명 (DETAIL DESCRIPTION · 상품 클릭 시 표시)
                           </label>
                           <p className="text-[11px] text-white/45 mb-1.5">
-                            리커버리 상품을 클릭해 상세 페이지로 들어갔을 때 표시되는 상세 설명입니다. 줄바꿈이 그대로 반영됩니다.
+                            상품을 클릭해 상세 페이지로 들어갔을 때 표시되는 본문입니다. 줄바꿈이 그대로 반영됩니다.
                           </p>
                           <textarea
-                            rows={6}
+                            rows={8}
                             value={prod.detailDescription || ''}
                             onChange={(e) =>
                               handleUpdateProduct(prod.id, {
                                 detailDescription: e.target.value,
                               })
                             }
-                            placeholder="상품의 세부 성분, 리커버리 효과, 섭취 방법 등을 자유롭게 작성하세요."
+                            placeholder="제품 소개, 영양 정보, 맛/식감 후기, 추천 이유 등을 자유롭게 작성하세요."
                             className="w-full bg-black border border-white/40 focus:border-white p-3 text-white resize-y leading-relaxed"
                           />
                         </div>

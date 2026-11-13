@@ -15,11 +15,11 @@ export interface ActivityItem {
 
 export interface ProductItem {
   id: string;
-  code: string;
+  code?: string;
   name: string;
   category: string;
   image: string;
-  spec: string;
+  spec?: string;
   usage: string;
   detailDescription?: string;
   images?: string[];

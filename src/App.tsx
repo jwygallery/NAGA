@@ -807,7 +807,7 @@ export default function App() {
                     <div className="border-b border-white/20 pb-4 mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                       <div>
                         <span className="text-[10px] sm:text-xs font-mono tracking-[0.22em] text-white/50 uppercase block mb-1">
-                          2. RECOVERY // {selectedProduct.code} · {selectedProduct.category}
+                          {selectedProduct.category}
                         </span>
                         <h2 className="text-2xl sm:text-4xl font-syne font-bold uppercase tracking-tight text-white">
                           {selectedProduct.name}
@@ -824,18 +824,10 @@ export default function App() {
                       </button>
                     </div>
 
-                    {/* Product Detail Main Content: Left Photo Gallery / Right Detailed Specs & Description */}
+                    {/* Product Detail Main Content: Left Photo Gallery / Right Summary & Detailed Description */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10">
                       {/* Left 7 Cols: Interactive Photo Slider + Thumbnail Strip */}
                       <div className="lg:col-span-7 space-y-3 sm:space-y-4">
-                        <div className="flex items-center justify-between font-mono text-[11px] tracking-[0.18em] text-white/60 uppercase">
-                          <span>PRODUCT VISUAL ARCHIVE</span>
-                          <span className="tabular-nums">
-                            [ {String(safePhotoIndex + 1).padStart(2, '0')} /{' '}
-                            {String(productGallery.length).padStart(2, '0')} ]
-                          </span>
-                        </div>
-
                         {/* Main 4:3 Image Viewer */}
                         <div className="relative w-full aspect-[4/3] bg-black border border-white/25 overflow-hidden group">
                           {productGallery.map((imgSrc, idx) => (
@@ -857,12 +849,12 @@ export default function App() {
                             </div>
                           ))}
 
-                          <div className="absolute top-3 left-3 z-20 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.2em] text-white uppercase">
-                            {selectedProduct.code}
-                          </div>
-
                           {productGallery.length > 1 && (
                             <>
+                              <div className="absolute top-3 right-3 z-20 bg-black/75 border border-white/25 px-2.5 py-1 text-[10px] font-mono tracking-[0.18em] text-white/80 tabular-nums">
+                                {String(safePhotoIndex + 1).padStart(2, '0')} / {String(productGallery.length).padStart(2, '0')}
+                              </div>
+
                               <div className="absolute inset-y-0 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
                                 <button
                                   type="button"
@@ -904,8 +896,8 @@ export default function App() {
                         {/* Additional Photos Thumbnail Strip */}
                         {productGallery.length > 1 && (
                           <div className="space-y-2 pt-1">
-                            <span className="block font-mono text-[10px] tracking-[0.2em] text-white/45 uppercase">
-                              ADDITIONAL PHOTOS // 클릭하여 사진 전환 ({productGallery.length}장)
+                            <span className="block font-mono text-[10px] tracking-[0.18em] text-white/45 uppercase">
+                              PHOTOS ({productGallery.length})
                             </span>
                             <div className="grid grid-cols-4 sm:grid-cols-5 gap-2.5">
                               {productGallery.map((thumbUrl, idx) => (
@@ -934,19 +926,14 @@ export default function App() {
                         )}
                       </div>
 
-                      {/* Right 5 Cols: Detailed Specifications & Description */}
+                      {/* Right 5 Cols: Category, Name, Summary & Detailed Description */}
                       <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
                         <div className="space-y-6">
                           {/* Product Summary Box */}
                           <div className="border border-white/20 bg-white/[0.03] p-4 sm:p-6 space-y-3">
-                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                              <span className="text-[10px] font-mono tracking-[0.22em] text-white/50 uppercase">
-                                {selectedProduct.category}
-                              </span>
-                              <span className="text-[10px] font-mono tracking-[0.18em] px-2 py-0.5 bg-white text-black font-bold uppercase">
-                                NAGA™ FORMULA
-                              </span>
-                            </div>
+                            <span className="block text-[10px] font-mono tracking-[0.22em] text-white/50 uppercase">
+                              {selectedProduct.category}
+                            </span>
                             <h3 className="text-xl sm:text-2xl font-syne font-bold uppercase tracking-tight text-white">
                               {selectedProduct.name}
                             </h3>
@@ -955,24 +942,11 @@ export default function App() {
                             </p>
                           </div>
 
-                          {/* Technical Specification */}
-                          <div className="border border-white/20 bg-black p-4 sm:p-5 space-y-2">
-                            <span className="block font-mono text-[10px] sm:text-[11px] tracking-[0.2em] text-white/50 uppercase">
-                              TECH SPECIFICATION // 핵심 규격 및 배합
-                            </span>
-                            <p className="font-mono text-xs sm:text-sm text-white/90 leading-relaxed">
-                              {selectedProduct.spec}
-                            </p>
-                          </div>
-
                           {/* Full Detailed Description */}
                           <div className="border border-white/20 bg-black p-4 sm:p-6 space-y-3">
-                            <div className="border-b border-white/15 pb-2.5 flex items-center justify-between">
+                            <div className="border-b border-white/15 pb-2.5">
                               <span className="font-mono text-xs tracking-[0.2em] text-white font-bold uppercase">
-                                DETAILED DESCRIPTION // 상세 설명
-                              </span>
-                              <span className="font-mono text-[10px] tracking-[0.15em] text-white/40 uppercase">
-                                FIELD NUTRITION
+                                상세 설명
                               </span>
                             </div>
                             <div className="text-xs sm:text-sm font-sans text-white/85 leading-relaxed whitespace-pre-line break-words">
@@ -991,7 +965,7 @@ export default function App() {
                             }}
                             className="w-full py-3.5 px-5 border border-white/40 hover:border-white hover:bg-white hover:text-black text-white font-mono text-xs font-bold tracking-[0.2em] uppercase transition-colors flex items-center justify-center gap-2"
                           >
-                            <span>[ ← BACK TO RECOVERY CATALOG // 목록으로 돌아가기 ]</span>
+                            <span>[ ← BACK TO RECOVERY ]</span>
                           </button>
                         </div>
                       </div>
@@ -1011,9 +985,6 @@ export default function App() {
                       <span className="font-sans font-bold tabular-nums">2.</span>
                       <span>RECOVERY</span>
                     </h2>
-                    <p className="text-xs font-mono tracking-[0.16em] text-white/50 mt-1.5 uppercase">
-                      SELECT A PRODUCT TO VIEW ADDITIONAL PHOTOS & DETAILED SPECIFICATION
-                    </p>
                   </div>
                   <button
                     onClick={() => setCurrentView('home')}
@@ -1048,15 +1019,14 @@ export default function App() {
                             alt={prod.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
-                          <div className="absolute top-3 left-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.2em] text-white uppercase">
-                            {prod.code}
-                          </div>
-                          <div className="absolute bottom-3 right-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.15em] text-white/80 uppercase tabular-nums">
-                            PHOTOS ({photoCount})
-                          </div>
+                          {photoCount > 1 && (
+                            <div className="absolute bottom-3 right-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.15em] text-white/80 uppercase tabular-nums">
+                              PHOTOS ({photoCount})
+                            </div>
+                          )}
                         </div>
 
-                        {/* Name and Details Below (명칭 하단 배치) */}
+                        {/* Name, Category and Summary Below */}
                         <div className="p-4 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
                           <div>
                             <span className="text-[10px] font-mono tracking-[0.2em] text-white/45 uppercase block mb-1">
@@ -1070,21 +1040,12 @@ export default function App() {
                             </p>
                           </div>
 
-                          <div className="space-y-3 pt-3 sm:pt-4 border-t border-white/10">
-                            <div className="font-mono text-[11px] tracking-[0.15em] text-white/60 space-y-1">
-                              <span className="block text-white/40 uppercase text-[10px] sm:text-[11px]">
-                                TECH SPECIFICATION
-                              </span>
-                              <span className="block text-white/90 line-clamp-2">{prod.spec}</span>
-                            </div>
-
-                            <div className="pt-2 flex items-center justify-between font-mono text-xs tracking-[0.18em] uppercase text-white/70 group-hover:text-white">
-                              <span>[ VIEW DETAILS & PHOTOS ]</span>
-                              <ArrowRight
-                                size={15}
-                                className="group-hover:translate-x-1 transition-transform"
-                              />
-                            </div>
+                          <div className="pt-3 sm:pt-4 border-t border-white/10 flex items-center justify-between font-mono text-xs tracking-[0.18em] uppercase text-white/70 group-hover:text-white">
+                            <span>[ 자세히 보기 ]</span>
+                            <ArrowRight
+                              size={15}
+                              className="group-hover:translate-x-1 transition-transform"
+                            />
                           </div>
                         </div>
                       </div>
