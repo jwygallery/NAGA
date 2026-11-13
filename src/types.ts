@@ -13,16 +13,25 @@ export interface ActivityItem {
   images: string[];
 }
 
+export interface RecoveryContentBlock {
+  id: string;
+  type: 'text' | 'image';
+  content: string;
+  caption?: string;
+}
+
 export interface ProductItem {
   id: string;
   code?: string;
   name: string;
+  subtitle?: string;
   category: string;
   image: string;
   spec?: string;
   usage: string;
   detailDescription?: string;
   images?: string[];
+  blocks?: RecoveryContentBlock[];
 }
 
 export interface HeroSlideItem {

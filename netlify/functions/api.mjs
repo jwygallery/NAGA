@@ -85,8 +85,18 @@ function sanitizePayloadUrls(data) {
   if (Array.isArray(copy.products)) {
     copy.products = copy.products.map((p) => ({
       ...p,
+      subtitle: p.subtitle !== undefined ? p.subtitle : (p.usage || p.category || ''),
+      usage: p.subtitle !== undefined ? p.subtitle : (p.usage || p.category || ''),
       image: normalizeImageUrl(p.image),
       images: Array.isArray(p.images) ? p.images.map((img) => normalizeImageUrl(img)).filter(Boolean) : [],
+      blocks: Array.isArray(p.blocks)
+        ? p.blocks.map((b, bIdx) => ({
+            id: b.id || `${p.id || 'prod'}-block-${bIdx}`,
+            type: b.type === 'image' ? 'image' : 'text',
+            content: b.type === 'image' ? normalizeImageUrl(b.content) : (b.content ?? ''),
+            caption: b.caption ?? '',
+          }))
+        : undefined,
     }));
   }
   if (Array.isArray(copy.joinNotices)) {
@@ -107,7 +117,7 @@ function generateDefaultDataTsContent(data) {
   const activitiesJson = JSON.stringify(data.activities || [], null, 2);
   const heroSlidesJson = JSON.stringify(data.heroSlides || [], null, 2);
 
-  return `import { NagaAppData, JoinNoticeItem, ProductItem } from './types';
+  return `import { NagaAppData, JoinNoticeItem, ProductItem, RecoveryContentBlock } from './types';
 
 export function normalizeImageUrl(url: string | undefined | null): string {
   if (!url || typeof url !== 'string') return '';
@@ -189,18 +199,62 @@ export function normalizeNagaData(raw: Partial<NagaAppData> | null | undefined):
               ? prod.images.map((img) => normalizeImageUrl(img)).filter(Boolean)
               : undefined;
           const mainImage = normalizeImageUrl(prod.image) || fallbackDefault.image;
-          return {
-            ...prod,
-            image: mainImage,
-            detailDescription:
-              prod.detailDescription !== undefined
-                ? prod.detailDescription
-                : fallbackDefault?.detailDescription || prod.usage || '',
-            images: rawImages && rawImages.length > 0
+          const resolvedSubtitle =
+            prod.subtitle !== undefined
+              ? prod.subtitle
+              : prod.usage || prod.category || '';
+          const resolvedDetail =
+            prod.detailDescription !== undefined
+              ? prod.detailDescription
+              : fallbackDefault?.detailDescription || prod.usage || '';
+          const resolvedImages =
+            rawImages && rawImages.length > 0
               ? rawImages
               : fallbackDefault && fallbackDefault.id === prod.id && fallbackDefault.images
               ? [mainImage, ...fallbackDefault.images.slice(1).map((img) => normalizeImageUrl(img))]
-              : [mainImage],
+              : [mainImage];
+
+          let resolvedBlocks: RecoveryContentBlock[];
+          if (Array.isArray(prod.blocks) && prod.blocks.length > 0) {
+            resolvedBlocks = prod.blocks.map((b, bIdx) => ({
+              id: b.id || \`\${prod.id || 'prod'}-block-\${bIdx}\`,
+              type: b.type === 'image' ? 'image' : 'text',
+              content: b.type === 'image' ? normalizeImageUrl(b.content) : (b.content ?? ''),
+              caption: b.caption ?? '',
+            }));
+          } else {
+            resolvedBlocks = [];
+            if (resolvedImages[0]) {
+              resolvedBlocks.push({
+                id: \`\${prod.id || 'prod'}-block-img-0\`,
+                type: 'image',
+                content: resolvedImages[0],
+              });
+            }
+            if (resolvedDetail.trim()) {
+              resolvedBlocks.push({
+                id: \`\${prod.id || 'prod'}-block-txt-0\`,
+                type: 'text',
+                content: resolvedDetail,
+              });
+            }
+            for (let i = 1; i < resolvedImages.length; i++) {
+              resolvedBlocks.push({
+                id: \`\${prod.id || 'prod'}-block-img-\${i}\`,
+                type: 'image',
+                content: resolvedImages[i],
+              });
+            }
+          }
+
+          return {
+            ...prod,
+            subtitle: resolvedSubtitle,
+            usage: resolvedSubtitle,
+            image: mainImage,
+            detailDescription: resolvedDetail,
+            images: resolvedImages,
+            blocks: resolvedBlocks,
           };
         })
       : DEFAULT_PRODUCTS;

@@ -806,206 +806,134 @@ export default function App() {
         )}
 
         {/* ==================================================================== */}
-        {/* VIEW 2: 2. RECOVERY (2열 제품 카탈로그 & 상품 클릭 시 상세 페이지) */}
+        {/* VIEW 2: 2. RECOVERY (블로그형 미리보기 목록 & 스크롤형 본문 포스트 뷰) */}
         {/* ==================================================================== */}
         {currentView === 'recovery' && (
           <div id="recovery-view" className="flex-1 flex flex-col max-w-7xl w-full mx-auto px-3.5 sm:px-8 py-6 sm:py-12">
             {selectedProduct ? (
               /* ============================================================== */
-              /* RECOVERY PRODUCT DETAIL PAGE (상품 클릭 시 추가 사진 & 상세 설명) */
+              /* RECOVERY BLOG POST VIEW (스크롤하며 배치한 사진과 글을 읽는 블로그 본문) */
               /* ============================================================== */
               (() => {
-                const productGallery =
-                  Array.isArray(selectedProduct.images) && selectedProduct.images.length > 0
-                    ? selectedProduct.images
-                    : [selectedProduct.image];
-                const safePhotoIndex =
-                  productPhotoIndex < productGallery.length ? productPhotoIndex : 0;
+                const postSubtitle =
+                  selectedProduct.subtitle !== undefined
+                    ? selectedProduct.subtitle
+                    : selectedProduct.usage || selectedProduct.category || '';
 
-                const nextProductPhoto = () => {
-                  setProductPhotoIndex((prev) => (prev + 1) % productGallery.length);
-                };
-                const prevProductPhoto = () => {
-                  setProductPhotoIndex(
-                    (prev) => (prev - 1 + productGallery.length) % productGallery.length
-                  );
-                };
+                const postBlocks =
+                  Array.isArray(selectedProduct.blocks) && selectedProduct.blocks.length > 0
+                    ? selectedProduct.blocks
+                    : [
+                        ...(selectedProduct.image
+                          ? [
+                              {
+                                id: 'fallback-img-0',
+                                type: 'image' as const,
+                                content: selectedProduct.image,
+                                caption: '',
+                              },
+                            ]
+                          : []),
+                        ...(selectedProduct.detailDescription || selectedProduct.usage
+                          ? [
+                              {
+                                id: 'fallback-txt-0',
+                                type: 'text' as const,
+                                content: selectedProduct.detailDescription || selectedProduct.usage || '',
+                              },
+                            ]
+                          : []),
+                      ];
 
                 return (
-                  <div id="recovery-product-detail" className="flex-1 flex flex-col">
-                    {/* Detail View Header */}
-                    <div className="border-b border-white/20 pb-4 mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                      <div>
-                        <span className="text-[10px] sm:text-xs font-mono tracking-[0.22em] text-white/50 uppercase block mb-1">
-                          {selectedProduct.category}
-                        </span>
-                        <h2 className="text-2xl sm:text-4xl font-syne font-bold uppercase tracking-tight text-white">
-                          {selectedProduct.name}
-                        </h2>
-                      </div>
+                  <article
+                    id="recovery-blog-post"
+                    className="flex-1 flex flex-col max-w-3xl w-full mx-auto"
+                  >
+                    {/* Top Back Navigation */}
+                    <div className="mb-6 sm:mb-8 flex items-center justify-between">
                       <button
+                        type="button"
                         onClick={() => {
                           setSelectedProductId(null);
                           setProductPhotoIndex(0);
                         }}
-                        className="text-xs font-mono tracking-[0.2em] uppercase text-white/80 hover:text-black hover:bg-white border border-white/30 px-4 py-2 self-start sm:self-auto hover:border-white transition-colors min-h-[38px] flex items-center"
+                        className="text-xs font-mono tracking-[0.2em] uppercase text-white/70 hover:text-black hover:bg-white border border-white/30 px-4 py-2 hover:border-white transition-colors min-h-[38px] flex items-center"
                       >
                         [ ← BACK TO RECOVERY ]
                       </button>
                     </div>
 
-                    {/* Product Detail Main Content: Left Photo Gallery / Right Summary & Detailed Description */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10">
-                      {/* Left 7 Cols: Interactive Photo Slider + Thumbnail Strip */}
-                      <div className="lg:col-span-7 space-y-3 sm:space-y-4">
-                        {/* Main 4:3 Image Viewer */}
-                        <div className="relative w-full aspect-[4/3] bg-black border border-white/25 overflow-hidden group">
-                          {productGallery.map((imgSrc, idx) => (
-                            <div
-                              key={idx}
-                              className={`absolute inset-0 transition-opacity duration-300 ${
-                                idx === safePhotoIndex
-                                  ? 'opacity-100 z-10'
-                                  : 'opacity-0 pointer-events-none z-0'
-                              }`}
-                            >
-                              <img
-                                src={imgSrc}
-                                alt={`${selectedProduct.name} photo ${idx + 1}`}
-                                className="w-full h-full object-cover"
-                                referrerPolicy="no-referrer"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-                            </div>
-                          ))}
+                    {/* Blog Post Header: 제목 (Title) & 부제목 (Subtitle) */}
+                    <header className="border-b border-white/25 pb-6 sm:pb-8 mb-8 sm:mb-10 space-y-2.5 sm:space-y-3">
+                      <h1 className="text-2xl sm:text-4xl font-syne font-bold tracking-tight text-white leading-tight break-keep">
+                        {selectedProduct.name}
+                      </h1>
+                      {postSubtitle && (
+                        <p className="text-sm sm:text-lg font-sans text-white/65 leading-relaxed break-keep">
+                          {postSubtitle}
+                        </p>
+                      )}
+                    </header>
 
-                          {productGallery.length > 1 && (
-                            <>
-                              <div className="absolute top-3 right-3 z-20 bg-black/75 border border-white/25 px-2.5 py-1 text-[10px] font-mono tracking-[0.18em] text-white/80 tabular-nums">
-                                {String(safePhotoIndex + 1).padStart(2, '0')} / {String(productGallery.length).padStart(2, '0')}
+                    {/* Blog Post Body: 사용자가 배치한 순서대로 사진과 글이 스크롤되며 노출 */}
+                    <div className="space-y-7 sm:space-y-9">
+                      {postBlocks.map((block, idx) => {
+                        if (block.type === 'image') {
+                          if (!block.content) return null;
+                          return (
+                            <figure key={block.id || idx} className="space-y-2">
+                              <div className="w-full border border-white/20 bg-black overflow-hidden">
+                                <img
+                                  src={block.content}
+                                  alt={
+                                    block.caption ||
+                                    `${selectedProduct.name} 본문 사진 ${idx + 1}`
+                                  }
+                                  className="w-full h-auto max-h-[720px] object-cover"
+                                  referrerPolicy="no-referrer"
+                                />
                               </div>
+                              {block.caption && (
+                                <figcaption className="text-xs font-mono text-white/50 tracking-wider text-center pt-0.5 break-keep">
+                                  {block.caption}
+                                </figcaption>
+                              )}
+                            </figure>
+                          );
+                        }
 
-                              <div className="absolute inset-y-0 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
-                                <button
-                                  type="button"
-                                  onClick={prevProductPhoto}
-                                  aria-label="Previous Product Photo"
-                                  className="pointer-events-auto w-9 h-9 sm:w-10 sm:h-10 bg-black/75 hover:bg-white hover:text-black border border-white/40 text-white flex items-center justify-center transition-colors active:scale-95"
-                                >
-                                  <ChevronLeft size={18} />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={nextProductPhoto}
-                                  aria-label="Next Product Photo"
-                                  className="pointer-events-auto w-9 h-9 sm:w-10 sm:h-10 bg-black/75 hover:bg-white hover:text-black border border-white/40 text-white flex items-center justify-center transition-colors active:scale-95"
-                                >
-                                  <ChevronRight size={18} />
-                                </button>
-                              </div>
-
-                              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/70 px-2.5 py-1 border border-white/20">
-                                {productGallery.map((_, idx) => (
-                                  <button
-                                    key={idx}
-                                    type="button"
-                                    onClick={() => setProductPhotoIndex(idx)}
-                                    aria-label={`Photo ${idx + 1}`}
-                                    className={`h-1.5 transition-all ${
-                                      idx === safePhotoIndex
-                                        ? 'w-5 bg-white'
-                                        : 'w-1.5 bg-white/40 hover:bg-white/70'
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                            </>
-                          )}
-                        </div>
-
-                        {/* Additional Photos Thumbnail Strip */}
-                        {productGallery.length > 1 && (
-                          <div className="space-y-2 pt-1">
-                            <span className="block font-mono text-[10px] tracking-[0.18em] text-white/45 uppercase">
-                              PHOTOS ({productGallery.length})
-                            </span>
-                            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2.5">
-                              {productGallery.map((thumbUrl, idx) => (
-                                <button
-                                  key={idx}
-                                  type="button"
-                                  onClick={() => setProductPhotoIndex(idx)}
-                                  className={`relative aspect-[4/3] bg-black border overflow-hidden transition-all ${
-                                    idx === safePhotoIndex
-                                      ? 'border-white ring-1 ring-white'
-                                      : 'border-white/20 opacity-60 hover:opacity-100 hover:border-white/60'
-                                  }`}
-                                >
-                                  <img
-                                    src={thumbUrl}
-                                    alt={`${selectedProduct.name} thumbnail ${idx + 1}`}
-                                    className="w-full h-full object-cover"
-                                  />
-                                  <span className="absolute bottom-1 right-1 bg-black/80 px-1 text-[9px] font-mono text-white/80 tabular-nums">
-                                    0{idx + 1}
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right 5 Cols: Category, Name, Summary & Detailed Description */}
-                      <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
-                        <div className="space-y-6">
-                          {/* Product Summary Box */}
-                          <div className="border border-white/20 bg-white/[0.03] p-4 sm:p-6 space-y-3">
-                            <span className="block text-[10px] font-mono tracking-[0.22em] text-white/50 uppercase">
-                              {selectedProduct.category}
-                            </span>
-                            <h3 className="text-xl sm:text-2xl font-syne font-bold uppercase tracking-tight text-white">
-                              {selectedProduct.name}
-                            </h3>
-                            <p className="text-xs sm:text-sm font-sans text-white/85 leading-relaxed">
-                              {selectedProduct.usage}
-                            </p>
-                          </div>
-
-                          {/* Full Detailed Description */}
-                          <div className="border border-white/20 bg-black p-4 sm:p-6 space-y-3">
-                            <div className="border-b border-white/15 pb-2.5">
-                              <span className="font-mono text-xs tracking-[0.2em] text-white font-bold uppercase">
-                                DESCRIPTION
-                              </span>
-                            </div>
-                            <div className="text-xs sm:text-sm font-sans text-white/85 leading-relaxed whitespace-pre-line break-words">
-                              {selectedProduct.detailDescription || selectedProduct.usage}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Back to Catalog Button */}
-                        <div className="pt-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedProductId(null);
-                              setProductPhotoIndex(0);
-                            }}
-                            className="w-full py-3.5 px-5 border border-white/40 hover:border-white hover:bg-white hover:text-black text-white font-mono text-xs font-bold tracking-[0.2em] uppercase transition-colors flex items-center justify-center gap-2"
+                        return (
+                          <div
+                            key={block.id || idx}
+                            className="text-sm sm:text-base font-sans text-white/90 leading-relaxed sm:leading-loose whitespace-pre-line break-keep"
                           >
-                            <span>[ ← BACK TO RECOVERY ]</span>
-                          </button>
-                        </div>
-                      </div>
+                            {block.content}
+                          </div>
+                        );
+                      })}
                     </div>
-                  </div>
+
+                    {/* Bottom Back Button */}
+                    <div className="mt-12 sm:mt-16 pt-8 border-t border-white/20">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedProductId(null);
+                          setProductPhotoIndex(0);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        className="w-full sm:w-auto px-6 py-3.5 border border-white/40 hover:border-white hover:bg-white hover:text-black text-white font-mono text-xs font-bold tracking-[0.2em] uppercase transition-colors flex items-center justify-center gap-2"
+                      >
+                        <span>[ ← BACK TO RECOVERY ]</span>
+                      </button>
+                    </div>
+                  </article>
                 );
               })()
             ) : (
               /* ============================================================== */
-              /* RECOVERY 2-COLUMN CATALOG LIST (상품 클릭 시 상세 페이지 이동) */
+              /* RECOVERY BLOG PREVIEW LIST (대표사진 + 제목 + 부제목 미리보기 카드) */
               /* ============================================================== */
               <>
                 {/* View Header */}
@@ -1024,15 +952,15 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* 2-Column Grid Layout: Clickable Product Cards */}
+                {/* 2-Column Blog Preview Grid: 대표사진 + 제목 + 부제목 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
                   {PRODUCTS_DATA.map((prod) => {
-                    const photoCount =
-                      Array.isArray(prod.images) && prod.images.length > 0
-                        ? prod.images.length
-                        : 1;
+                    const previewSubtitle =
+                      prod.subtitle !== undefined
+                        ? prod.subtitle
+                        : prod.usage || prod.category || '';
                     return (
-                      <div
+                      <article
                         key={prod.id}
                         id={`product-card-${prod.id}`}
                         onClick={() => {
@@ -1042,43 +970,38 @@ export default function App() {
                         }}
                         className="cursor-pointer border border-white/20 hover:border-white bg-black flex flex-col transition-all duration-300 group"
                       >
-                        {/* Photo on Top (사진 상단 배치) */}
+                        {/* 대표사진 (Cover Photo on Top) */}
                         <div className="relative w-full aspect-[4/3] bg-black overflow-hidden border-b border-white/20">
                           <img
                             src={prod.image}
                             alt={prod.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            referrerPolicy="no-referrer"
                           />
-                          {photoCount > 1 && (
-                            <div className="absolute bottom-3 right-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.15em] text-white/80 uppercase tabular-nums">
-                              PHOTOS ({photoCount})
-                            </div>
-                          )}
                         </div>
 
-                        {/* Name, Category and Summary Below */}
+                        {/* 제목 (Title) & 부제목 (Subtitle) */}
                         <div className="p-4 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
-                          <div>
-                            <span className="text-[10px] font-mono tracking-[0.2em] text-white/45 uppercase block mb-1">
-                              {prod.category}
-                            </span>
-                            <h3 className="text-xl sm:text-2xl font-syne font-bold uppercase tracking-tight text-white group-hover:text-white/90">
+                          <div className="space-y-1.5 sm:space-y-2">
+                            <h3 className="text-xl sm:text-2xl font-syne font-bold tracking-tight text-white group-hover:text-white/90 break-keep">
                               {prod.name}
                             </h3>
-                            <p className="mt-2.5 sm:mt-3 text-xs sm:text-sm font-sans text-white/80 leading-relaxed">
-                              {prod.usage}
-                            </p>
+                            {previewSubtitle && (
+                              <p className="text-xs sm:text-sm font-sans text-white/70 leading-relaxed break-keep">
+                                {previewSubtitle}
+                              </p>
+                            )}
                           </div>
 
                           <div className="pt-3 sm:pt-4 border-t border-white/10 flex items-center justify-between font-mono text-xs tracking-[0.18em] uppercase text-white/70 group-hover:text-white">
-                            <span>[ 자세히 보기 ]</span>
+                            <span>[ READ POST ]</span>
                             <ArrowRight
                               size={15}
                               className="group-hover:translate-x-1 transition-transform"
                             />
                           </div>
                         </div>
-                      </div>
+                      </article>
                     );
                   })}
                 </div>

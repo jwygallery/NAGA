@@ -18,7 +18,14 @@ import {
   GitBranch,
   Download,
 } from 'lucide-react';
-import { ActivityItem, HeroSlideItem, ProductItem, JoinNoticeItem, NagaAppData } from '../types';
+import {
+  ActivityItem,
+  HeroSlideItem,
+  ProductItem,
+  RecoveryContentBlock,
+  JoinNoticeItem,
+  NagaAppData,
+} from '../types';
 import { DEFAULT_JOIN_NOTICES } from '../defaultData';
 
 interface AdminConsoleModalProps {
@@ -474,8 +481,64 @@ export function AdminConsoleModal({
   };
 
   // --------------------------------------------------------------------------
-  // Products Handlers (Catalog + Detail Page Gallery & Detailed Description)
+  // Recovery Blog Post Handlers (Cover Photo + Title + Subtitle + Body Blocks)
   // --------------------------------------------------------------------------
+  const getProductBlocks = (prod: ProductItem): RecoveryContentBlock[] => {
+    if (Array.isArray(prod.blocks) && prod.blocks.length > 0) {
+      return prod.blocks;
+    }
+    const fallbackBlocks: RecoveryContentBlock[] = [];
+    const imgs =
+      Array.isArray(prod.images) && prod.images.length > 0
+        ? prod.images
+        : prod.image
+        ? [prod.image]
+        : [];
+    if (imgs[0]) {
+      fallbackBlocks.push({
+        id: `${prod.id}-block-img-0`,
+        type: 'image',
+        content: imgs[0],
+        caption: '',
+      });
+    }
+    const textContent = prod.detailDescription || prod.usage || '';
+    if (textContent.trim()) {
+      fallbackBlocks.push({
+        id: `${prod.id}-block-txt-0`,
+        type: 'text',
+        content: textContent,
+      });
+    }
+    for (let i = 1; i < imgs.length; i++) {
+      fallbackBlocks.push({
+        id: `${prod.id}-block-img-${i}`,
+        type: 'image',
+        content: imgs[i],
+        caption: '',
+      });
+    }
+    return fallbackBlocks;
+  };
+
+  const syncProductFromBlocks = (
+    prod: ProductItem,
+    nextBlocks: RecoveryContentBlock[]
+  ): ProductItem => {
+    const textBlocks = nextBlocks
+      .filter((b) => b.type === 'text' && b.content.trim())
+      .map((b) => b.content);
+    const imageBlocks = nextBlocks
+      .filter((b) => b.type === 'image' && b.content.trim())
+      .map((b) => b.content);
+    return {
+      ...prod,
+      blocks: nextBlocks,
+      detailDescription: textBlocks.join('\n\n') || prod.detailDescription || '',
+      images: imageBlocks.length > 0 ? imageBlocks : prod.image ? [prod.image] : [],
+    };
+  };
+
   const handleUpdateProduct = (id: string, updates: Partial<ProductItem>) => {
     setData((prev) => ({
       ...prev,
@@ -485,112 +548,147 @@ export function AdminConsoleModal({
 
   const handleAddProduct = () => {
     const defaultImg = '/images/product_02_alpine_shake.jpg';
+    const prodId = `prod-${Date.now()}`;
     const newProd: ProductItem = {
-      id: `prod-${Date.now()}`,
-      name: 'NEW RECOVERY ITEM',
-      category: '편의점 / 리커버리 리뷰',
+      id: prodId,
+      name: '새 리커버리 블로그 포스트 제목',
+      subtitle: '부제목을 입력하세요 (리커버리 목록 미리보기와 포스트 상단에 표시됩니다)',
+      category: '부제목을 입력하세요 (리커버리 목록 미리보기와 포스트 상단에 표시됩니다)',
       image: defaultImg,
-      usage: '제품의 핵심 특징이나 한줄 요약 설명을 입력하세요.',
-      detailDescription:
-        '제품 소개, 맛·식감 리뷰, 영양 성분, 구매 팁 등 상세 설명을 자유롭게 작성하세요.',
+      usage: '부제목을 입력하세요 (리커버리 목록 미리보기와 포스트 상단에 표시됩니다)',
+      detailDescription: '여기에 본문 내용을 작성하세요.',
       images: [defaultImg],
+      blocks: [
+        {
+          id: `${prodId}-block-1`,
+          type: 'image',
+          content: defaultImg,
+          caption: '',
+        },
+        {
+          id: `${prodId}-block-2`,
+          type: 'text',
+          content: '여기에 첫 번째 본문 문단을 작성하세요. 아래 버튼으로 사진과 글을 원하는 순서대로 자유롭게 추가하고 배치할 수 있습니다.',
+        },
+      ],
     };
     setData((prev) => ({
       ...prev,
-      products: [...prev.products, newProd],
+      products: [newProd, ...prev.products],
     }));
-    setSaveStatus('새 리커버리 상품이 추가되었습니다. 사진과 설명을 입력한 뒤 [전체 저장]을 눌러주세요.');
+    setSaveStatus('새 리커버리 블로그 글이 추가되었습니다. 작성 후 상단의 [전체 저장]을 눌러주세요.');
+  };
+
+  const handleMoveProduct = (index: number, direction: 'up' | 'down') => {
+    const targetIdx = direction === 'up' ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= data.products.length) return;
+    const nextProducts = [...data.products];
+    const temp = nextProducts[index];
+    nextProducts[index] = nextProducts[targetIdx];
+    nextProducts[targetIdx] = temp;
+    setData((prev) => ({
+      ...prev,
+      products: nextProducts,
+    }));
   };
 
   const handleDeleteProduct = (id: string) => {
     if (data.products.length <= 1) {
-      alert('리커버리 상품은 최소 1개 이상 유지되어야 합니다.');
+      alert('리커버리 글은 최소 1개 이상 유지되어야 합니다.');
       return;
     }
+    if (!window.confirm('이 리커버리 블로그 글을 삭제하시겠습니까?')) return;
     setData((prev) => ({
       ...prev,
       products: prev.products.filter((p) => p.id !== id),
     }));
   };
 
-  const getProductGallery = (prod: ProductItem): string[] => {
-    if (Array.isArray(prod.images) && prod.images.length > 0) {
-      return prod.images;
-    }
-    return prod.image ? [prod.image] : ['/images/product_02_alpine_shake.jpg'];
-  };
-
-  const handleAddProductGalleryPhoto = (prodId: string, newUrl: string) => {
-    setData((prev) => ({
-      ...prev,
-      products: prev.products.map((p) => {
-        if (p.id !== prodId) return p;
-        const currentGallery = getProductGallery(p);
-        return {
-          ...p,
-          images: [...currentGallery, newUrl],
-        };
-      }),
-    }));
-    setSaveStatus('상품 추가 사진이 등록되었습니다. 상단의 [전체 저장]을 눌러 반영하세요.');
-  };
-
-  const handleUpdateProductGalleryPhoto = (prodId: string, photoIdx: number, newUrl: string) => {
-    setData((prev) => ({
-      ...prev,
-      products: prev.products.map((p) => {
-        if (p.id !== prodId) return p;
-        const nextGallery = [...getProductGallery(p)];
-        nextGallery[photoIdx] = newUrl;
-        return {
-          ...p,
-          image: photoIdx === 0 ? newUrl : p.image,
-          images: nextGallery,
-        };
-      }),
-    }));
-  };
-
-  const handleMoveProductGalleryPhoto = (
+  const handleAddProductBlock = (
     prodId: string,
-    photoIdx: number,
+    type: 'text' | 'image',
+    initialContent?: string,
+    insertAfterIndex?: number
+  ) => {
+    setData((prev) => ({
+      ...prev,
+      products: prev.products.map((p) => {
+        if (p.id !== prodId) return p;
+        const currentBlocks = [...getProductBlocks(p)];
+        const newBlock: RecoveryContentBlock = {
+          id: `${prodId}-block-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          type,
+          content:
+            initialContent !== undefined
+              ? initialContent
+              : type === 'image'
+              ? '/images/product_02_alpine_shake.jpg'
+              : '',
+          caption: '',
+        };
+        if (
+          insertAfterIndex !== undefined &&
+          insertAfterIndex >= 0 &&
+          insertAfterIndex < currentBlocks.length
+        ) {
+          currentBlocks.splice(insertAfterIndex + 1, 0, newBlock);
+        } else {
+          currentBlocks.push(newBlock);
+        }
+        return syncProductFromBlocks(p, currentBlocks);
+      }),
+    }));
+  };
+
+  const handleUpdateProductBlock = (
+    prodId: string,
+    blockIdx: number,
+    updates: Partial<RecoveryContentBlock>
+  ) => {
+    setData((prev) => ({
+      ...prev,
+      products: prev.products.map((p) => {
+        if (p.id !== prodId) return p;
+        const nextBlocks = [...getProductBlocks(p)];
+        if (!nextBlocks[blockIdx]) return p;
+        nextBlocks[blockIdx] = { ...nextBlocks[blockIdx], ...updates };
+        return syncProductFromBlocks(p, nextBlocks);
+      }),
+    }));
+  };
+
+  const handleMoveProductBlock = (
+    prodId: string,
+    blockIdx: number,
     direction: 'up' | 'down'
   ) => {
     setData((prev) => ({
       ...prev,
       products: prev.products.map((p) => {
         if (p.id !== prodId) return p;
-        const nextGallery = [...getProductGallery(p)];
-        const targetIdx = direction === 'up' ? photoIdx - 1 : photoIdx + 1;
-        if (targetIdx < 0 || targetIdx >= nextGallery.length) return p;
-        const temp = nextGallery[photoIdx];
-        nextGallery[photoIdx] = nextGallery[targetIdx];
-        nextGallery[targetIdx] = temp;
-        return {
-          ...p,
-          image: nextGallery[0] || p.image,
-          images: nextGallery,
-        };
+        const nextBlocks = [...getProductBlocks(p)];
+        const targetIdx = direction === 'up' ? blockIdx - 1 : blockIdx + 1;
+        if (targetIdx < 0 || targetIdx >= nextBlocks.length) return p;
+        const temp = nextBlocks[blockIdx];
+        nextBlocks[blockIdx] = nextBlocks[targetIdx];
+        nextBlocks[targetIdx] = temp;
+        return syncProductFromBlocks(p, nextBlocks);
       }),
     }));
   };
 
-  const handleDeleteProductGalleryPhoto = (prodId: string, photoIdx: number) => {
+  const handleDeleteProductBlock = (prodId: string, blockIdx: number) => {
     setData((prev) => ({
       ...prev,
       products: prev.products.map((p) => {
         if (p.id !== prodId) return p;
-        const currentGallery = getProductGallery(p);
-        if (currentGallery.length <= 1) {
-          alert('상품 사진은 최소 1장 이상 유지되어야 합니다.');
+        const currentBlocks = getProductBlocks(p);
+        if (currentBlocks.length <= 1) {
+          alert('본문에는 최소 1개 이상의 블록(사진 또는 글)이 있어야 합니다.');
           return p;
         }
-        const nextGallery = currentGallery.filter((_, idx) => idx !== photoIdx);
-        return {
-          ...p,
-          image: nextGallery[0] || p.image,
-          images: nextGallery,
-        };
+        const nextBlocks = currentBlocks.filter((_, idx) => idx !== blockIdx);
+        return syncProductFromBlocks(p, nextBlocks);
       }),
     }));
   };
@@ -1365,17 +1463,17 @@ export function AdminConsoleModal({
         )}
 
         {/* ================================================================== */}
-        {/* TAB 3: RECOVERY PRODUCTS (상세 페이지 추가 사진 갤러리 & 상세 설명 관리) */}
+        {/* TAB 3: RECOVERY BLOG POST EDITOR (대표사진 · 제목 · 부제목 · 본문 블록 배치) */}
         {/* ================================================================== */}
         {activeTab === 'products' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/20 pb-4">
               <div>
                 <h3 className="text-xl sm:text-2xl font-syne font-bold uppercase tracking-tight text-white">
-                  RECOVERY CATALOG & DETAIL PAGE MANAGEMENT
+                  RECOVERY BLOG EDITOR
                 </h3>
                 <p className="text-xs font-mono text-white/50 tracking-wider mt-1">
-                  2. RECOVERY 카탈로그 정보와 상품 클릭 시 이동하는 상세 페이지의 추가 사진들·상세 설명을 통합 관리합니다.
+                  리커버리 페이지 미리보기용 [대표사진 · 제목 · 부제목]과 클릭 시 스크롤하며 읽는 [본문(사진+글 자유 배치)]을 블로그 형식으로 관리합니다.
                 </p>
               </div>
               <button
@@ -1383,125 +1481,105 @@ export function AdminConsoleModal({
                 className="px-4 py-2.5 bg-white text-black font-mono text-xs font-bold tracking-[0.2em] uppercase hover:bg-white/90 transition-all flex items-center gap-2 border border-white whitespace-nowrap shrink-0"
               >
                 <Plus size={15} />
-                <span>+ 새 리커버리 상품 추가</span>
+                <span>+ 새 블로그 글 작성</span>
               </button>
             </div>
 
-            <div className="space-y-8">
-              {data.products.map((prod) => {
-                const gallery = getProductGallery(prod);
+            <div className="space-y-10">
+              {data.products.map((prod, prodIdx) => {
+                const blocks = getProductBlocks(prod);
+                const currentSubtitle =
+                  prod.subtitle !== undefined
+                    ? prod.subtitle
+                    : prod.usage || prod.category || '';
+                const coverUploadField = `prod-cover-${prod.id}`;
+
                 return (
                   <div
                     key={prod.id}
-                    className="border border-white/25 bg-black p-4 sm:p-6 space-y-6"
+                    className="border border-white/30 bg-black p-4 sm:p-6 space-y-6"
                   >
-                    {/* Product Header */}
-                    <div className="flex items-center justify-between border-b border-white/15 pb-3">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className="font-mono text-xs text-white/70 border border-white/30 px-2.5 py-1 bg-white/5 tracking-[0.15em] uppercase">
-                          {prod.category || 'RECOVERY'}
+                    {/* Post Card Header */}
+                    <div className="flex items-center justify-between border-b border-white/15 pb-3.5 gap-3 flex-wrap">
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <span className="font-mono text-xs text-black bg-white px-2.5 py-0.5 font-bold tracking-[0.15em] uppercase">
+                          POST #{String(prodIdx + 1).padStart(2, '0')}
                         </span>
-                        <span className="font-syne font-bold text-base sm:text-lg text-white uppercase">
-                          {prod.name}
+                        <span className="font-syne font-bold text-base sm:text-lg text-white">
+                          {prod.name || '제목 없음'}
                         </span>
                         <span className="text-[11px] font-mono text-white/45">
-                          (사진 {gallery.length}장)
+                          (본문 블록 {blocks.length}개)
                         </span>
                       </div>
-                      <button
-                        onClick={() => handleDeleteProduct(prod.id)}
-                        className="px-2.5 py-1.5 border border-red-500/40 text-red-400 hover:bg-red-950/60 transition-colors flex items-center gap-1.5 font-mono text-xs"
-                        title="상품 삭제"
-                      >
-                        <Trash2 size={13} />
-                        <span>삭제</span>
-                      </button>
+
+                      <div className="flex items-center gap-1.5 font-mono text-xs">
+                        <button
+                          type="button"
+                          onClick={() => handleMoveProduct(prodIdx, 'up')}
+                          disabled={prodIdx === 0}
+                          title="포스트 순서 위로 이동"
+                          className="p-1.5 border border-white/25 hover:border-white disabled:opacity-30 text-white transition-colors"
+                        >
+                          <ArrowUp size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveProduct(prodIdx, 'down')}
+                          disabled={prodIdx === data.products.length - 1}
+                          title="포스트 순서 아래로 이동"
+                          className="p-1.5 border border-white/25 hover:border-white disabled:opacity-30 text-white transition-colors"
+                        >
+                          <ArrowDown size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteProduct(prod.id)}
+                          className="px-2.5 py-1.5 border border-red-500/40 text-red-400 hover:bg-red-950/60 transition-colors flex items-center gap-1.5"
+                          title="이 블로그 글 삭제"
+                        >
+                          <Trash2 size={13} />
+                          <span>포스트 삭제</span>
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 font-mono text-xs">
-                      {/* Left 6 Cols: Category, Product Name, Summary & Detail Description */}
-                      <div className="lg:col-span-6 space-y-4">
-                        <div>
-                          <label className="block text-white/50 mb-1">카테고리 (CATEGORY)</label>
-                          <input
-                            type="text"
-                            value={prod.category}
-                            onChange={(e) =>
-                              handleUpdateProduct(prod.id, { category: e.target.value })
-                            }
-                            placeholder="예: 편의점 닭가슴살 리뷰 / PROTEIN SNACK"
-                            className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-white/50 mb-1">상품명 (PRODUCT NAME)</label>
-                          <input
-                            type="text"
-                            value={prod.name}
-                            onChange={(e) =>
-                              handleUpdateProduct(prod.id, { name: e.target.value })
-                            }
-                            placeholder="예: CU 한끼 닭가슴살 블랙페퍼"
-                            className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white text-sm font-syne font-bold"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-white/50 mb-1">
-                            요약 설명 (SUMMARY · 목록 카드에 표시)
-                          </label>
-                          <textarea
-                            rows={2}
-                            value={prod.usage}
-                            onChange={(e) =>
-                              handleUpdateProduct(prod.id, { usage: e.target.value })
-                            }
-                            placeholder="리커버리 목록 카드에 보이는 간단한 한줄/두줄 요약을 입력하세요."
-                            className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white resize-none"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-white font-bold mb-1">
-                            DESCRIPTION (상품 클릭 시 표시)
-                          </label>
-                          <p className="text-[11px] text-white/45 mb-1.5">
-                            상품을 클릭해 상세 페이지로 들어갔을 때 표시되는 본문입니다. 줄바꿈이 그대로 반영됩니다.
-                          </p>
-                          <textarea
-                            rows={8}
-                            value={prod.detailDescription || ''}
-                            onChange={(e) =>
-                              handleUpdateProduct(prod.id, {
-                                detailDescription: e.target.value,
-                              })
-                            }
-                            placeholder="제품 소개, 영양 정보, 맛/식감 후기, 추천 이유 등을 자유롭게 작성하세요."
-                            className="w-full bg-black border border-white/40 focus:border-white p-3 text-white resize-y leading-relaxed"
-                          />
-                        </div>
+                    {/* SECTION 1: PREVIEW & HEADER (대표사진 · 제목 · 부제목) */}
+                    <div className="border border-white/20 bg-white/[0.02] p-4 sm:p-5 space-y-4">
+                      <div className="border-b border-white/15 pb-2">
+                        <span className="font-mono text-xs font-bold tracking-[0.18em] text-white uppercase">
+                          1. 미리보기 및 헤더 설정 (대표사진 · 제목 · 부제목)
+                        </span>
+                        <p className="text-[11px] font-mono text-white/45 mt-0.5">
+                          리커버리 페이지 첫 화면 카드에 대표사진과 제목, 부제목이 표시되며, 글 상단 헤더에도 제목과 부제목이 노출됩니다.
+                        </p>
                       </div>
 
-                      {/* Right 6 Cols: Main Photo & Additional Detail Photos Gallery */}
-                      <div className="lg:col-span-6 space-y-4">
-                        <div className="flex items-center justify-between flex-wrap gap-2 border-b border-white/15 pb-2.5">
-                          <div>
-                            <span className="block text-white font-bold uppercase tracking-wider">
-                              대표 사진 및 추가 사진 갤러리 ({gallery.length}장)
-                            </span>
-                            <span className="text-[11px] text-white/45">
-                              1번 사진이 카탈로그 대표 썸네일이 되며, 모든 사진이 상세 페이지 갤러리에 표시됩니다.
-                            </span>
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 font-mono text-xs">
+                        {/* Left 4 Cols: Cover Photo (대표사진) */}
+                        <div className="lg:col-span-4 space-y-2.5">
+                          <label className="block text-white/70 font-bold uppercase tracking-wider">
+                            대표 사진 (COVER PHOTO)
+                          </label>
+                          <div className="relative aspect-[4/3] bg-neutral-900 border border-white/25 overflow-hidden">
+                            {prod.image ? (
+                              <img
+                                src={prod.image}
+                                alt={`${prod.name} 대표 사진`}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-white/30">
+                                대표 사진 없음
+                              </div>
+                            )}
                           </div>
 
-                          {/* Upload New Additional Photo to Product Gallery */}
-                          <label className="px-3.5 py-2 bg-white text-black font-mono text-[11px] font-bold tracking-[0.15em] uppercase hover:bg-white/90 transition-all flex items-center gap-1.5 border border-white cursor-pointer whitespace-nowrap shrink-0">
-                            <Upload size={13} />
+                          <label className="block w-full py-2 px-3 bg-white/10 hover:bg-white hover:text-black border border-white/30 text-center font-mono text-[11px] uppercase cursor-pointer transition-colors">
                             <span>
-                              {uploadingField === `prod-add-photo-${prod.id}`
+                              {uploadingField === coverUploadField
                                 ? '업로드 중...'
-                                : '+ 추가 사진 업로드'}
+                                : '내 기기에서 대표 사진 변경'}
                             </span>
                             <input
                               type="file"
@@ -1510,117 +1588,354 @@ export function AdminConsoleModal({
                               onChange={(e) =>
                                 handleFileUpload(
                                   e,
-                                  (newUrl) => handleAddProductGalleryPhoto(prod.id, newUrl),
-                                  `prod-add-photo-${prod.id}`
+                                  (newUrl) =>
+                                    handleUpdateProduct(prod.id, { image: newUrl }),
+                                  coverUploadField
+                                )
+                              }
+                            />
+                          </label>
+
+                          <input
+                            type="text"
+                            value={prod.image || ''}
+                            onChange={(e) =>
+                              handleUpdateProduct(prod.id, { image: e.target.value })
+                            }
+                            placeholder="/uploads/cover.jpg or URL"
+                            className="w-full bg-black border border-white/20 p-1.5 text-[10px] text-white/70"
+                          />
+                        </div>
+
+                        {/* Right 8 Cols: Title (제목) & Subtitle (부제목) */}
+                        <div className="lg:col-span-8 space-y-4 flex flex-col justify-center">
+                          <div>
+                            <label className="block text-white font-bold mb-1.5">
+                              제목 (TITLE)
+                            </label>
+                            <input
+                              type="text"
+                              value={prod.name}
+                              onChange={(e) =>
+                                handleUpdateProduct(prod.id, { name: e.target.value })
+                              }
+                              placeholder="예: 더 단백 / CU 편의점 닭가슴살 5종 비교"
+                              className="w-full bg-black border border-white/35 focus:border-white p-3 text-white text-base font-syne font-bold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-white font-bold mb-1.5">
+                              부제목 (SUBTITLE)
+                            </label>
+                            <textarea
+                              rows={2}
+                              value={currentSubtitle}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                handleUpdateProduct(prod.id, {
+                                  subtitle: val,
+                                  usage: val,
+                                  category: val,
+                                });
+                              }}
+                              placeholder="예: 편의점 단백질 쉐이크 비교분석 — 가장 성분이 클린한 제품은 무엇일까?"
+                              className="w-full bg-black border border-white/35 focus:border-white p-3 text-white text-xs sm:text-sm font-sans resize-none leading-relaxed"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* SECTION 2: BLOG BODY BLOCKS (본문 — 사진과 글 자유 배치) */}
+                    <div className="border border-white/20 bg-white/[0.01] p-4 sm:p-5 space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/15 pb-3">
+                        <div>
+                          <span className="font-mono text-xs font-bold tracking-[0.18em] text-white uppercase block">
+                            2. 본문 구성 (BODY · 사진과 글을 원하는 순서대로 배치)
+                          </span>
+                          <p className="text-[11px] font-mono text-white/45 mt-0.5">
+                            블로그 글을 읽을 때 위에서 아래로 스크롤되는 순서 그대로 사진 블록과 글 블록을 배치하세요.
+                          </p>
+                        </div>
+
+                        {/* Top Quick Add Block Buttons */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => handleAddProductBlock(prod.id, 'text')}
+                            className="px-3 py-2 bg-white text-black hover:bg-white/90 font-mono text-[11px] font-bold tracking-[0.12em] uppercase transition-colors flex items-center gap-1.5 border border-white"
+                          >
+                            <Plus size={13} />
+                            <span>+ 글(텍스트) 블록 추가</span>
+                          </button>
+
+                          <label className="px-3 py-2 bg-white/10 hover:bg-white hover:text-black text-white font-mono text-[11px] font-bold tracking-[0.12em] uppercase cursor-pointer transition-colors flex items-center gap-1.5 border border-white/40">
+                            <Upload size={13} />
+                            <span>
+                              {uploadingField === `prod-add-block-img-${prod.id}`
+                                ? '사진 업로드 중...'
+                                : '+ 사진 업로드로 블록 추가'}
+                            </span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="sr-only"
+                              onChange={(e) =>
+                                handleFileUpload(
+                                  e,
+                                  (newUrl) =>
+                                    handleAddProductBlock(prod.id, 'image', newUrl),
+                                  `prod-add-block-img-${prod.id}`
                                 )
                               }
                             />
                           </label>
                         </div>
+                      </div>
 
-                        {/* Gallery Photos Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                          {gallery.map((imgUrl, photoIdx) => {
-                            const fieldKey = `prod-${prod.id}-photo-${photoIdx}`;
-                            return (
-                              <div
-                                key={photoIdx}
-                                className={`border p-3 space-y-2.5 bg-black ${
-                                  photoIdx === 0 ? 'border-white/50' : 'border-white/20'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-white">
-                                    {photoIdx === 0
-                                      ? 'PHOTO #01 (대표 썸네일)'
-                                      : `PHOTO #${String(photoIdx + 1).padStart(2, '0')} (추가 사진)`}
+                      {/* Sequential Blocks List */}
+                      <div className="space-y-4">
+                        {blocks.map((block, blockIdx) => {
+                          const blockFieldKey = `prod-${prod.id}-block-${blockIdx}`;
+                          const insertImgFieldKey = `prod-${prod.id}-insert-after-${blockIdx}`;
+                          return (
+                            <div
+                              key={block.id || blockIdx}
+                              className="border border-white/25 bg-black p-3.5 sm:p-4 space-y-3"
+                            >
+                              {/* Block Top Bar: Index, Type Badge, Reorder & Delete */}
+                              <div className="flex items-center justify-between gap-2 flex-wrap border-b border-white/10 pb-2.5">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-mono text-[11px] font-bold text-white/80 tracking-[0.15em]">
+                                    #{String(blockIdx + 1).padStart(2, '0')}
                                   </span>
-                                  <div className="flex items-center gap-1">
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleMoveProductGalleryPhoto(prod.id, photoIdx, 'up')
-                                      }
-                                      disabled={photoIdx === 0}
-                                      title="앞 순서로 이동"
-                                      className="p-1 border border-white/20 hover:border-white disabled:opacity-30 text-white"
-                                    >
-                                      <ArrowUp size={12} />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleMoveProductGalleryPhoto(prod.id, photoIdx, 'down')
-                                      }
-                                      disabled={photoIdx === gallery.length - 1}
-                                      title="뒤 순서로 이동"
-                                      className="p-1 border border-white/20 hover:border-white disabled:opacity-30 text-white"
-                                    >
-                                      <ArrowDown size={12} />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() =>
-                                        handleDeleteProductGalleryPhoto(prod.id, photoIdx)
-                                      }
-                                      title="이 사진 삭제"
-                                      className="p-1 border border-red-500/40 text-red-400 hover:bg-red-950/60"
-                                    >
-                                      <Trash2 size={12} />
-                                    </button>
-                                  </div>
+                                  <span
+                                    className={`font-mono text-[10px] px-2 py-0.5 border uppercase tracking-wider ${
+                                      block.type === 'image'
+                                        ? 'border-white/50 bg-white/10 text-white font-bold'
+                                        : 'border-white/30 bg-white/[0.03] text-white/80'
+                                    }`}
+                                  >
+                                    {block.type === 'image' ? '사진 (PHOTO)' : '글 (TEXT)'}
+                                  </span>
                                 </div>
 
-                                <div className="relative aspect-[4/3] bg-neutral-900 border border-white/20 overflow-hidden">
-                                  <img
-                                    src={imgUrl}
-                                    alt={`${prod.name} ${photoIdx + 1}`}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-
-                                <label className="block w-full py-2 px-2.5 bg-white/10 hover:bg-white hover:text-black border border-white/30 text-center font-mono text-[11px] uppercase cursor-pointer transition-colors">
-                                  <span>
-                                    {uploadingField === fieldKey
-                                      ? '업로드 중...'
-                                      : '내 기기에서 이 사진 변경'}
-                                  </span>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="sr-only"
-                                    onChange={(e) =>
-                                      handleFileUpload(
-                                        e,
-                                        (newUrl) =>
-                                          handleUpdateProductGalleryPhoto(
-                                            prod.id,
-                                            photoIdx,
-                                            newUrl
-                                          ),
-                                        fieldKey
+                                <div className="flex items-center gap-1.5 font-mono text-[11px] flex-wrap">
+                                  {/* Insert Text Below This Block */}
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleAddProductBlock(
+                                        prod.id,
+                                        'text',
+                                        '',
+                                        blockIdx
                                       )
                                     }
-                                  />
-                                </label>
+                                    className="px-2 py-1 border border-white/20 hover:border-white text-white/70 hover:text-white text-[10px] transition-colors"
+                                    title="이 블록 바로 아래에 글 블록 끼워넣기"
+                                  >
+                                    + 아래에 글 추가
+                                  </button>
 
-                                <input
-                                  type="text"
-                                  value={imgUrl}
-                                  onChange={(e) =>
-                                    handleUpdateProductGalleryPhoto(
-                                      prod.id,
-                                      photoIdx,
-                                      e.target.value
-                                    )
-                                  }
-                                  placeholder="/images/product.jpg"
-                                  className="w-full bg-black border border-white/20 p-1.5 text-[10px] text-white/70"
-                                />
+                                  {/* Insert Photo Below This Block */}
+                                  <label
+                                    className="px-2 py-1 border border-white/20 hover:border-white text-white/70 hover:text-white text-[10px] cursor-pointer transition-colors"
+                                    title="이 블록 바로 아래에 사진 업로드하여 끼워넣기"
+                                  >
+                                    <span>
+                                      {uploadingField === insertImgFieldKey
+                                        ? '업로드 중...'
+                                        : '+ 아래에 사진 추가'}
+                                    </span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="sr-only"
+                                      onChange={(e) =>
+                                        handleFileUpload(
+                                          e,
+                                          (newUrl) =>
+                                            handleAddProductBlock(
+                                              prod.id,
+                                              'image',
+                                              newUrl,
+                                              blockIdx
+                                            ),
+                                          insertImgFieldKey
+                                        )
+                                      }
+                                    />
+                                  </label>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleMoveProductBlock(prod.id, blockIdx, 'up')
+                                    }
+                                    disabled={blockIdx === 0}
+                                    title="위 순서로 이동"
+                                    className="p-1 border border-white/25 hover:border-white disabled:opacity-30 text-white transition-colors"
+                                  >
+                                    <ArrowUp size={13} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleMoveProductBlock(prod.id, blockIdx, 'down')
+                                    }
+                                    disabled={blockIdx === blocks.length - 1}
+                                    title="아래 순서로 이동"
+                                    className="p-1 border border-white/25 hover:border-white disabled:opacity-30 text-white transition-colors"
+                                  >
+                                    <ArrowDown size={13} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleDeleteProductBlock(prod.id, blockIdx)
+                                    }
+                                    title="이 블록 삭제"
+                                    className="p-1 border border-red-500/40 text-red-400 hover:bg-red-950/60 transition-colors"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
                               </div>
-                            );
-                          })}
-                        </div>
+
+                              {/* Block Content Editor */}
+                              {block.type === 'text' ? (
+                                <div>
+                                  <textarea
+                                    rows={4}
+                                    value={block.content}
+                                    onChange={(e) =>
+                                      handleUpdateProductBlock(prod.id, blockIdx, {
+                                        content: e.target.value,
+                                      })
+                                    }
+                                    placeholder="여기에 본문 글을 작성하세요. 엔터(줄바꿈)가 블로그 본문에 그대로 반영됩니다."
+                                    className="w-full bg-neutral-950 border border-white/30 focus:border-white p-3 text-white text-xs sm:text-sm font-sans resize-y leading-relaxed"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-start font-mono text-xs">
+                                  <div className="sm:col-span-5">
+                                    <div className="relative aspect-[4/3] bg-neutral-900 border border-white/20 overflow-hidden">
+                                      {block.content ? (
+                                        <img
+                                          src={block.content}
+                                          alt={`본문 사진 #${blockIdx + 1}`}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-white/30">
+                                          사진 없음
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="sm:col-span-7 space-y-2.5">
+                                    <label className="block w-full py-2.5 px-3 bg-white/10 hover:bg-white hover:text-black border border-white/30 text-center font-mono text-xs uppercase cursor-pointer transition-colors">
+                                      <span>
+                                        {uploadingField === blockFieldKey
+                                          ? '업로드 중...'
+                                          : '내 기기에서 이 사진 변경'}
+                                      </span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="sr-only"
+                                        onChange={(e) =>
+                                          handleFileUpload(
+                                            e,
+                                            (newUrl) =>
+                                              handleUpdateProductBlock(
+                                                prod.id,
+                                                blockIdx,
+                                                { content: newUrl }
+                                              ),
+                                            blockFieldKey
+                                          )
+                                        }
+                                      />
+                                    </label>
+
+                                    <div>
+                                      <label className="block text-[10px] text-white/45 mb-1">
+                                        사진 설명 캡션 (선택사항 · 사진 아래 작은 글씨로 표시)
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={block.caption || ''}
+                                        onChange={(e) =>
+                                          handleUpdateProductBlock(prod.id, blockIdx, {
+                                            caption: e.target.value,
+                                          })
+                                        }
+                                        placeholder="예: 성분표 비교 / 1팩당 단백질 20g 함유"
+                                        className="w-full bg-black border border-white/25 focus:border-white p-2 text-xs text-white font-sans"
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <label className="block text-[10px] text-white/40 mb-1">
+                                        이미지 경로 직접 입력 (선택)
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={block.content}
+                                        onChange={(e) =>
+                                          handleUpdateProductBlock(prod.id, blockIdx, {
+                                            content: e.target.value,
+                                          })
+                                        }
+                                        placeholder="/uploads/photo.jpg"
+                                        className="w-full bg-black border border-white/20 p-1.5 text-[10px] text-white/60"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Bottom Quick Add Block Bar */}
+                      <div className="pt-2 flex items-center justify-center sm:justify-start gap-2.5 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => handleAddProductBlock(prod.id, 'text')}
+                          className="px-4 py-2.5 bg-white text-black hover:bg-white/90 font-mono text-xs font-bold tracking-[0.14em] uppercase transition-colors flex items-center gap-1.5 border border-white"
+                        >
+                          <Plus size={14} />
+                          <span>+ 본문 하단에 글(텍스트) 추가</span>
+                        </button>
+
+                        <label className="px-4 py-2.5 bg-white/10 hover:bg-white hover:text-black text-white font-mono text-xs font-bold tracking-[0.14em] uppercase cursor-pointer transition-colors flex items-center gap-1.5 border border-white/40">
+                          <Upload size={14} />
+                          <span>
+                            {uploadingField === `prod-add-bottom-img-${prod.id}`
+                              ? '사진 업로드 중...'
+                              : '+ 본문 하단에 사진 업로드 추가'}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            onChange={(e) =>
+                              handleFileUpload(
+                                e,
+                                (newUrl) =>
+                                  handleAddProductBlock(prod.id, 'image', newUrl),
+                                `prod-add-bottom-img-${prod.id}`
+                              )
+                            }
+                          />
+                        </label>
                       </div>
                     </div>
                   </div>

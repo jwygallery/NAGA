@@ -1,4 +1,4 @@
-import { NagaAppData, JoinNoticeItem, ProductItem } from './types';
+import { NagaAppData, JoinNoticeItem, ProductItem, RecoveryContentBlock } from './types';
 
 export function normalizeImageUrl(url: string | undefined | null): string {
   if (!url || typeof url !== 'string') return '';
@@ -71,6 +71,29 @@ export const DEFAULT_PRODUCTS: ProductItem[] = [
       "/uploads/1794243418898_IMG_5445_jpeg.jpg",
       "/images/product_02_alpine_shake.jpg",
       "/images/hero_slide_02.jpg"
+    ],
+    "subtitle": "편의점 단백질 쉐이크 비교분석",
+    "blocks": [
+      {
+        "id": "prod-01-block-img-0",
+        "type": "image",
+        "content": "/uploads/1794243418898_IMG_5445_jpeg.jpg"
+      },
+      {
+        "id": "prod-01-block-txt-0",
+        "type": "text",
+        "content": "급하게 단백질을 섭취해야할 때, 편의점에 들어가 어떤 쉐이크를 선택하는 게 좋을까?\n가장 성분이 클린한 쉐이크가 무엇인지 성분표를 분석해봤다."
+      },
+      {
+        "id": "prod-01-block-img-1",
+        "type": "image",
+        "content": "/images/product_02_alpine_shake.jpg"
+      },
+      {
+        "id": "prod-01-block-img-2",
+        "type": "image",
+        "content": "/images/hero_slide_02.jpg"
+      }
     ]
   }
 ];
@@ -205,18 +228,62 @@ export function normalizeNagaData(raw: Partial<NagaAppData> | null | undefined):
               ? prod.images.map((img) => normalizeImageUrl(img)).filter(Boolean)
               : undefined;
           const mainImage = normalizeImageUrl(prod.image) || fallbackDefault.image;
-          return {
-            ...prod,
-            image: mainImage,
-            detailDescription:
-              prod.detailDescription !== undefined
-                ? prod.detailDescription
-                : fallbackDefault?.detailDescription || prod.usage || '',
-            images: rawImages && rawImages.length > 0
+          const resolvedSubtitle =
+            prod.subtitle !== undefined
+              ? prod.subtitle
+              : prod.usage || prod.category || '';
+          const resolvedDetail =
+            prod.detailDescription !== undefined
+              ? prod.detailDescription
+              : fallbackDefault?.detailDescription || prod.usage || '';
+          const resolvedImages =
+            rawImages && rawImages.length > 0
               ? rawImages
               : fallbackDefault && fallbackDefault.id === prod.id && fallbackDefault.images
               ? [mainImage, ...fallbackDefault.images.slice(1).map((img) => normalizeImageUrl(img))]
-              : [mainImage],
+              : [mainImage];
+
+          let resolvedBlocks: RecoveryContentBlock[];
+          if (Array.isArray(prod.blocks) && prod.blocks.length > 0) {
+            resolvedBlocks = prod.blocks.map((b, bIdx) => ({
+              id: b.id || `${prod.id || 'prod'}-block-${bIdx}`,
+              type: b.type === 'image' ? 'image' : 'text',
+              content: b.type === 'image' ? normalizeImageUrl(b.content) : (b.content ?? ''),
+              caption: b.caption ?? '',
+            }));
+          } else {
+            resolvedBlocks = [];
+            if (resolvedImages[0]) {
+              resolvedBlocks.push({
+                id: `${prod.id || 'prod'}-block-img-0`,
+                type: 'image',
+                content: resolvedImages[0],
+              });
+            }
+            if (resolvedDetail.trim()) {
+              resolvedBlocks.push({
+                id: `${prod.id || 'prod'}-block-txt-0`,
+                type: 'text',
+                content: resolvedDetail,
+              });
+            }
+            for (let i = 1; i < resolvedImages.length; i++) {
+              resolvedBlocks.push({
+                id: `${prod.id || 'prod'}-block-img-${i}`,
+                type: 'image',
+                content: resolvedImages[i],
+              });
+            }
+          }
+
+          return {
+            ...prod,
+            subtitle: resolvedSubtitle,
+            usage: resolvedSubtitle,
+            image: mainImage,
+            detailDescription: resolvedDetail,
+            images: resolvedImages,
+            blocks: resolvedBlocks,
           };
         })
       : DEFAULT_PRODUCTS;

@@ -87,6 +87,29 @@
         "/uploads/1794243418898_IMG_5445_jpeg.jpg",
         "/images/product_02_alpine_shake.jpg",
         "/images/hero_slide_02.jpg"
+      ],
+      "subtitle": "편의점 단백질 쉐이크 비교분석",
+      "blocks": [
+        {
+          "id": "prod-01-block-img-0",
+          "type": "image",
+          "content": "/uploads/1794243418898_IMG_5445_jpeg.jpg"
+        },
+        {
+          "id": "prod-01-block-txt-0",
+          "type": "text",
+          "content": "급하게 단백질을 섭취해야할 때, 편의점에 들어가 어떤 쉐이크를 선택하는 게 좋을까?\n가장 성분이 클린한 쉐이크가 무엇인지 성분표를 분석해봤다."
+        },
+        {
+          "id": "prod-01-block-img-1",
+          "type": "image",
+          "content": "/images/product_02_alpine_shake.jpg"
+        },
+        {
+          "id": "prod-01-block-img-2",
+          "type": "image",
+          "content": "/images/hero_slide_02.jpg"
+        }
       ]
     }
   ],
