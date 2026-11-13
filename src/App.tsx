@@ -330,7 +330,7 @@ export default function App() {
                 NAGA<span className="text-[10px] tracking-normal font-sans align-top">™</span>
               </span>
               <span className="text-[8px] sm:text-[9px] text-white/60 tracking-[0.12em] sm:tracking-[0.18em] uppercase font-mono mt-0.5 truncate max-w-[120px] xs:max-w-[180px] sm:max-w-none">
-                NATIONAL ALPINE GUARD ASSOSIATION
+                NATIONAL ALPINE GUARD ASSOCIATION
               </span>
             </div>
           </button>
