@@ -832,7 +832,7 @@ export function AdminConsoleModal({
                   SESSION & TRAINING ACTIVITIES
                 </h3>
                 <p className="text-xs font-mono text-white/50 tracking-wider mt-1">
-                  일정 순서(가까운 일정이 위로), 거리, 코스 상세 정보 및 코스 사진(3장)을 수정하거나 새 게시물을 등록합니다.
+                  일정 순서(가까운 일정이 위로), 거리, 코스 상세 정보 및 코스 사진(자유롭게 추가·수정·순서변경·삭제 가능)을 관리합니다.
                 </p>
               </div>
               {!isCreatingNewActivity && !editingActivityId && (
@@ -967,18 +967,122 @@ export function AdminConsoleModal({
                     />
                   </div>
 
-                  {/* 3 Course Photos Uploader */}
-                  <div className="space-y-3 pt-2 border-t border-white/20">
-                    <span className="block font-bold uppercase tracking-[0.15em] text-white">
-                      코스 사진 슬라이드 (가로 4:3 비율 권장, 각 3장)
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {[0, 1, 2].map((slotIdx) => {
-                        const currentImg = activityForm.images?.[slotIdx] || '';
+                  {/* Dynamic Course Photos Uploader (Add, Reorder, Replace, Delete) */}
+                  <div className="space-y-3 pt-3 border-t border-white/20">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div>
+                        <span className="block font-bold uppercase tracking-[0.15em] text-white">
+                          PHOTOS · 액티비티 사진 갤러리 ({(activityForm.images || []).length}장)
+                        </span>
+                        <span className="text-[11px] text-white/50 block mt-0.5">
+                          가로 4:3 비율 권장 · 원하는 만큼 사진을 추가하거나 순서를 바꾸고 수정·삭제할 수 있습니다.
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Upload new photo directly to activityForm.images */}
+                        <label className="px-3 py-2 bg-white text-black hover:bg-white/90 font-mono text-[11px] font-bold tracking-[0.15em] uppercase cursor-pointer transition-colors flex items-center gap-1.5 border border-white">
+                          <Upload size={13} />
+                          <span>
+                            {uploadingField === 'act-photo-add-new'
+                              ? '사진 업로드 중...'
+                              : '+ 사진 업로드로 추가'}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            onChange={(e) =>
+                              handleFileUpload(
+                                e,
+                                (newUrl) => {
+                                  const nextImages = [...(activityForm.images || []), newUrl];
+                                  updateActivityForm({ images: nextImages });
+                                },
+                                'act-photo-add-new'
+                              )
+                            }
+                          />
+                        </label>
+
+                        {/* Add blank photo slot */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextImages = [
+                              ...(activityForm.images || []),
+                              '/images/activity_02_slide_1.jpg',
+                            ];
+                            updateActivityForm({ images: nextImages });
+                          }}
+                          className="px-3 py-2 border border-white/30 hover:border-white text-white/80 hover:text-white font-mono text-[11px] tracking-[0.15em] uppercase transition-colors flex items-center gap-1.5"
+                        >
+                          <Plus size={13} />
+                          <span>+ 사진 슬롯 추가</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {(activityForm.images || []).map((currentImg, slotIdx) => {
+                        const totalPhotos = (activityForm.images || []).length;
                         const fieldId = `act-photo-${slotIdx}`;
                         return (
-                          <div key={slotIdx} className="border border-white/20 bg-black p-3 space-y-2">
-                            <span className="text-[10px] text-white/50 block">SLIDE #{slotIdx + 1}</span>
+                          <div key={slotIdx} className="border border-white/20 bg-black p-3 space-y-2.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-white/80 tracking-[0.15em]">
+                                PHOTO #{String(slotIdx + 1).padStart(2, '0')} / {String(totalPhotos).padStart(2, '0')}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  disabled={slotIdx === 0}
+                                  onClick={() => {
+                                    const nextImages = [...(activityForm.images || [])];
+                                    const temp = nextImages[slotIdx - 1];
+                                    nextImages[slotIdx - 1] = nextImages[slotIdx];
+                                    nextImages[slotIdx] = temp;
+                                    updateActivityForm({ images: nextImages });
+                                  }}
+                                  title="앞 순서로 이동"
+                                  className="p-1 border border-white/20 hover:border-white disabled:opacity-30 text-white transition-colors"
+                                >
+                                  <ArrowUp size={12} />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={slotIdx === totalPhotos - 1}
+                                  onClick={() => {
+                                    const nextImages = [...(activityForm.images || [])];
+                                    const temp = nextImages[slotIdx + 1];
+                                    nextImages[slotIdx + 1] = nextImages[slotIdx];
+                                    nextImages[slotIdx] = temp;
+                                    updateActivityForm({ images: nextImages });
+                                  }}
+                                  title="뒤 순서로 이동"
+                                  className="p-1 border border-white/20 hover:border-white disabled:opacity-30 text-white transition-colors"
+                                >
+                                  <ArrowDown size={12} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const currentList = activityForm.images || [];
+                                    if (currentList.length <= 1) {
+                                      alert('최소 1장의 사진은 유지되어야 합니다.');
+                                      return;
+                                    }
+                                    const nextImages = currentList.filter((_, i) => i !== slotIdx);
+                                    updateActivityForm({ images: nextImages });
+                                  }}
+                                  title="이 사진 삭제"
+                                  className="p-1 border border-red-500/40 text-red-400 hover:bg-red-950/60 transition-colors"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            </div>
+
                             <div className="relative aspect-[4/3] bg-neutral-900 border border-white/20 overflow-hidden">
                               {currentImg ? (
                                 <img
@@ -1023,7 +1127,7 @@ export function AdminConsoleModal({
                                 nextImages[slotIdx] = e.target.value;
                                 updateActivityForm({ images: nextImages });
                               }}
-                              placeholder="/images/photo.jpg or URL"
+                              placeholder="/uploads/photo.jpg or URL"
                               className="w-full bg-black border border-white/20 p-1.5 text-[10px] text-white/70"
                             />
                           </div>
@@ -1079,7 +1183,7 @@ export function AdminConsoleModal({
 
                     <p className="text-xs font-mono text-white/70 line-clamp-1">{act.keyPoints}</p>
 
-                    <div className="flex items-center gap-2 pt-1">
+                    <div className="flex items-center gap-2 flex-wrap pt-1">
                       {(act.images || []).map((img, i) => (
                         <div
                           key={i}
@@ -1143,7 +1247,7 @@ export function AdminConsoleModal({
                   HERO BANNER PHOTO EXHIBITION
                 </h3>
                 <p className="text-xs font-mono text-white/50 tracking-wider mt-1">
-                  메인 화면에 전시되는 히어로 슬라이드 전용 사진 아카이브입니다. 세션과 무관하게 순수 사진 전시용으로만 관리됩니다.
+                  메인 화면에 전시되는 히어로 슬라이드 전용 사진 아카이브입니다 (가로 4:3 비율 권장). 세션과 무관하게 순수 사진 전시용으로만 관리됩니다.
                 </p>
               </div>
               <div className="flex items-center gap-2.5 flex-wrap">
@@ -1213,8 +1317,8 @@ export function AdminConsoleModal({
                     </div>
                   </div>
 
-                  {/* Slide Image Preview (16:9) */}
-                  <div className="relative aspect-[16/9] bg-neutral-900 border border-white/20 overflow-hidden">
+                  {/* Slide Image Preview (4:3) */}
+                  <div className="relative aspect-[4/3] bg-neutral-900 border border-white/20 overflow-hidden">
                     <img
                       src={slide.image}
                       alt={`Hero Exhibition Photo ${idx + 1}`}

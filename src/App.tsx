@@ -396,11 +396,11 @@ export default function App() {
         {/* VIEW 0: HOME VIEW (Hero Image Slider + Main Footer placed immediately below) */}
         {/* ==================================================================== */}
         {currentView === 'home' && (
-          <div id="home-view" className="flex-1 flex flex-col w-full">
-            {/* Hero Section (메인 배너) with touch swipe on mobile */}
+          <div id="home-view" className="flex-1 flex flex-col w-full justify-between">
+            {/* Hero Section (메인 배너): 모바일에서도 가로 4:3 비율 유지 + 하단 배너 한눈에 노출 */}
             <section
               id="hero-banner-section"
-              className="relative w-full h-[calc(100dvh-64px)] sm:h-[calc(100dvh-68px)] min-h-[360px] max-h-[820px] bg-black overflow-hidden flex flex-col justify-between touch-pan-y"
+              className="relative w-full aspect-[4/3] sm:aspect-auto sm:h-[64dvh] sm:min-h-[420px] max-h-[760px] bg-black overflow-hidden flex flex-col justify-between touch-pan-y shrink-0"
               onMouseEnter={() => setIsPaused(true)}
               onMouseLeave={() => setIsPaused(false)}
               onTouchStart={handleTouchStart}
@@ -427,23 +427,23 @@ export default function App() {
               ))}
 
               {/* Slider Controls Bar: Left & Right Arrow Buttons + Slide Index & Progress */}
-              <div className="relative z-20 w-full px-4 sm:px-12 pb-4 sm:pb-6 mt-auto flex items-end justify-between gap-4">
-                <div className="flex items-center gap-2">
+              <div className="relative z-20 w-full px-3.5 sm:px-12 pb-3 sm:pb-6 mt-auto flex items-end justify-between gap-4">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <button
                     id="hero-slider-prev-btn"
                     onClick={prevSlide}
                     aria-label="Previous Slide"
-                    className="w-11 h-11 sm:w-10 sm:h-10 border border-white/40 bg-black/75 hover:bg-white hover:text-black transition-colors flex items-center justify-center text-white active:scale-95"
+                    className="w-9 h-9 sm:w-10 sm:h-10 border border-white/40 bg-black/75 hover:bg-white hover:text-black transition-colors flex items-center justify-center text-white active:scale-95"
                   >
-                    <ChevronLeft size={18} />
+                    <ChevronLeft size={17} />
                   </button>
                   <button
                     id="hero-slider-next-btn"
                     onClick={nextSlide}
                     aria-label="Next Slide"
-                    className="w-11 h-11 sm:w-10 sm:h-10 border border-white/40 bg-black/75 hover:bg-white hover:text-black transition-colors flex items-center justify-center text-white active:scale-95"
+                    className="w-9 h-9 sm:w-10 sm:h-10 border border-white/40 bg-black/75 hover:bg-white hover:text-black transition-colors flex items-center justify-center text-white active:scale-95"
                   >
-                    <ChevronRight size={18} />
+                    <ChevronRight size={17} />
                   </button>
                 </div>
 
@@ -477,29 +477,29 @@ export default function App() {
 
             {/* 
               ========================================================================
-              MAIN FOOTER (배너 직하단 배치: 참고 이미지 레이아웃 반영)
+              MAIN FOOTER (배너 직하단 배치: 모바일에서 4:3 히어로 배너와 한 화면에 노출)
               Left: "NAGA™" & "National Alpine Guard Association."
               Right: ORGANIZER, INSTAGRAM, SEOUL, KOREA, etc.
               ========================================================================
             */}
             <footer
               id="main-footer"
-              className="w-full bg-black border-t border-white/20 px-4 sm:px-12 py-8 sm:py-14"
+              className="w-full bg-black border-t border-white/20 px-4 sm:px-12 py-5 sm:py-12 flex-1 flex items-center"
             >
-              <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-start justify-between gap-6 sm:gap-8 lg:gap-16">
+              <div className="max-w-7xl w-full mx-auto flex flex-col lg:flex-row items-start justify-between gap-4 sm:gap-8 lg:gap-16">
                 {/* Left Side: Bold Brand Typography */}
-                <div className="space-y-1.5 sm:space-y-2 max-w-xl">
-                  <h2 className="text-3xl sm:text-5xl font-syne font-extrabold uppercase tracking-tight text-white leading-none">
-                    NAGA<span className="text-xl sm:text-2xl font-sans align-top ml-1">™</span>
+                <div className="space-y-1 sm:space-y-2 max-w-xl">
+                  <h2 className="text-2xl sm:text-5xl font-syne font-extrabold uppercase tracking-tight text-white leading-none">
+                    NAGA<span className="text-base sm:text-2xl font-sans align-top ml-1">™</span>
                   </h2>
-                  <p className="text-lg sm:text-2xl lg:text-3xl font-syne font-bold tracking-tight text-white leading-snug sm:leading-tight break-words">
+                  <p className="text-base sm:text-2xl lg:text-3xl font-syne font-bold tracking-tight text-white leading-snug sm:leading-tight break-words">
                     National Alpine Guard Association.
                   </p>
                 </div>
 
                 {/* Right Side: Informational Column Right-Aligned */}
-                <div className="font-mono text-xs sm:text-sm tracking-[0.14em] sm:tracking-[0.16em] text-white/80 uppercase pt-4 lg:pt-2 border-t border-white/10 lg:border-t-0 w-full lg:w-auto text-left lg:text-right lg:ml-auto">
-                  <div className="space-y-2 sm:space-y-2.5">
+                <div className="font-mono text-[11px] sm:text-sm tracking-[0.14em] sm:tracking-[0.16em] text-white/80 uppercase pt-3 lg:pt-2 border-t border-white/10 lg:border-t-0 w-full lg:w-auto text-left lg:text-right lg:ml-auto">
+                  <div className="space-y-1.5 sm:space-y-2.5">
                     <div>ORGANIZER: JWY</div>
                     <div className="break-words">
                       INSTAGRAM:{' '}
@@ -659,13 +659,14 @@ export default function App() {
 
                   {/* Photo Slide Carousel */}
                   {selectedActivity.images && selectedActivity.images.length > 0 && (
-                    <div className="space-y-2 pt-1">
+                    <div className="space-y-2.5 pt-1">
                       <div className="flex items-center justify-between">
                         <span className="font-mono text-[11px] tracking-[0.18em] text-white/50 uppercase">
                           PHOTOS
                         </span>
                         <span className="font-mono text-[11px] tracking-[0.18em] text-white/70 tabular-nums">
-                          [ 0{modalSlideIndex + 1} / 0{selectedActivity.images.length} ]
+                          [ {String((modalSlideIndex % selectedActivity.images.length) + 1).padStart(2, '0')} /{' '}
+                          {String(selectedActivity.images.length).padStart(2, '0')} ]
                         </span>
                       </div>
 
@@ -689,49 +690,78 @@ export default function App() {
                         ))}
 
                         {/* Navigation Arrows */}
-                        <div className="absolute inset-y-0 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              prevModalSlide();
-                            }}
-                            className="pointer-events-auto w-8 h-8 sm:w-9 sm:h-9 bg-black/70 hover:bg-white hover:text-black border border-white/40 text-white flex items-center justify-center transition-colors active:scale-95"
-                            aria-label="Previous Photo"
-                          >
-                            <ChevronLeft size={16} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              nextModalSlide();
-                            }}
-                            className="pointer-events-auto w-8 h-8 sm:w-9 sm:h-9 bg-black/70 hover:bg-white hover:text-black border border-white/40 text-white flex items-center justify-center transition-colors active:scale-95"
-                            aria-label="Next Photo"
-                          >
-                            <ChevronRight size={16} />
-                          </button>
-                        </div>
-
-                        {/* Slide Indicators / Dots at Bottom */}
-                        <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/60 px-2.5 py-1 border border-white/20">
-                          {selectedActivity.images.map((_, idx) => (
+                        {selectedActivity.images.length > 1 && (
+                          <div className="absolute inset-y-0 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
                             <button
-                              key={idx}
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setModalSlideIndex(idx);
+                                prevModalSlide();
                               }}
-                              aria-label={`Go to slide ${idx + 1}`}
-                              className={`h-1.5 transition-all ${
-                                idx === modalSlideIndex ? 'w-5 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'
+                              className="pointer-events-auto w-8 h-8 sm:w-9 sm:h-9 bg-black/70 hover:bg-white hover:text-black border border-white/40 text-white flex items-center justify-center transition-colors active:scale-95"
+                              aria-label="Previous Photo"
+                            >
+                              <ChevronLeft size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                nextModalSlide();
+                              }}
+                              className="pointer-events-auto w-8 h-8 sm:w-9 sm:h-9 bg-black/70 hover:bg-white hover:text-black border border-white/40 text-white flex items-center justify-center transition-colors active:scale-95"
+                              aria-label="Next Photo"
+                            >
+                              <ChevronRight size={16} />
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Slide Indicators / Dots at Bottom */}
+                        {selectedActivity.images.length > 1 && (
+                          <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/60 px-2.5 py-1 border border-white/20 max-w-[90%] overflow-x-auto no-scrollbar">
+                            {selectedActivity.images.map((_, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setModalSlideIndex(idx);
+                                }}
+                                aria-label={`Go to slide ${idx + 1}`}
+                                className={`h-1.5 shrink-0 transition-all ${
+                                  idx === modalSlideIndex ? 'w-5 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Thumbnail Strip for Quick Photo Selection */}
+                      {selectedActivity.images.length > 1 && (
+                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 pt-1">
+                          {selectedActivity.images.map((imgSrc, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setModalSlideIndex(idx)}
+                              className={`relative aspect-[4/3] border overflow-hidden transition-all ${
+                                idx === modalSlideIndex
+                                  ? 'border-white ring-1 ring-white opacity-100'
+                                  : 'border-white/20 opacity-50 hover:opacity-85'
                               }`}
-                            />
+                            >
+                              <img
+                                src={imgSrc}
+                                alt={`Thumbnail ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                              />
+                            </button>
                           ))}
                         </div>
-                      </div>
+                      )}
                     </div>
                   )}
 
