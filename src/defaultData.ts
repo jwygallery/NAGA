@@ -62,17 +62,17 @@ export const DEFAULT_PRODUCTS: ProductItem[] = [
     "id": "prod-01",
     "code": "[Product 01]",
     "name": "편의점 단백질 음료 비교",
-    "category": "July, 06, 2026\n편의점 단백질 쉐이크 비교분석",
+    "category": "July, 06, 2026",
     "image": "/uploads/1794243418898_IMG_5445_jpeg.jpg",
     "spec": " 30g 단백질 / 휴대용 파우치 규격",
-    "usage": "July, 06, 2026\n편의점 단백질 쉐이크 비교분석",
+    "usage": "July, 06, 2026",
     "detailDescription": "급하게 단백질을 섭취해야할 때, 편의점에 들어가 어떤 쉐이크를 선택하는 게 좋을까?\n가장 성분이 클린한 쉐이크가 무엇인지 성분표를 분석해봤다.",
     "images": [
       "/uploads/1794243418898_IMG_5445_jpeg.jpg",
       "/images/product_02_alpine_shake.jpg",
       "/uploads/1794568209767_IMG_5483_jpeg.jpg"
     ],
-    "subtitle": "July, 06, 2026\n편의점 단백질 쉐이크 비교분석",
+    "subtitle": "July, 06, 2026",
     "blocks": [
       {
         "id": "prod-01-block-img-0",
