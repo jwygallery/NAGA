@@ -549,13 +549,14 @@ export function AdminConsoleModal({
   const handleAddProduct = () => {
     const defaultImg = '/images/product_02_alpine_shake.jpg';
     const prodId = `prod-${Date.now()}`;
+    const todayStr = `${new Date().getFullYear()}.${String(new Date().getMonth() + 1).padStart(2, '0')}.${String(new Date().getDate()).padStart(2, '0')}`;
     const newProd: ProductItem = {
       id: prodId,
       name: '새 리커버리 블로그 포스트 제목',
-      subtitle: '부제목을 입력하세요 (리커버리 목록 미리보기와 포스트 상단에 표시됩니다)',
-      category: '부제목을 입력하세요 (리커버리 목록 미리보기와 포스트 상단에 표시됩니다)',
+      subtitle: todayStr,
+      category: todayStr,
       image: defaultImg,
-      usage: '부제목을 입력하세요 (리커버리 목록 미리보기와 포스트 상단에 표시됩니다)',
+      usage: todayStr,
       detailDescription: '여기에 본문 내용을 작성하세요.',
       images: [defaultImg],
       blocks: [
@@ -1463,7 +1464,7 @@ export function AdminConsoleModal({
         )}
 
         {/* ================================================================== */}
-        {/* TAB 3: RECOVERY BLOG POST EDITOR (대표사진 · 제목 · 부제목 · 본문 블록 배치) */}
+        {/* TAB 3: RECOVERY BLOG POST EDITOR (대표사진 · 제목 · 날짜 입력 · 본문 블록 배치) */}
         {/* ================================================================== */}
         {activeTab === 'products' && (
           <div className="space-y-6">
@@ -1473,7 +1474,7 @@ export function AdminConsoleModal({
                   RECOVERY BLOG EDITOR
                 </h3>
                 <p className="text-xs font-mono text-white/50 tracking-wider mt-1">
-                  리커버리 페이지 미리보기용 [대표사진 · 제목 · 부제목]과 클릭 시 스크롤하며 읽는 [본문(사진+글 자유 배치)]을 블로그 형식으로 관리합니다.
+                  리커버리 페이지 미리보기용 [대표사진 · 제목 · 작성 날짜]와 클릭 시 스크롤하며 읽는 [본문(사진+글 자유 배치)]을 블로그 형식으로 관리합니다.
                 </p>
               </div>
               <button
@@ -1544,14 +1545,14 @@ export function AdminConsoleModal({
                       </div>
                     </div>
 
-                    {/* SECTION 1: PREVIEW & HEADER (대표사진 · 제목 · 부제목) */}
+                    {/* SECTION 1: PREVIEW & HEADER (대표사진 · 제목 · 날짜 입력) */}
                     <div className="border border-white/20 bg-white/[0.02] p-4 sm:p-5 space-y-4">
                       <div className="border-b border-white/15 pb-2">
                         <span className="font-mono text-xs font-bold tracking-[0.18em] text-white uppercase">
-                          1. 미리보기 및 헤더 설정 (대표사진 · 제목 · 부제목)
+                          1. 미리보기 및 헤더 설정 (대표사진 · 제목 · 날짜 입력)
                         </span>
                         <p className="text-[11px] font-mono text-white/45 mt-0.5">
-                          리커버리 페이지 첫 화면 카드에 대표사진과 제목, 부제목이 표시되며, 글 상단 헤더에도 제목과 부제목이 노출됩니다.
+                          리커버리 페이지 첫 화면 카드에 대표사진과 제목, 작성 날짜가 표시되며, 글 상단 헤더에도 제목과 작성 날짜가 노출됩니다.
                         </p>
                       </div>
 
@@ -1607,7 +1608,7 @@ export function AdminConsoleModal({
                           />
                         </div>
 
-                        {/* Right 8 Cols: Title (제목) & Subtitle (부제목) */}
+                        {/* Right 8 Cols: Title (제목) & Date (날짜 입력) */}
                         <div className="lg:col-span-8 space-y-4 flex flex-col justify-center">
                           <div>
                             <label className="block text-white font-bold mb-1.5">
@@ -1626,7 +1627,7 @@ export function AdminConsoleModal({
 
                           <div>
                             <label className="block text-white font-bold mb-1.5">
-                              부제목 (SUBTITLE)
+                              날짜 입력 (DATE)
                             </label>
                             <textarea
                               rows={2}
@@ -1639,7 +1640,7 @@ export function AdminConsoleModal({
                                   category: val,
                                 });
                               }}
-                              placeholder="예: 편의점 단백질 쉐이크 비교분석 — 가장 성분이 클린한 제품은 무엇일까?"
+                              placeholder="예: 2026.11.13"
                               className="w-full bg-black border border-white/35 focus:border-white p-3 text-white text-xs sm:text-sm font-sans resize-none leading-relaxed"
                             />
                           </div>
