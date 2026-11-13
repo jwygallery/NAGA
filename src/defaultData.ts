@@ -61,30 +61,16 @@ export const DEFAULT_PRODUCTS: ProductItem[] = [
   {
     "id": "prod-01",
     "code": "[Product 01]",
-    "name": "NAGA Alpine Snack",
-    "category": "RAPID METABOLIC RECOVERY",
+    "name": "더 단백",
+    "category": "편의점 단백질 쉐이크 리뷰",
     "image": "/uploads/1794243418898_IMG_5445_jpeg.jpg",
     "spec": " 30g 단백질 / 휴대용 파우치 규격",
-    "usage": "급성 근육 피로를 중화하고 글리코겐을 신속 재충전하는 고단백 식단.",
-    "detailDescription": "브루클린 버거 ㅋㅋ",
+    "usage": "편의점 단백질 쉐이크 비교분석",
+    "detailDescription": "급하게 단백질을 섭취해야할 때, 편의점에 들어가 어떤 쉐이크를 선택하는 게 좋을까?\n가장 성분이 클린한 쉐이크가 무엇인지 성분표를 분석해봤다.",
     "images": [
       "/uploads/1794243418898_IMG_5445_jpeg.jpg",
       "/images/product_02_alpine_shake.jpg",
       "/images/hero_slide_02.jpg"
-    ]
-  },
-  {
-    "id": "prod-02",
-    "code": "[Product 02]",
-    "name": "NAGA Balance Greek Bowl",
-    "category": "POST-EXPEDITION NUTRITION",
-    "image": "/images/product_03_greek_bowl.jpg",
-    "spec": "유청 분리 고농축 그릭 요거트 / 고단백 슈퍼푸드 너트 믹스 / 천연 아카시아 꿀",
-    "usage": "장거리 알파인 활동 후 위장 부담 없이 장시간 단백질을 공급하는 고영양 밸런스 리커버리 볼.",
-    "detailDescription": "장시간산행 완료 후 지친 소화기관에 부담을 주지 않으면서 서방형(Slow-Release) 단백질과 항산화 영양소를 공급하는 수제 그릭 요거트 리커버리 볼입니다.\n\n• 핵심 배합: 3단계 유청 분리 공정을 거친 꾸덕한 고농축 카제인·유청 그릭 요거트 + 로스팅 아몬드·호두·호박씨·치아씨드 슈퍼푸드 토핑 + 천연 아카시아 벌꿀\n• 리커버리 효능: 산행 중 고갈된 근육 글리코겐을 완만하게 회복시키며, 유산균과 식이섬유가 장시간 산행 후 신체 컨디션 정상화를 돕습니다.",
-    "images": [
-      "/images/product_03_greek_bowl.jpg",
-      "/images/activity_taebaek_slide_1.jpg"
     ]
   }
 ];
