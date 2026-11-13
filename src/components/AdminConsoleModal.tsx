@@ -614,14 +614,14 @@ export function AdminConsoleModal({
     const newSession: JoinNoticeItem = {
       id: `join-session-${Date.now()}`,
       isActive: true,
-      tag: 'UPCOMING EXPEDITION · 2027',
-      title: 'NEW EXPEDITION SESSION',
-      sub: '신규 모집 산행 세션 (한글 소제목을 입력하세요)',
-      description: '고려대학교 약학대학 산악단체 NAGA™ 공식 필드 세션 참가 등록 안내',
+      tag: 'OPEN SESSION · 2027',
+      title: 'NEW SESSION',
+      sub: '신규 모집 세션 (한글 소제목을 입력하세요)',
+      description: '세션 상세 안내 설명을 입력하세요.',
       coursePhoto: '/images/activity_taebaek_slide_1.jpg',
-      photoArchiveTag: 'EXPEDITION ARCHIVE',
-      photoTrailTag: 'ALPINE COURSE TRAIL',
-      targetSession: 'NEW EXPEDITION SESSION [2027] - 신규 모집 산행 세션',
+      photoArchiveTag: '',
+      photoTrailTag: '',
+      targetSession: 'NEW SESSION [2027] - 신규 모집 세션',
     };
     const nextList = [...joinNoticesList, newSession];
     setData((prev) => ({
@@ -829,7 +829,7 @@ export function AdminConsoleModal({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/20 pb-4">
               <div>
                 <h3 className="text-xl sm:text-2xl font-syne font-bold uppercase tracking-tight text-white">
-                  EXPEDITION & TRAINING ACTIVITIES
+                  SESSION & TRAINING ACTIVITIES
                 </h3>
                 <p className="text-xs font-mono text-white/50 tracking-wider mt-1">
                   일정 순서(가까운 일정이 위로), 거리, 코스 상세 정보 및 코스 사진(3장)을 수정하거나 새 게시물을 등록합니다.
@@ -1360,7 +1360,7 @@ export function AdminConsoleModal({
 
                         <div>
                           <label className="block text-white font-bold mb-1">
-                            상세 설명 (DETAIL DESCRIPTION · 상품 클릭 시 표시)
+                            DESCRIPTION (상품 클릭 시 표시)
                           </label>
                           <p className="text-[11px] text-white/45 mb-1.5">
                             상품을 클릭해 상세 페이지로 들어갔을 때 표시되는 본문입니다. 줄바꿈이 그대로 반영됩니다.
@@ -1661,7 +1661,7 @@ export function AdminConsoleModal({
                             onChange={(e) =>
                               handleUpdateJoinSession(session.id, { tag: e.target.value })
                             }
-                            placeholder="UPCOMING EXPEDITION · 2027.01"
+                            placeholder="OPEN SESSION · 2027.06"
                             className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white"
                           />
                         </div>
@@ -1684,7 +1684,7 @@ export function AdminConsoleModal({
 
                       <div>
                         <label className="block text-white/50 mb-1">
-                          세션 영문 타이틀 (JOIN 탭 이름 & 공지 제목)
+                          세션 타이틀 (JOIN 탭 이름 & 공지 제목)
                         </label>
                         <input
                           type="text"
@@ -1697,7 +1697,7 @@ export function AdminConsoleModal({
                       </div>
 
                       <div>
-                        <label className="block text-white/50 mb-1">한글 소제목 (SUBTITLE)</label>
+                        <label className="block text-white/50 mb-1">소제목 (SUBTITLE)</label>
                         <input
                           type="text"
                           value={session.sub}
@@ -1710,7 +1710,7 @@ export function AdminConsoleModal({
 
                       <div>
                         <label className="block text-white/50 mb-1">
-                          모집 안내 상세 설명 (DESCRIPTION)
+                          모집 안내 설명 (DESCRIPTION)
                         </label>
                         <textarea
                           rows={3}
@@ -1721,41 +1721,12 @@ export function AdminConsoleModal({
                           className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white resize-none"
                         />
                       </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-white/50 mb-1">사진 좌상단 캡션</label>
-                          <input
-                            type="text"
-                            value={session.photoArchiveTag}
-                            onChange={(e) =>
-                              handleUpdateJoinSession(session.id, {
-                                photoArchiveTag: e.target.value,
-                              })
-                            }
-                            className="w-full bg-black border border-white/25 focus:border-white p-2 text-white/80"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-white/50 mb-1">사진 우하단 코스 캡션</label>
-                          <input
-                            type="text"
-                            value={session.photoTrailTag}
-                            onChange={(e) =>
-                              handleUpdateJoinSession(session.id, {
-                                photoTrailTag: e.target.value,
-                              })
-                            }
-                            className="w-full bg-black border border-white/25 focus:border-white p-2 text-white/80"
-                          />
-                        </div>
-                      </div>
                     </div>
 
                     {/* Right 5 cols: 4:3 Course Photo Preview & Upload */}
                     <div className="lg:col-span-5 space-y-3">
                       <span className="block text-white/60 uppercase tracking-wider">
-                        코스 아카이브 사진 (가로 4:3 비율)
+                        세션 대표 사진 (PHOTOS · 4:3 비율)
                       </span>
                       <div className="relative aspect-[4/3] w-full bg-neutral-900 border border-white/20 overflow-hidden">
                         <img

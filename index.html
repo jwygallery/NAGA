@@ -63,6 +63,16 @@
         margin: 0;
         padding: 0;
         overflow-x: hidden;
+        word-break: keep-all;
+        min-height: 100dvh;
+      }
+      /* Hide scrollbar utility */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
       }
       /* Custom selection style */
       ::selection {
@@ -71,7 +81,7 @@
       }
     </style>
   </head>
-  <body class="bg-black text-white min-h-screen">
+  <body class="bg-black text-white min-h-[100dvh] break-keep">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

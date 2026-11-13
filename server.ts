@@ -499,6 +499,7 @@ async function syncDatabaseToGitHub(reason: string, includeAppSourceFiles = fals
 
     if (includeAppSourceFiles) {
       const extraPaths = [
+        'index.html',
         'src/types.ts',
         'src/App.tsx',
         'src/components/AdminConsoleModal.tsx',

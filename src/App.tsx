@@ -302,7 +302,7 @@ export default function App() {
   };
 
   return (
-    <div id="naga-app" className="min-h-screen bg-black text-white flex flex-col font-sans selection:bg-white selection:text-black overflow-x-hidden w-full">
+    <div id="naga-app" className="min-h-[100dvh] bg-black text-white flex flex-col font-sans break-keep selection:bg-white selection:text-black overflow-x-hidden w-full">
       {/* 
         ========================================================================
         HEADER (Fixed at top, strictly maintained across all SPA view swaps)
@@ -400,7 +400,7 @@ export default function App() {
             {/* Hero Section (메인 배너) with touch swipe on mobile */}
             <section
               id="hero-banner-section"
-              className="relative w-full h-[52vh] min-h-[340px] sm:h-[68vh] sm:min-h-[480px] max-h-[780px] bg-black overflow-hidden flex flex-col justify-between touch-pan-y"
+              className="relative w-full h-[calc(100dvh-64px)] sm:h-[calc(100dvh-68px)] min-h-[360px] max-h-[820px] bg-black overflow-hidden flex flex-col justify-between touch-pan-y"
               onMouseEnter={() => setIsPaused(true)}
               onMouseLeave={() => setIsPaused(false)}
               onTouchStart={handleTouchStart}
@@ -604,14 +604,14 @@ export default function App() {
                 onClick={() => setSelectedActivity(null)}
               >
                 <div
-                  className="bg-black border border-white text-white w-full max-w-2xl p-5 sm:p-8 space-y-5 sm:space-y-6 relative max-h-[92vh] overflow-y-auto"
+                  className="bg-black border border-white text-white w-full max-w-2xl px-5 pt-5 sm:px-8 sm:pt-8 space-y-5 sm:space-y-6 relative max-h-[85dvh] overflow-y-auto"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {/* Modal Header */}
                   <div className="border-b border-white/20 pb-4 flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <span className="font-mono text-xs tracking-[0.18em] sm:tracking-[0.2em] text-white/60 block uppercase tabular-nums">
-                        ACTIVITY PROTOCOL · {selectedActivity.code}
+                        {selectedActivity.code}
                       </span>
                       <h3 className="text-lg sm:text-2xl font-syne font-bold uppercase tracking-tight mt-1 text-white break-words">
                         {selectedActivity.title}
@@ -650,19 +650,19 @@ export default function App() {
                   {/* Detailed Description */}
                   <div className="space-y-2">
                     <span className="font-mono text-xs tracking-[0.18em] text-white/50 uppercase block">
-                      DRILL OBJECTIVE
+                      DESCRIPTION
                     </span>
                     <p className="text-xs sm:text-sm leading-relaxed text-white/90 font-sans break-words">
                       {selectedActivity.description}
                     </p>
                   </div>
 
-                  {/* Photo Slide Carousel (드릴 목적 아래 사진 슬라이드) */}
+                  {/* Photo Slide Carousel */}
                   {selectedActivity.images && selectedActivity.images.length > 0 && (
                     <div className="space-y-2 pt-1">
                       <div className="flex items-center justify-between">
                         <span className="font-mono text-[11px] tracking-[0.18em] text-white/50 uppercase">
-                          FIELD VISUAL ARCHIVE
+                          PHOTOS
                         </span>
                         <span className="font-mono text-[11px] tracking-[0.18em] text-white/70 tabular-nums">
                           [ 0{modalSlideIndex + 1} / 0{selectedActivity.images.length} ]
@@ -735,10 +735,10 @@ export default function App() {
                     </div>
                   )}
 
-                  {/* Modal Actions (신청 연동 버튼 제거, 닫기 전용) */}
-                  <div className="border-t border-white/20 pt-4 flex items-center justify-between gap-3">
+                  {/* Sticky Modal Footer */}
+                  <div className="sticky bottom-0 z-30 bg-black border-t border-white/20 py-4 flex items-center justify-between gap-3">
                     <span className="font-mono text-[11px] tracking-[0.15em] text-white/40 uppercase">
-                      NAGA™ FIELD ARCHIVE · {selectedActivity.distance}
+                      {selectedActivity.distance} · {selectedActivity.elevation}
                     </span>
 
                     <button
@@ -946,7 +946,7 @@ export default function App() {
                           <div className="border border-white/20 bg-black p-4 sm:p-6 space-y-3">
                             <div className="border-b border-white/15 pb-2.5">
                               <span className="font-mono text-xs tracking-[0.2em] text-white font-bold uppercase">
-                                상세 설명
+                                DESCRIPTION
                               </span>
                             </div>
                             <div className="text-xs sm:text-sm font-sans text-white/85 leading-relaxed whitespace-pre-line break-words">
@@ -1090,8 +1090,8 @@ export default function App() {
                   <span className="font-sans font-bold tabular-nums">3.</span>
                   <span>JOIN</span>
                 </h2>
-                <p className="text-xs font-mono tracking-[0.18em] text-white/50 mt-1.5 uppercase">
-                  EXPEDITION & PRE-TRAINING REGISTRATION // 참가 세션 선택 및 신청
+                <p className="text-xs font-mono tracking-[0.12em] text-white/60 mt-1.5">
+                  참가 세션 선택 및 신청
                 </p>
               </div>
               <button
@@ -1102,20 +1102,17 @@ export default function App() {
               </button>
             </div>
 
-            {/* Multi-Session Selector Tab Bar (동시 모집 세션 전환 탭) */}
+            {/* Multi-Session Selector Tab Bar (모바일: 세로 스택 / 데스크톱: 가로 스크롤 탭) */}
             <div className="mb-6 sm:mb-8">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-mono tracking-[0.22em] text-white/50 uppercase">
-                  SELECT ACTIVE SESSION // 모집 중인 세션 선택 ({activeJoinSessions.length})
-                </span>
-                <span className="text-[10px] font-mono tracking-[0.18em] text-white/40 uppercase hidden sm:inline">
-                  TAB TO SWITCH SESSION
+                <span className="text-[11px] font-mono tracking-[0.15em] text-white/50 uppercase">
+                  SESSIONS ({activeJoinSessions.length})
                 </span>
               </div>
               <div
                 role="tablist"
-                aria-label="Active Recruitment Sessions"
-                className="grid grid-cols-1 sm:grid-cols-2 gap-2.5"
+                aria-label="Active Sessions"
+                className="flex flex-col sm:flex-row sm:overflow-x-auto no-scrollbar gap-2.5"
               >
                 {activeJoinSessions.map((session, idx) => {
                   const isSelected = session.id === currentJoinSession.id;
@@ -1130,7 +1127,7 @@ export default function App() {
                         setFormSubmitted(false);
                         setFormError('');
                       }}
-                      className={`text-left border p-3.5 sm:p-4 transition-all flex flex-col justify-between gap-1.5 ${
+                      className={`text-left border p-3.5 sm:p-4 transition-all flex flex-col justify-between gap-1.5 sm:min-w-[240px] sm:flex-1 ${
                         isSelected
                           ? 'bg-white text-black border-white'
                           : 'bg-black text-white border-white/25 hover:border-white/70 hover:bg-white/[0.03]'
@@ -1138,14 +1135,14 @@ export default function App() {
                     >
                       <div className="flex items-center justify-between gap-2 w-full">
                         <span
-                          className={`text-[10px] font-mono tracking-[0.2em] uppercase tabular-nums ${
+                          className={`text-[10px] font-mono tracking-[0.18em] uppercase tabular-nums ${
                             isSelected ? 'text-black/60 font-bold' : 'text-white/45'
                           }`}
                         >
-                          SESSION {String(idx + 1).padStart(2, '0')} // {session.tag || 'OPEN'}
+                          {session.tag || `SESSION ${String(idx + 1).padStart(2, '0')}`}
                         </span>
                         <span
-                          className={`text-[9px] font-mono tracking-[0.18em] px-1.5 py-0.5 uppercase font-bold ${
+                          className={`text-[9px] font-mono tracking-[0.18em] px-1.5 py-0.5 uppercase font-bold shrink-0 ${
                             isSelected
                               ? 'bg-black text-white'
                               : 'border border-white/25 text-white/60'
@@ -1156,14 +1153,14 @@ export default function App() {
                       </div>
                       <div className="mt-0.5">
                         <div
-                          className={`text-sm sm:text-base font-syne font-bold uppercase tracking-tight leading-snug ${
+                          className={`text-sm sm:text-base font-syne font-bold uppercase tracking-tight leading-snug break-keep ${
                             isSelected ? 'text-black' : 'text-white'
                           }`}
                         >
                           {session.title}
                         </div>
                         <div
-                          className={`text-[11px] font-mono tracking-[0.06em] mt-0.5 line-clamp-1 ${
+                          className={`text-[11px] font-mono tracking-[0.04em] mt-0.5 line-clamp-1 ${
                             isSelected ? 'text-black/75' : 'text-white/60'
                           }`}
                         >
@@ -1176,29 +1173,29 @@ export default function App() {
               </div>
             </div>
 
-            {/* Content: 현재 선택된 모집 세션 안내 문구 */}
+            {/* Content: 현재 선택된 모집 세션 안내 */}
             <div className="border border-white/20 bg-white/[0.03] p-4 sm:p-6 mb-6 sm:mb-8 space-y-4">
               <div>
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-[10px] font-mono tracking-[0.25em] text-white/50 uppercase block">
-                    {currentJoinSession.tag || 'UPCOMING EXPEDITION // 2027.01'}
+                  <span className="text-[10px] font-mono tracking-[0.22em] text-white/50 uppercase block">
+                    {currentJoinSession.tag || 'UPCOMING SESSION'}
                   </span>
                   <span className="text-[10px] font-mono tracking-[0.2em] text-white/40 uppercase tabular-nums">
                     SESSION {String(activeJoinSessions.findIndex((s) => s.id === currentJoinSession.id) + 1).padStart(2, '0')} / {String(activeJoinSessions.length).padStart(2, '0')}
                   </span>
                 </div>
-                <h3 className="text-xl sm:text-3xl font-syne font-bold uppercase tracking-tight text-white mt-1.5 leading-snug">
+                <h3 className="text-xl sm:text-3xl font-syne font-bold uppercase tracking-tight text-white mt-1.5 leading-snug break-keep">
                   {currentJoinSession.title}
                 </h3>
-                <p className="text-xs sm:text-sm font-mono tracking-[0.12em] text-white/85 mt-1">
+                <p className="text-xs sm:text-sm font-mono tracking-[0.08em] text-white/85 mt-1 break-keep">
                   {currentJoinSession.sub}
                 </p>
-                <p className="mt-2.5 text-xs font-mono tracking-[0.08em] sm:tracking-[0.12em] text-white/60 uppercase leading-relaxed">
+                <p className="mt-2.5 text-xs font-mono tracking-[0.06em] text-white/60 leading-relaxed break-keep">
                   {currentJoinSession.description}
                 </p>
               </div>
 
-              {/* Course Photo (가로 4:3 비율 코스 사진) */}
+              {/* Course Photo (가로 4:3 비율 코스 사진 · 사진 위 불필요한 텍스트 오버레이 제거) */}
               <div className="relative w-full aspect-[4/3] max-h-[440px] bg-black border border-white/20 overflow-hidden">
                 <img
                   src={currentJoinSession.coursePhoto}
@@ -1206,17 +1203,10 @@ export default function App() {
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-                <div className="absolute top-3 left-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.2em] text-white uppercase">
-                  {currentJoinSession.photoArchiveTag || 'EXPEDITION ARCHIVE'}
-                </div>
-                <div className="absolute bottom-3 right-3 bg-black/80 border border-white/30 px-2.5 py-1 text-[10px] font-mono tracking-[0.15em] text-white/80 uppercase">
-                  {currentJoinSession.photoTrailTag || 'TRAIL ARCHIVE'}
-                </div>
               </div>
             </div>
 
-            {/* Netlify Forms / Formspree Compatible Application Form */}
+            {/* Application Form */}
             {formSubmitted ? (
               <div
                 id="submission-success-card"
@@ -1226,14 +1216,11 @@ export default function App() {
                   <Check size={24} className="text-white" />
                 </div>
                 <div className="space-y-2">
-                  <span className="text-xs font-mono tracking-[0.25em] text-white/50 uppercase block">
-                    TRANSMISSION CONFIRMED
-                  </span>
                   <h4 className="text-lg sm:text-xl font-syne font-bold uppercase tracking-tight text-white">
-                    APPLICATION SUBMITTED SUCCESSFULLY
+                    APPLICATION SUBMITTED
                   </h4>
-                  <p className="text-xs font-mono tracking-[0.15em] text-white/80 max-w-md mx-auto leading-relaxed">
-                    {formName} 님의 [{currentJoinSession.title} — {currentJoinSession.sub}] 참가 신청서가 접수되었습니다. 기재하신 연락처({formPhone})로 세부 일정 안내 및 장비 점검 지침이 발송됩니다.
+                  <p className="text-xs font-mono tracking-[0.1em] text-white/80 max-w-md mx-auto leading-relaxed break-keep">
+                    {formName} 님의 [{currentJoinSession.title}] 참가 신청서가 접수되었습니다. 기재하신 연락처({formPhone})로 세부 일정 안내가 발송됩니다.
                   </p>
                 </div>
                 <div className="pt-4 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
@@ -1259,18 +1246,13 @@ export default function App() {
                 onSubmit={handleFormSubmit}
                 className="border border-white/20 p-4 sm:p-8 space-y-5 sm:space-y-6 bg-black"
               >
-                {/* Form Header (영어 타이틀 / 선택된 세션 한글 소제목) */}
-                <div className="border-b border-white/20 pb-3 sm:pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
-                  <div>
-                    <h3 className="text-lg sm:text-2xl font-syne font-bold uppercase tracking-tight text-white">
-                      EXPEDITION APPLICATION
-                    </h3>
-                    <p className="text-xs font-mono tracking-[0.15em] text-white/60 mt-1 uppercase">
-                      {currentJoinSession.title} — {currentJoinSession.sub} 참가 신청서
-                    </p>
-                  </div>
+                {/* Form Header (단순화: APPLICATION 타이틀만 표시, 하단 설명 제거) */}
+                <div className="border-b border-white/20 pb-3 sm:pb-4 flex items-center justify-between gap-2">
+                  <h3 className="text-lg sm:text-2xl font-syne font-bold uppercase tracking-tight text-white">
+                    APPLICATION
+                  </h3>
                   <span className="text-[10px] font-mono tracking-[0.2em] text-white/45 uppercase">
-                    * REQUIRED FIELDS
+                    * REQUIRED
                   </span>
                 </div>
 
@@ -1280,11 +1262,34 @@ export default function App() {
                   </div>
                 )}
 
+                {/* 선택된 신청 세션 표시 */}
+                <div className="border border-white/25 bg-white/[0.04] p-3.5 sm:p-4 space-y-1">
+                  <span className="text-[10px] font-mono tracking-[0.2em] text-white/50 uppercase block">
+                    SELECTED SESSION
+                  </span>
+                  <div className="text-sm sm:text-base font-syne font-bold uppercase tracking-tight text-white break-keep">
+                    {currentJoinSession.title}
+                  </div>
+                  <p className="text-xs font-mono text-white/75 break-keep">
+                    {currentJoinSession.sub}
+                  </p>
+                  <input
+                    type="hidden"
+                    name="sessions"
+                    value={TARGET_EXPEDITION_SESSION}
+                  />
+                  <input
+                    type="hidden"
+                    name="targetExpedition"
+                    value={currentJoinSession.title}
+                  />
+                </div>
+
                 {/* 이름 (Input Text, 필수) */}
                 <div className="space-y-1.5">
                   <label htmlFor={nameInputId} className="block">
                     <span className="block text-xs font-mono font-bold tracking-[0.2em] uppercase text-white">
-                      FULL NAME <span className="text-white">*</span>
+                      NAME <span className="text-white">*</span>
                     </span>
                     <span className="block text-[11px] font-mono tracking-[0.1em] text-white/50">
                       이름
@@ -1297,7 +1302,7 @@ export default function App() {
                     required
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
-                    placeholder="홍길동 (Hong Gildong)"
+                    placeholder="홍길동"
                     className="w-full bg-black border border-white/30 focus:border-white px-3.5 sm:px-4 py-3 text-sm font-mono text-white placeholder-white/30 focus:outline-none transition-colors min-h-[44px]"
                   />
                 </div>
@@ -1306,7 +1311,7 @@ export default function App() {
                 <div className="space-y-1.5">
                   <label htmlFor={phoneInputId} className="block">
                     <span className="block text-xs font-mono font-bold tracking-[0.2em] uppercase text-white">
-                      CONTACT NUMBER <span className="text-white">*</span>
+                      PHONE <span className="text-white">*</span>
                     </span>
                     <span className="block text-[11px] font-mono tracking-[0.1em] text-white/50">
                       연락처
@@ -1328,7 +1333,7 @@ export default function App() {
                 <div className="space-y-1.5">
                   <label htmlFor={instagramInputId} className="block">
                     <span className="block text-xs font-mono font-bold tracking-[0.2em] uppercase text-white">
-                      INSTAGRAM / SOCIAL
+                      INSTAGRAM
                     </span>
                     <span className="block text-[11px] font-mono tracking-[0.1em] text-white/50">
                       인스타그램 계정 (선택)
@@ -1345,47 +1350,14 @@ export default function App() {
                   />
                 </div>
 
-                {/* 선택된 신청 세션 확인 박스 */}
-                <div className="border border-white/25 bg-white/[0.04] p-4 sm:p-5 space-y-2">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <span className="text-[10px] font-mono tracking-[0.2em] text-white/50 uppercase block">
-                      TARGET EXPEDITION // 선택된 신청 세션
-                    </span>
-                    <span className="text-[9px] font-mono tracking-wider px-2 py-0.5 bg-white text-black font-bold uppercase">
-                      ACTIVE REGISTRATION
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="text-base sm:text-lg font-syne font-bold uppercase tracking-tight text-white">
-                      {currentJoinSession.title}
-                    </h4>
-                    <p className="text-xs font-mono tracking-[0.05em] text-white/80 mt-0.5">
-                      {currentJoinSession.sub}
-                    </p>
-                  </div>
-                  <div className="pt-1 text-[11px] font-mono text-white/50">
-                    ※ 상단 탭에서 다른 모집 세션을 선택하면 신청 대상 세션이 즉시 전환됩니다.
-                  </div>
-                  <input
-                    type="hidden"
-                    name="sessions"
-                    value={TARGET_EXPEDITION_SESSION}
-                  />
-                  <input
-                    type="hidden"
-                    name="targetExpedition"
-                    value={currentJoinSession.title}
-                  />
-                </div>
-
                 {/* 장비 및 건강 특이사항 (Textarea, 선택) */}
                 <div className="space-y-1.5">
                   <label htmlFor="gear-notes-input" className="block">
                     <span className="block text-xs font-mono font-bold tracking-[0.2em] uppercase text-white">
-                      GEAR & PHYSICAL NOTES
+                      NOTES
                     </span>
                     <span className="block text-[11px] font-mono tracking-[0.1em] text-white/50">
-                      필수 장비 보유 여부 및 산행/건강 특이사항 (선택)
+                      장비 보유 여부 및 특이사항 (선택)
                     </span>
                   </label>
                   <textarea
@@ -1393,12 +1365,12 @@ export default function App() {
                     rows={2}
                     value={formGearNote}
                     onChange={(e) => setFormGearNote(e.target.value)}
-                    placeholder="예: 필수 산행 장비 보유 여부, 산행 경험 및 컨디션 특이사항 등"
+                    placeholder="장비 보유 여부 및 특이사항 등"
                     className="w-full bg-black border border-white/30 focus:border-white px-3.5 sm:px-4 py-2.5 text-xs font-mono text-white placeholder-white/30 focus:outline-none transition-colors resize-none"
                   />
                 </div>
 
-                {/* 제출 버튼: [ SUBMIT APPLICATION ➔ ] */}
+                {/* 제출 버튼 */}
                 <div className="pt-3 sm:pt-4">
                   <button
                     type="submit"
@@ -1407,9 +1379,9 @@ export default function App() {
                     className="w-full py-3.5 sm:py-4 bg-white text-black font-mono text-xs sm:text-sm font-bold tracking-[0.2em] sm:tracking-[0.25em] uppercase hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] transition-all flex items-center justify-center gap-3 border border-white min-h-[46px]"
                   >
                     {isSubmitting ? (
-                      <span className="animate-pulse">[ TRANSMITTING DATA... ]</span>
+                      <span className="animate-pulse">[ SUBMITTING... ]</span>
                     ) : (
-                      <span>[ SUBMIT APPLICATION // {currentJoinSession.title} 참가 신청하기 ➔ ]</span>
+                      <span>[ SUBMIT APPLICATION ➔ ]</span>
                     )}
                   </button>
                 </div>
