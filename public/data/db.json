@@ -77,38 +77,42 @@
     {
       "id": "prod-01",
       "code": "[Product 01]",
-      "name": "더 단백",
-      "category": "편의점 단백질 쉐이크 리뷰",
+      "name": "편의점 단백질 음료 비교",
+      "category": "July, 06, 2026\n편의점 단백질 쉐이크 비교분석",
       "image": "/uploads/1794243418898_IMG_5445_jpeg.jpg",
       "spec": " 30g 단백질 / 휴대용 파우치 규격",
-      "usage": "편의점 단백질 쉐이크 비교분석",
+      "usage": "July, 06, 2026\n편의점 단백질 쉐이크 비교분석",
       "detailDescription": "급하게 단백질을 섭취해야할 때, 편의점에 들어가 어떤 쉐이크를 선택하는 게 좋을까?\n가장 성분이 클린한 쉐이크가 무엇인지 성분표를 분석해봤다.",
       "images": [
         "/uploads/1794243418898_IMG_5445_jpeg.jpg",
         "/images/product_02_alpine_shake.jpg",
-        "/images/hero_slide_02.jpg"
+        "/uploads/1794568209767_IMG_5483_jpeg.jpg"
       ],
-      "subtitle": "편의점 단백질 쉐이크 비교분석",
+      "subtitle": "July, 06, 2026\n편의점 단백질 쉐이크 비교분석",
       "blocks": [
         {
           "id": "prod-01-block-img-0",
           "type": "image",
-          "content": "/uploads/1794243418898_IMG_5445_jpeg.jpg"
+          "content": "/uploads/1794243418898_IMG_5445_jpeg.jpg",
+          "caption": ""
         },
         {
           "id": "prod-01-block-txt-0",
           "type": "text",
-          "content": "급하게 단백질을 섭취해야할 때, 편의점에 들어가 어떤 쉐이크를 선택하는 게 좋을까?\n가장 성분이 클린한 쉐이크가 무엇인지 성분표를 분석해봤다."
+          "content": "급하게 단백질을 섭취해야할 때, 편의점에 들어가 어떤 쉐이크를 선택하는 게 좋을까?\n가장 성분이 클린한 쉐이크가 무엇인지 성분표를 분석해봤다.",
+          "caption": ""
         },
         {
           "id": "prod-01-block-img-1",
           "type": "image",
-          "content": "/images/product_02_alpine_shake.jpg"
+          "content": "/images/product_02_alpine_shake.jpg",
+          "caption": "물론 이렇게 먹으면 제일 좋다"
         },
         {
-          "id": "prod-01-block-img-2",
+          "id": "prod-01-block-1794568213572-b0bv",
           "type": "image",
-          "content": "/images/hero_slide_02.jpg"
+          "content": "/uploads/1794568209767_IMG_5483_jpeg.jpg",
+          "caption": ""
         }
       ]
     }
