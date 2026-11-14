@@ -117,7 +117,7 @@ export const DEFAULT_NAGA_DATA: NagaAppData = {
   {
     "id": "act-03",
     "code": "[ARCHIVE]",
-    "date": "NOV, 23, 2027",
+    "date": "NOV, 23, 2026",
     "title": "TRAINING DRILL 01: BUK-HAN-SAN",
     "distance": "15km",
     "elevation": "+1,280m 누적고도",
@@ -125,7 +125,7 @@ export const DEFAULT_NAGA_DATA: NagaAppData = {
     "keyPoints": "야간 산행 연습",
     "gearRequired": "트레킹 기어, 물병, 헤드랜턴",
     "recoveryProtocol": "운동 후 프로틴 쉐이크 지급",
-    "description": "야간 산행 연습 및 시야가 제한된 어두운 야간 암릉 지형에서의 안전한 보행과 장비 적응 훈련.",
+    "description": "2026년 11월 23일, 야간 산행 연습 및 시야가 제한된 어두운 야간 암릉 지형에서의 안전한 보행과 장비 적응 훈련",
     "images": [
       "/images/activity_03_slide_1.jpg",
       "/images/activity_03_slide_2.jpg"
