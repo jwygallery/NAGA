@@ -5,6 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    base: process.env.VITE_BASE_URL || (process.env.GITHUB_PAGES === 'true' ? '/NAGA/' : '/'),
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

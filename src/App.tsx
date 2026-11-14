@@ -5,6 +5,12 @@ import { DEFAULT_NAGA_DATA, DEFAULT_JOIN_NOTICES, normalizeNagaData } from './de
 import { ActivityItem, ProductItem, HeroSlideItem, JoinNoticeData, JoinNoticeItem, NagaAppData } from './types';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminConsoleModal, SaveDataResult } from './components/AdminConsoleModal';
+import {
+  resolveAssetUrl,
+  hasGitHubDirectConfig,
+  commitDataViaGitHubDirect,
+  fetchLatestDbFromGitHubDirect,
+} from './githubDirect';
 
 // View type definition for SPA View Swap
 type ViewMode = 'home' | 'activities' | 'recovery' | 'join';
@@ -62,7 +68,7 @@ function BrandLogo() {
     <div className="w-10 h-10 bg-black border border-white/30 flex items-center justify-center p-1 group-hover:border-white transition-colors overflow-hidden">
       {candidateIndex < candidates.length ? (
         <img
-          src={candidates[candidateIndex]}
+          src={resolveAssetUrl(candidates[candidateIndex])}
           alt="NAGA Logo"
           className="w-full h-full object-contain"
           onError={() => setCandidateIndex((prev) => prev + 1)}
@@ -119,7 +125,8 @@ export default function App() {
     const loadRemoteData = async () => {
       try {
         const res = await fetch(`/api/data?t=${Date.now()}`, { cache: 'no-store' });
-        if (res.ok) {
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
           const resData = await res.json();
           if (resData?.success && resData?.data && isMounted) {
             const normalized = normalizeNagaData(resData.data);
@@ -131,12 +138,29 @@ export default function App() {
           }
         }
       } catch {
-        // Fallback to static /data/db.json if deployed on static hosting (e.g. Netlify / GitHub Pages)
+        // Fallback for static hosting (e.g. GitHub Pages / Netlify)
+      }
+
+      if (hasGitHubDirectConfig()) {
+        try {
+          const directData = await fetchLatestDbFromGitHubDirect();
+          if (directData && isMounted) {
+            const normalized = normalizeNagaData(directData as Partial<NagaAppData>);
+            setAppData(normalized);
+            try {
+              localStorage.setItem('naga_app_data_cache', JSON.stringify(normalized));
+            } catch {}
+            return;
+          }
+        } catch {}
       }
 
       try {
-        const staticRes = await fetch(`/data/db.json?t=${Date.now()}`, { cache: 'no-store' });
-        if (staticRes.ok) {
+        const staticRes = await fetch(`${resolveAssetUrl('/data/db.json')}?t=${Date.now()}`, {
+          cache: 'no-store',
+        });
+        const staticType = staticRes.headers.get('content-type') || '';
+        if (staticRes.ok && staticType.includes('application/json')) {
           const staticData = await staticRes.json();
           if (staticData && typeof staticData === 'object' && isMounted) {
             const normalized = normalizeNagaData(staticData);
@@ -235,7 +259,7 @@ export default function App() {
     HERO_SLIDES.slice(1).forEach((slide) => {
       if (!slide?.image) return;
       const img = new Image();
-      img.src = slide.image;
+      img.src = resolveAssetUrl(slide.image);
       preloadedImages.push(img);
     });
     return () => {
@@ -264,29 +288,49 @@ export default function App() {
       localStorage.setItem('naga_app_data_cache', JSON.stringify(normalized));
     } catch {}
 
+    // 1. If local GitHub Direct API is configured, perform 3-way atomic commit directly from browser
+    if (hasGitHubDirectConfig()) {
+      const ghRes = await commitDataViaGitHubDirect(normalized);
+      return {
+        success: ghRes.ok,
+        githubSynced: ghRes.ok,
+        githubConfigured: true,
+        githubCommitUrl: ghRes.commitUrl || null,
+        message: ghRes.message,
+      };
+    }
+
+    // 2. Otherwise try Cloud Run / Express backend `/api/data`
     try {
       const res = await fetch('/api/data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(normalized),
       });
-      const resData = await res.json();
-      return {
-        success: !!resData.success,
-        githubSynced: !!resData.githubSynced,
-        githubConfigured: !!resData.githubConfigured,
-        githubCommitUrl: resData.githubCommitUrl || null,
-        message: resData.message,
-      };
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const resData = await res.json();
+        return {
+          success: !!resData.success,
+          githubSynced: !!resData.githubSynced,
+          githubConfigured: !!resData.githubConfigured,
+          githubCommitUrl: resData.githubCommitUrl || null,
+          message: resData.message,
+        };
+      }
     } catch (err) {
       console.error('Server save error:', err);
-      return {
-        success: true,
-        githubSynced: false,
-        githubConfigured: false,
-        message: '로컬 브라우저 캐시에 저장되었습니다.',
-      };
     }
+
+    // 3. Static hosting (github.io) without Token configured yet
+    return {
+      success: false,
+      githubSynced: false,
+      githubConfigured: false,
+      needsGitHubConfig: true,
+      message:
+        '정적 호스팅(github.io) 환경입니다. 상단 [GITHUB API]에 GitHub Token과 저장소를 입력·저장한 뒤 다시 시도해 주세요.',
+    };
   };
 
   const nextModalSlide = () => {
@@ -532,7 +576,7 @@ export default function App() {
                   }`}
                 >
                   <img
-                    src={slide.image}
+                    src={resolveAssetUrl(slide.image)}
                     alt={`NAGA Exhibition Slide ${index + 1}`}
                     className="w-full h-full object-cover object-center"
                     loading={index === 0 ? 'eager' : 'lazy'}
@@ -795,7 +839,7 @@ export default function App() {
                             }`}
                           >
                             <img
-                              src={imgSrc}
+                              src={resolveAssetUrl(imgSrc)}
                               alt={`${selectedActivity.title} photo ${idx + 1}`}
                               className="w-full h-full object-cover"
                               decoding="async"
@@ -869,7 +913,7 @@ export default function App() {
                               }`}
                             >
                               <img
-                                src={imgSrc}
+                                src={resolveAssetUrl(imgSrc)}
                                 alt={`Thumbnail ${idx + 1}`}
                                 className="w-full h-full object-cover"
                                 loading="lazy"
@@ -1000,7 +1044,7 @@ export default function App() {
                             <figure key={block.id || idx} className="space-y-2">
                               <div className="w-full min-h-[180px] border border-white/20 bg-zinc-900 overflow-hidden">
                                 <img
-                                  src={block.content}
+                                  src={resolveAssetUrl(block.content)}
                                   alt={
                                     block.caption ||
                                     `${selectedProduct.name} 본문 사진 ${idx + 1}`
@@ -1082,7 +1126,7 @@ export default function App() {
                         {/* 대표사진 (Cover Photo on Top) */}
                         <div className="relative w-full aspect-[4/3] bg-zinc-900 overflow-hidden border-b border-white/20">
                           <img
-                            src={prod.image}
+                            src={resolveAssetUrl(prod.image)}
                             alt={prod.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             loading="lazy"
@@ -1258,7 +1302,7 @@ export default function App() {
               {/* Course Photo (가로 4:3 비율 코스 사진 · 사진 위 불필요한 텍스트 오버레이 제거) */}
               <div className="relative w-full aspect-[4/3] max-h-[440px] bg-zinc-900 border border-white/20 overflow-hidden">
                 <img
-                  src={currentJoinSession.coursePhoto}
+                  src={resolveAssetUrl(currentJoinSession.coursePhoto)}
                   alt={currentJoinSession.title}
                   className="w-full h-full object-cover"
                   loading="lazy"

@@ -549,7 +549,9 @@ async function syncDatabaseToGitHub(reason: string, includeAppSourceFiles = fals
     if (includeAppSourceFiles) {
       const extraPaths = [
         'index.html',
+        'vite.config.ts',
         'src/types.ts',
+        'src/githubDirect.ts',
         'src/App.tsx',
         'src/components/AdminConsoleModal.tsx',
         'server.ts',

@@ -15,6 +15,7 @@ import {
   Eye,
   EyeOff,
   CopyPlus,
+  KeyRound,
 } from 'lucide-react';
 import {
   ActivityItem,
@@ -24,12 +25,24 @@ import {
   JoinNoticeItem,
   NagaAppData,
 } from '../types';
-import { DEFAULT_JOIN_NOTICES } from '../defaultData';
+import { DEFAULT_JOIN_NOTICES, DEFAULT_NAGA_DATA } from '../defaultData';
+import {
+  GitHubDirectConfig,
+  cacheUploadPreview,
+  compressImageFile,
+  uploadImageViaGitHubDirect,
+  resolveAssetUrl,
+  getGitHubDirectConfig,
+  saveGitHubDirectConfig,
+  clearGitHubDirectConfig,
+  hasGitHubDirectConfig,
+} from '../githubDirect';
 
 export interface SaveDataResult {
   success: boolean;
   githubSynced?: boolean;
   githubConfigured?: boolean;
+  needsGitHubConfig?: boolean;
   githubCommitUrl?: string | null;
   message?: string;
 }
@@ -59,6 +72,17 @@ export function AdminConsoleModal({
   const [activityForm, setActivityForm] = useState<Partial<ActivityItem>>({});
   const [isCreatingNewActivity, setIsCreatingNewActivity] = useState(false);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
+  const [ghConfig, setGhConfig] = useState<GitHubDirectConfig>(() => getGitHubDirectConfig());
+  const [ghConfigured, setGhConfigured] = useState<boolean>(() => hasGitHubDirectConfig());
+  const [isGitHubSettingsOpen, setIsGitHubSettingsOpen] = useState<boolean>(false);
+  const [showGhToken, setShowGhToken] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setGhConfig(getGitHubDirectConfig());
+      setGhConfigured(hasGitHubDirectConfig());
+    }
+  }, [isOpen]);
 
   // Sync with initialData when opened or updated
   React.useEffect(() => {
@@ -86,93 +110,31 @@ export function AdminConsoleModal({
       ? data.joinNotices
       : DEFAULT_JOIN_NOTICES;
 
-  // --------------------------------------------------------------------------
-  // Client-Side Image Resize (max 1600px) & Compression (quality 0.82)
-  // --------------------------------------------------------------------------
-  const compressImageFile = (file: File, maxDimension = 1600, quality = 0.82): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const readRawAsDataUrl = () => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
-        reader.readAsDataURL(file);
-      };
+  const handleSaveGitHubSettings = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const saved = saveGitHubDirectConfig(ghConfig);
+    setGhConfig(saved);
+    const configured = hasGitHubDirectConfig();
+    setGhConfigured(configured);
+    if (configured) {
+      setSaveStatus(
+        `GitHub Direct API 설정 저장 완료 (${saved.repo}@${saved.branch}) · 이제 정적 호스팅에서도 업로드/저장이 직접 작동합니다.`
+      );
+      setIsGitHubSettingsOpen(false);
+    } else {
+      setSaveStatus('GitHub Personal Access Token과 저장소(owner/repo)를 올바르게 입력해 주세요.');
+    }
+  };
 
-      // Keep SVG/GIF intact without rasterizing
-      if (file.type === 'image/svg+xml' || file.type === 'image/gif') {
-        readRawAsDataUrl();
-        return;
-      }
-
-      const objectUrl = URL.createObjectURL(file);
-      const img = new Image();
-
-      img.onload = () => {
-        try {
-          let width = img.naturalWidth || img.width;
-          let height = img.naturalHeight || img.height;
-
-          if (!width || !height) {
-            URL.revokeObjectURL(objectUrl);
-            readRawAsDataUrl();
-            return;
-          }
-
-          if (width > maxDimension || height > maxDimension) {
-            if (width >= height) {
-              height = Math.round((height * maxDimension) / width);
-              width = maxDimension;
-            } else {
-              width = Math.round((width * maxDimension) / height);
-              height = maxDimension;
-            }
-          }
-
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-
-          if (!ctx) {
-            URL.revokeObjectURL(objectUrl);
-            readRawAsDataUrl();
-            return;
-          }
-
-          // Preserve transparency via WebP for PNGs; otherwise fill dark ground & encode JPEG
-          if (file.type === 'image/png') {
-            ctx.drawImage(img, 0, 0, width, height);
-            const webpUrl = canvas.toDataURL('image/webp', quality);
-            URL.revokeObjectURL(objectUrl);
-            if (webpUrl.startsWith('data:image/webp')) {
-              resolve(webpUrl);
-              return;
-            }
-          } else {
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(0, 0, width, height);
-            ctx.drawImage(img, 0, 0, width, height);
-            URL.revokeObjectURL(objectUrl);
-          }
-
-          resolve(canvas.toDataURL('image/jpeg', quality));
-        } catch {
-          URL.revokeObjectURL(objectUrl);
-          readRawAsDataUrl();
-        }
-      };
-
-      img.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        readRawAsDataUrl();
-      };
-
-      img.src = objectUrl;
-    });
+  const handleClearGitHubSettings = () => {
+    clearGitHubDirectConfig();
+    setGhConfig(getGitHubDirectConfig());
+    setGhConfigured(false);
+    setSaveStatus('브라우저에 저장된 GitHub Direct API 설정이 초기화되었습니다.');
   };
 
   // --------------------------------------------------------------------------
-  // Image Upload Helper (Compress -> /api/upload)
+  // Image Upload Helper (Canvas Compress <=1600px JPEG 0.82 -> Direct GitHub or /api/upload)
   // --------------------------------------------------------------------------
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -183,10 +145,24 @@ export function AdminConsoleModal({
     if (!file) return;
 
     setUploadingField(fieldKey);
-    setSaveStatus('이미지 최적화 및 업로드 중...');
+    setSaveStatus('이미지 리사이징(1600px 이하)·압축 및 업로드 중...');
 
     try {
       const base64 = await compressImageFile(file, 1600, 0.82);
+
+      // 1. If local GitHub Direct Token is configured, upload directly to GitHub Contents API
+      if (hasGitHubDirectConfig()) {
+        const ghRes = await uploadImageViaGitHubDirect(base64, file.name);
+        if (ghRes.ok && ghRes.url) {
+          onUploaded(ghRes.url, file.name);
+          setSaveStatus(`${ghRes.message} 상단의 [SAVE ALL]을 눌러 반영하세요.`);
+        } else {
+          setSaveStatus(ghRes.message);
+        }
+        return;
+      }
+
+      // 2. Otherwise try Cloud Run / Express backend `/api/upload`
       try {
         const res = await fetch('/api/upload', {
           method: 'POST',
@@ -196,18 +172,23 @@ export function AdminConsoleModal({
             filename: file.name,
           }),
         });
-        const resData = await res.json();
-        if (res.ok && resData.url) {
+        const contentType = res.headers.get('content-type') || '';
+        const resData = contentType.includes('application/json') ? await res.json() : null;
+        if (res.ok && resData?.url) {
+          cacheUploadPreview(resData.url, base64);
           onUploaded(resData.url, file.name);
-          setSaveStatus('사진이 업로드되었습니다. 상단의 [전체 저장]을 눌러 반영하세요.');
-        } else {
-          onUploaded(base64, file.name);
-          setSaveStatus('로컬 미리보기로 적용되었습니다. 상단의 [전체 저장]을 눌러주세요.');
+          setSaveStatus('사진이 업로드되었습니다. 상단의 [SAVE ALL]을 눌러 반영하세요.');
+          return;
         }
       } catch {
-        onUploaded(base64, file.name);
-        setSaveStatus('로컬 미리보기로 적용되었습니다. 상단의 [전체 저장]을 눌러주세요.');
+        // Backend unreachable (e.g. github.io static hosting)
       }
+
+      // 3. Serverless (github.io) fallback when no backend & no token configured yet
+      setIsGitHubSettingsOpen(true);
+      setSaveStatus(
+        '정적 호스팅(github.io) 환경입니다. 상단 [GITHUB API] 설정에서 GitHub Token(ghp_...)을 저장한 뒤 다시 업로드해 주세요.'
+      );
     } catch {
       setSaveStatus('사진 처리 중 오류가 발생했습니다.');
     } finally {
@@ -283,6 +264,15 @@ export function AdminConsoleModal({
     const result: SaveDataResult =
       typeof rawResult === 'boolean' ? { success: rawResult } : rawResult;
 
+    if (result.needsGitHubConfig) {
+      setIsGitHubSettingsOpen(true);
+      setSaveStatus(
+        result.message ||
+          '정적 호스팅(github.io) 환경입니다. 상단 [GITHUB API]에 GitHub Token을 설정한 뒤 다시 저장해 주세요.'
+      );
+      return;
+    }
+
     if (result.success) {
       if (result.githubConfigured && result.githubSynced) {
         setSaveStatus(
@@ -293,11 +283,11 @@ export function AdminConsoleModal({
           result.message || '서버에 저장되었으나 GitHub 자동 푸시 중 오류가 발생했습니다.'
         );
       } else {
-        setSaveStatus('모든 변경사항이 영구 데이터베이스에 성공적으로 저장되었습니다!');
+        setSaveStatus(result.message || '모든 변경사항이 영구 데이터베이스에 성공적으로 저장되었습니다!');
       }
       setTimeout(() => setSaveStatus(null), 5000);
     } else {
-      setSaveStatus('저장 중 오류가 발생했습니다. 다시 시도해 주세요.');
+      setSaveStatus(result.message || '저장 중 오류가 발생했습니다. 다시 시도해 주세요.');
     }
   };
 
@@ -311,12 +301,31 @@ export function AdminConsoleModal({
     }
     setIsSaving(true);
     try {
-      const res = await fetch('/api/data/reset', { method: 'POST' });
-      const resData = await res.json();
-      if (res.ok && resData.data) {
-        setData(resData.data);
-        await onSaveData(resData.data);
-        setSaveStatus('기본 데이터로 초기화되었습니다.');
+      if (!hasGitHubDirectConfig()) {
+        try {
+          const res = await fetch('/api/data/reset', { method: 'POST' });
+          const contentType = res.headers.get('content-type') || '';
+          const resData = contentType.includes('application/json') ? await res.json() : null;
+          if (res.ok && resData?.data) {
+            setData(resData.data);
+            await onSaveData(resData.data);
+            setSaveStatus('기본 데이터로 초기화되었습니다.');
+            return;
+          }
+        } catch {
+          // Fall back to direct client reset for static hosting
+        }
+      }
+
+      setData(DEFAULT_NAGA_DATA);
+      const saveRes = await onSaveData(DEFAULT_NAGA_DATA);
+      const parsed: SaveDataResult =
+        typeof saveRes === 'boolean' ? { success: saveRes } : saveRes;
+      if (parsed.needsGitHubConfig) {
+        setIsGitHubSettingsOpen(true);
+        setSaveStatus(parsed.message || '상단 [GITHUB API]에 GitHub Token을 설정해 주세요.');
+      } else {
+        setSaveStatus(parsed.message || '기본 데이터로 초기화되었습니다.');
       }
     } catch {
       setSaveStatus('초기화 중 오류가 발생했습니다.');
@@ -793,6 +802,20 @@ export function AdminConsoleModal({
         {/* Global Action Buttons */}
         <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap justify-end">
           <button
+            type="button"
+            onClick={() => setIsGitHubSettingsOpen((prev) => !prev)}
+            title="GitHub Pages 직접 업로드/커밋 API 설정"
+            className={`px-3 py-2 font-mono text-xs tracking-[0.12em] uppercase transition-colors flex items-center gap-1.5 border whitespace-nowrap shrink-0 ${
+              ghConfigured
+                ? 'border-white/50 bg-white/10 text-white hover:bg-white hover:text-black'
+                : 'border-white/25 text-white/70 hover:text-white hover:border-white'
+            }`}
+          >
+            <KeyRound size={13} />
+            <span>{ghConfigured ? 'GITHUB API ✓' : 'GITHUB API'}</span>
+          </button>
+
+          <button
             onClick={handleSaveAll}
             disabled={isSaving}
             className="px-3.5 sm:px-5 py-2 bg-white text-black font-mono text-xs font-bold tracking-[0.18em] uppercase hover:bg-white/90 disabled:opacity-50 transition-all flex items-center gap-2 border border-white active:scale-95 whitespace-nowrap shrink-0"
@@ -827,6 +850,102 @@ export function AdminConsoleModal({
           </button>
         </div>
       </header>
+
+      {/* Collapsible GitHub Direct REST API Config Panel (for github.io serverless persistence) */}
+      {isGitHubSettingsOpen && (
+        <form
+          onSubmit={handleSaveGitHubSettings}
+          className="border-b border-white/25 bg-neutral-950 px-4 sm:px-8 py-4 shrink-0 space-y-3"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 className="text-xs font-mono font-bold tracking-[0.16em] uppercase text-white flex items-center gap-2">
+                <KeyRound size={13} />
+                <span>GITHUB DIRECT API SETTINGS (정적 호스팅 / GITHUB.IO 직접 연동)</span>
+              </h3>
+              <p className="text-[11px] font-mono text-white/50 mt-0.5">
+                Token은 현재 브라우저 localStorage에만 저장되며, github.io에서도 사진 업로드 및 db.json · public/data/db.json · defaultData.ts 커밋이 직접 수행됩니다.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsGitHubSettingsOpen(false)}
+              className="text-[11px] font-mono text-white/50 hover:text-white self-end sm:self-center"
+            >
+              [ 닫기 ]
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 font-mono text-xs items-end">
+            <div className="sm:col-span-5">
+              <label className="block text-[10px] text-white/55 mb-1 uppercase tracking-wider">
+                Personal Access Token (repo 권한 · ghp_...)
+              </label>
+              <div className="relative flex items-center">
+                <input
+                  type={showGhToken ? 'text' : 'password'}
+                  value={ghConfig.token}
+                  onChange={(e) => setGhConfig((prev) => ({ ...prev, token: e.target.value }))}
+                  placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                  autoComplete="off"
+                  className="w-full bg-black border border-white/30 focus:border-white p-2 pr-9 text-white text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowGhToken((prev) => !prev)}
+                  className="absolute right-2 text-white/50 hover:text-white"
+                  aria-label="토큰 보기 토글"
+                >
+                  {showGhToken ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="sm:col-span-3">
+              <label className="block text-[10px] text-white/55 mb-1 uppercase tracking-wider">
+                Repository (owner/repo)
+              </label>
+              <input
+                type="text"
+                value={ghConfig.repo}
+                onChange={(e) => setGhConfig((prev) => ({ ...prev, repo: e.target.value }))}
+                placeholder="jwygallery/NAGA"
+                className="w-full bg-black border border-white/30 focus:border-white p-2 text-white text-xs"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-[10px] text-white/55 mb-1 uppercase tracking-wider">
+                Branch
+              </label>
+              <input
+                type="text"
+                value={ghConfig.branch}
+                onChange={(e) => setGhConfig((prev) => ({ ...prev, branch: e.target.value }))}
+                placeholder="main"
+                className="w-full bg-black border border-white/30 focus:border-white p-2 text-white text-xs"
+              />
+            </div>
+
+            <div className="sm:col-span-2 flex items-center gap-1.5">
+              <button
+                type="submit"
+                className="flex-1 py-2 px-3 bg-white text-black font-bold uppercase tracking-wider hover:bg-white/90 border border-white text-xs transition-colors"
+              >
+                설정 저장
+              </button>
+              <button
+                type="button"
+                onClick={handleClearGitHubSettings}
+                title="저장된 토큰 초기화"
+                className="py-2 px-2.5 border border-white/25 text-white/60 hover:text-white hover:border-white text-xs transition-colors"
+              >
+                초기화
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
 
       {/* Save Notification Banner */}
       {saveStatus && (
@@ -1166,7 +1285,7 @@ export function AdminConsoleModal({
                             <div className="relative aspect-[4/3] bg-neutral-900 border border-white/20 overflow-hidden">
                               {currentImg ? (
                                 <img
-                                  src={currentImg}
+                                  src={resolveAssetUrl(currentImg)}
                                   alt={`Slide ${slotIdx + 1}`}
                                   className="w-full h-full object-cover"
                                 />
@@ -1269,7 +1388,7 @@ export function AdminConsoleModal({
                           key={i}
                           className="w-14 h-10 border border-white/20 bg-neutral-900 overflow-hidden shrink-0"
                         >
-                          <img src={img} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
+                          <img src={resolveAssetUrl(img)} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
                         </div>
                       ))}
                       <span className="text-[10px] font-mono text-white/40">
@@ -1392,7 +1511,7 @@ export function AdminConsoleModal({
                   {/* Slide Image Preview (4:3) */}
                   <div className="relative aspect-[4/3] bg-neutral-900 border border-white/20 overflow-hidden">
                     <img
-                      src={slide.image}
+                      src={resolveAssetUrl(slide.image)}
                       alt={`Hero Exhibition Photo ${idx + 1}`}
                       className="w-full h-full object-cover"
                     />
@@ -1538,7 +1657,7 @@ export function AdminConsoleModal({
                           <div className="relative aspect-[4/3] bg-neutral-900 border border-white/25 overflow-hidden">
                             {prod.image ? (
                               <img
-                                src={prod.image}
+                                src={resolveAssetUrl(prod.image)}
                                 alt={`${prod.name} 대표 사진`}
                                 className="w-full h-full object-cover"
                               />
@@ -1752,7 +1871,7 @@ export function AdminConsoleModal({
                                     <div className="relative aspect-[4/3] bg-neutral-900 border border-white/20 overflow-hidden">
                                       {block.content ? (
                                         <img
-                                          src={block.content}
+                                          src={resolveAssetUrl(block.content)}
                                           alt={`본문 사진 #${blockIdx + 1}`}
                                           className="w-full h-full object-cover"
                                         />
@@ -2054,7 +2173,7 @@ export function AdminConsoleModal({
                       </span>
                       <div className="relative aspect-[4/3] w-full bg-neutral-900 border border-white/20 overflow-hidden">
                         <img
-                          src={session.coursePhoto}
+                          src={resolveAssetUrl(session.coursePhoto)}
                           alt={session.title}
                           className="w-full h-full object-cover"
                         />
