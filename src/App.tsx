@@ -4,7 +4,7 @@ import { IMAGE_REGISTRY } from './imageRegistry';
 import { DEFAULT_NAGA_DATA, DEFAULT_JOIN_NOTICES, normalizeNagaData } from './defaultData';
 import { ActivityItem, ProductItem, HeroSlideItem, JoinNoticeData, JoinNoticeItem, NagaAppData } from './types';
 import { AdminLoginModal } from './components/AdminLoginModal';
-import { AdminConsoleModal } from './components/AdminConsoleModal';
+import { AdminConsoleModal, SaveDataResult } from './components/AdminConsoleModal';
 
 // View type definition for SPA View Swap
 type ViewMode = 'home' | 'activities' | 'recovery' | 'join';
@@ -228,6 +228,24 @@ export default function App() {
     }
   }, [HERO_SLIDES.length, activeSlide]);
 
+  // Background preload remaining hero slide images after mount
+  useEffect(() => {
+    if (!HERO_SLIDES || HERO_SLIDES.length <= 1) return;
+    const preloadedImages: HTMLImageElement[] = [];
+    HERO_SLIDES.slice(1).forEach((slide) => {
+      if (!slide?.image) return;
+      const img = new Image();
+      img.src = slide.image;
+      preloadedImages.push(img);
+    });
+    return () => {
+      preloadedImages.forEach((img) => {
+        img.onload = null;
+        img.onerror = null;
+      });
+    };
+  }, [HERO_SLIDES]);
+
   // Admin Management State
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
     try {
@@ -239,7 +257,7 @@ export default function App() {
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [isAdminConsoleOpen, setIsAdminConsoleOpen] = useState(false);
 
-  const handleSaveAppData = async (updatedData: NagaAppData): Promise<boolean> => {
+  const handleSaveAppData = async (updatedData: NagaAppData): Promise<SaveDataResult> => {
     const normalized = normalizeNagaData(updatedData);
     setAppData(normalized);
     try {
@@ -253,10 +271,21 @@ export default function App() {
         body: JSON.stringify(normalized),
       });
       const resData = await res.json();
-      return !!resData.success;
+      return {
+        success: !!resData.success,
+        githubSynced: !!resData.githubSynced,
+        githubConfigured: !!resData.githubConfigured,
+        githubCommitUrl: resData.githubCommitUrl || null,
+        message: resData.message,
+      };
     } catch (err) {
       console.error('Server save error:', err);
-      return true;
+      return {
+        success: true,
+        githubSynced: false,
+        githubConfigured: false,
+        message: '로컬 브라우저 캐시에 저장되었습니다.',
+      };
     }
   };
 
@@ -487,7 +516,7 @@ export default function App() {
             {/* Hero Section (메인 배너): 모바일에서도 가로 4:3 비율 유지 + 하단 배너 한눈에 노출 */}
             <section
               id="hero-banner-section"
-              className="relative w-full aspect-[4/3] sm:aspect-auto sm:h-[64dvh] sm:min-h-[420px] max-h-[760px] bg-black overflow-hidden flex flex-col justify-between touch-pan-y shrink-0"
+              className="relative w-full aspect-[4/3] sm:aspect-auto sm:h-[64dvh] sm:min-h-[420px] max-h-[760px] bg-zinc-900 overflow-hidden flex flex-col justify-between touch-pan-y shrink-0"
               onMouseEnter={() => setIsPaused(true)}
               onMouseLeave={() => setIsPaused(false)}
               onTouchStart={handleTouchStart}
@@ -498,7 +527,7 @@ export default function App() {
               {HERO_SLIDES.map((slide, index) => (
                 <div
                   key={slide.id}
-                  className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                  className={`absolute inset-0 bg-zinc-900 transition-opacity duration-700 ease-in-out ${
                     index === activeSlide ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'
                   }`}
                 >
@@ -507,6 +536,8 @@ export default function App() {
                     alt={`NAGA Exhibition Slide ${index + 1}`}
                     className="w-full h-full object-cover object-center"
                     loading={index === 0 ? 'eager' : 'lazy'}
+                    fetchPriority={index === 0 ? 'high' : 'auto'}
+                    decoding={index === 0 ? 'sync' : 'async'}
                     referrerPolicy="no-referrer"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent pointer-events-none" />
@@ -754,12 +785,12 @@ export default function App() {
                         </span>
                       </div>
 
-                      <div className="relative w-full aspect-[4/3] max-h-[440px] bg-black border border-white/20 overflow-hidden group mx-auto">
+                      <div className="relative w-full aspect-[4/3] max-h-[440px] bg-zinc-900 border border-white/20 overflow-hidden group mx-auto">
                         {/* Slide Images */}
                         {selectedActivity.images.map((imgSrc, idx) => (
                           <div
                             key={idx}
-                            className={`absolute inset-0 transition-opacity duration-300 ${
+                            className={`absolute inset-0 bg-zinc-900 transition-opacity duration-300 ${
                               idx === modalSlideIndex ? 'opacity-100 z-10' : 'opacity-0 pointer-events-none z-0'
                             }`}
                           >
@@ -767,6 +798,7 @@ export default function App() {
                               src={imgSrc}
                               alt={`${selectedActivity.title} photo ${idx + 1}`}
                               className="w-full h-full object-cover"
+                              decoding="async"
                               referrerPolicy="no-referrer"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
@@ -830,7 +862,7 @@ export default function App() {
                               key={idx}
                               type="button"
                               onClick={() => setModalSlideIndex(idx)}
-                              className={`relative aspect-[4/3] border overflow-hidden transition-all ${
+                              className={`relative aspect-[4/3] bg-zinc-900 border overflow-hidden transition-all ${
                                 idx === modalSlideIndex
                                   ? 'border-white ring-1 ring-white opacity-100'
                                   : 'border-white/20 opacity-50 hover:opacity-85'
@@ -840,6 +872,8 @@ export default function App() {
                                 src={imgSrc}
                                 alt={`Thumbnail ${idx + 1}`}
                                 className="w-full h-full object-cover"
+                                loading="lazy"
+                                decoding="async"
                                 referrerPolicy="no-referrer"
                               />
                             </button>
@@ -964,7 +998,7 @@ export default function App() {
                           if (!block.content) return null;
                           return (
                             <figure key={block.id || idx} className="space-y-2">
-                              <div className="w-full border border-white/20 bg-black overflow-hidden">
+                              <div className="w-full min-h-[180px] border border-white/20 bg-zinc-900 overflow-hidden">
                                 <img
                                   src={block.content}
                                   alt={
@@ -972,6 +1006,8 @@ export default function App() {
                                     `${selectedProduct.name} 본문 사진 ${idx + 1}`
                                   }
                                   className="w-full h-auto max-h-[720px] object-cover"
+                                  loading="lazy"
+                                  decoding="async"
                                   referrerPolicy="no-referrer"
                                 />
                               </div>
@@ -1044,11 +1080,13 @@ export default function App() {
                         className="cursor-pointer border border-white/20 hover:border-white bg-black flex flex-col transition-all duration-300 group"
                       >
                         {/* 대표사진 (Cover Photo on Top) */}
-                        <div className="relative w-full aspect-[4/3] bg-black overflow-hidden border-b border-white/20">
+                        <div className="relative w-full aspect-[4/3] bg-zinc-900 overflow-hidden border-b border-white/20">
                           <img
                             src={prod.image}
                             alt={prod.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                            decoding="async"
                             referrerPolicy="no-referrer"
                           />
                         </div>
@@ -1218,11 +1256,13 @@ export default function App() {
               </div>
 
               {/* Course Photo (가로 4:3 비율 코스 사진 · 사진 위 불필요한 텍스트 오버레이 제거) */}
-              <div className="relative w-full aspect-[4/3] max-h-[440px] bg-black border border-white/20 overflow-hidden">
+              <div className="relative w-full aspect-[4/3] max-h-[440px] bg-zinc-900 border border-white/20 overflow-hidden">
                 <img
                   src={currentJoinSession.coursePhoto}
                   alt={currentJoinSession.title}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
                   referrerPolicy="no-referrer"
                 />
               </div>

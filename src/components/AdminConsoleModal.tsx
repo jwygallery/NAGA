@@ -15,8 +15,6 @@ import {
   Eye,
   EyeOff,
   CopyPlus,
-  GitBranch,
-  Download,
 } from 'lucide-react';
 import {
   ActivityItem,
@@ -28,12 +26,20 @@ import {
 } from '../types';
 import { DEFAULT_JOIN_NOTICES } from '../defaultData';
 
+export interface SaveDataResult {
+  success: boolean;
+  githubSynced?: boolean;
+  githubConfigured?: boolean;
+  githubCommitUrl?: string | null;
+  message?: string;
+}
+
 interface AdminConsoleModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLogout: () => void;
   initialData: NagaAppData;
-  onSaveData: (updatedData: NagaAppData) => Promise<boolean>;
+  onSaveData: (updatedData: NagaAppData) => Promise<SaveDataResult | boolean>;
 }
 
 type AdminTab = 'activities' | 'hero' | 'products' | 'notice';
@@ -53,20 +59,6 @@ export function AdminConsoleModal({
   const [activityForm, setActivityForm] = useState<Partial<ActivityItem>>({});
   const [isCreatingNewActivity, setIsCreatingNewActivity] = useState(false);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
-  const [isPushingGitHub, setIsPushingGitHub] = useState(false);
-  const [githubStatus, setGithubStatus] = useState<{
-    configured: boolean;
-    repo: string | null;
-    branch: string;
-    lastSyncAt: string | null;
-    lastCommitUrl: string | null;
-  }>({
-    configured: false,
-    repo: null,
-    branch: 'main',
-    lastSyncAt: null,
-    lastCommitUrl: null,
-  });
 
   // Sync with initialData when opened or updated
   React.useEffect(() => {
@@ -87,25 +79,6 @@ export function AdminConsoleModal({
     });
   }, [initialData]);
 
-  // Fetch GitHub Repository Sync Status when console opens
-  React.useEffect(() => {
-    if (!isOpen) return;
-    fetch('/api/github/status')
-      .then((res) => res.json())
-      .then((info) => {
-        if (info && info.success) {
-          setGithubStatus({
-            configured: !!info.configured,
-            repo: info.repo || null,
-            branch: info.branch || 'main',
-            lastSyncAt: info.lastSyncAt || null,
-            lastCommitUrl: info.lastCommitUrl || null,
-          });
-        }
-      })
-      .catch(() => {});
-  }, [isOpen]);
-
   if (!isOpen) return null;
 
   const joinNoticesList: JoinNoticeItem[] =
@@ -114,7 +87,92 @@ export function AdminConsoleModal({
       : DEFAULT_JOIN_NOTICES;
 
   // --------------------------------------------------------------------------
-  // Image Upload Helper (Local Device File -> /api/upload)
+  // Client-Side Image Resize (max 1600px) & Compression (quality 0.82)
+  // --------------------------------------------------------------------------
+  const compressImageFile = (file: File, maxDimension = 1600, quality = 0.82): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const readRawAsDataUrl = () => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
+        reader.readAsDataURL(file);
+      };
+
+      // Keep SVG/GIF intact without rasterizing
+      if (file.type === 'image/svg+xml' || file.type === 'image/gif') {
+        readRawAsDataUrl();
+        return;
+      }
+
+      const objectUrl = URL.createObjectURL(file);
+      const img = new Image();
+
+      img.onload = () => {
+        try {
+          let width = img.naturalWidth || img.width;
+          let height = img.naturalHeight || img.height;
+
+          if (!width || !height) {
+            URL.revokeObjectURL(objectUrl);
+            readRawAsDataUrl();
+            return;
+          }
+
+          if (width > maxDimension || height > maxDimension) {
+            if (width >= height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+
+          if (!ctx) {
+            URL.revokeObjectURL(objectUrl);
+            readRawAsDataUrl();
+            return;
+          }
+
+          // Preserve transparency via WebP for PNGs; otherwise fill dark ground & encode JPEG
+          if (file.type === 'image/png') {
+            ctx.drawImage(img, 0, 0, width, height);
+            const webpUrl = canvas.toDataURL('image/webp', quality);
+            URL.revokeObjectURL(objectUrl);
+            if (webpUrl.startsWith('data:image/webp')) {
+              resolve(webpUrl);
+              return;
+            }
+          } else {
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+            URL.revokeObjectURL(objectUrl);
+          }
+
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        } catch {
+          URL.revokeObjectURL(objectUrl);
+          readRawAsDataUrl();
+        }
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        readRawAsDataUrl();
+      };
+
+      img.src = objectUrl;
+    });
+  };
+
+  // --------------------------------------------------------------------------
+  // Image Upload Helper (Compress -> /api/upload)
   // --------------------------------------------------------------------------
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -125,41 +183,36 @@ export function AdminConsoleModal({
     if (!file) return;
 
     setUploadingField(fieldKey);
-    setSaveStatus('사진 업로드 중...');
+    setSaveStatus('이미지 최적화 및 업로드 중...');
 
     try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = reader.result as string;
-        try {
-          const res = await fetch('/api/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              imageBase64: base64,
-              filename: file.name,
-            }),
-          });
-          const resData = await res.json();
-          if (res.ok && resData.url) {
-            onUploaded(resData.url, file.name);
-            setSaveStatus('사진이 업로드되었습니다. 상단의 [전체 저장]을 눌러 반영하세요.');
-          } else {
-            onUploaded(base64, file.name);
-            setSaveStatus('로컬 미리보기로 적용되었습니다. 상단의 [전체 저장]을 눌러주세요.');
-          }
-        } catch {
+      const base64 = await compressImageFile(file, 1600, 0.82);
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: base64,
+            filename: file.name,
+          }),
+        });
+        const resData = await res.json();
+        if (res.ok && resData.url) {
+          onUploaded(resData.url, file.name);
+          setSaveStatus('사진이 업로드되었습니다. 상단의 [전체 저장]을 눌러 반영하세요.');
+        } else {
           onUploaded(base64, file.name);
           setSaveStatus('로컬 미리보기로 적용되었습니다. 상단의 [전체 저장]을 눌러주세요.');
-        } finally {
-          setUploadingField(null);
-          e.target.value = '';
         }
-      };
-      reader.readAsDataURL(file);
+      } catch {
+        onUploaded(base64, file.name);
+        setSaveStatus('로컬 미리보기로 적용되었습니다. 상단의 [전체 저장]을 눌러주세요.');
+      }
     } catch {
+      setSaveStatus('사진 처리 중 오류가 발생했습니다.');
+    } finally {
       setUploadingField(null);
-      setSaveStatus('사진 읽기 중 오류가 발생했습니다.');
+      e.target.value = '';
     }
   };
 
@@ -178,7 +231,7 @@ export function AdminConsoleModal({
 
     return {
       id: form.id || `act-${Date.now()}`,
-      code: form.code || '[2027.01]',
+      code: form.code || '[UPCOMING]',
       date: form.date || '2027.01',
       title: (form.title || 'NEW ALPINE ACTIVITY').trim(),
       distance: form.distance || '10km',
@@ -219,90 +272,33 @@ export function AdminConsoleModal({
 
   const handleSaveAll = async () => {
     setIsSaving(true);
-    setSaveStatus('서버 및 GitHub 저장소에 변경사항을 저장하는 중...');
+    setSaveStatus('변경사항 저장 및 GitHub 원격 저장소에 푸시하는 중...');
     const payload = buildCurrentPayload();
     setData(payload);
     setEditingActivityId(null);
     setIsCreatingNewActivity(false);
-    const success = await onSaveData(payload);
+    const rawResult = await onSaveData(payload);
     setIsSaving(false);
 
-    if (success) {
-      // Refresh GitHub sync status
-      try {
-        const stRes = await fetch('/api/github/status');
-        const stData = await stRes.json();
-        if (stData?.success) {
-          setGithubStatus({
-            configured: !!stData.configured,
-            repo: stData.repo || null,
-            branch: stData.branch || 'main',
-            lastSyncAt: stData.lastSyncAt || null,
-            lastCommitUrl: stData.lastCommitUrl || null,
-          });
-          if (stData.configured && stData.lastSyncAt) {
-            setSaveStatus(
-              `저장 완료! GitHub (${stData.repo}@${stData.branch}) 원격 저장소에도 자동 커밋·푸시되었습니다.`
-            );
-            setTimeout(() => setSaveStatus(null), 5000);
-            return;
-          }
-        }
-      } catch {}
+    const result: SaveDataResult =
+      typeof rawResult === 'boolean' ? { success: rawResult } : rawResult;
 
-      setSaveStatus('모든 변경사항이 영구 데이터베이스에 성공적으로 저장되었습니다!');
-      setTimeout(() => setSaveStatus(null), 4000);
+    if (result.success) {
+      if (result.githubConfigured && result.githubSynced) {
+        setSaveStatus(
+          result.message || '저장 완료 및 GitHub 원격 저장소에 자동 푸시되었습니다!'
+        );
+      } else if (result.githubConfigured && result.githubSynced === false) {
+        setSaveStatus(
+          result.message || '서버에 저장되었으나 GitHub 자동 푸시 중 오류가 발생했습니다.'
+        );
+      } else {
+        setSaveStatus('모든 변경사항이 영구 데이터베이스에 성공적으로 저장되었습니다!');
+      }
+      setTimeout(() => setSaveStatus(null), 5000);
     } else {
       setSaveStatus('저장 중 오류가 발생했습니다. 다시 시도해 주세요.');
     }
-  };
-
-  const handlePushToGitHub = async () => {
-    setIsPushingGitHub(true);
-    setSaveStatus('변경사항과 업로드된 사진을 GitHub 원격 저장소에 커밋·푸시하는 중...');
-    const payload = buildCurrentPayload();
-    setData(payload);
-    setEditingActivityId(null);
-    setIsCreatingNewActivity(false);
-    await onSaveData(payload);
-
-    try {
-      const res = await fetch('/api/github/push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: payload }),
-      });
-      const resData = await res.json();
-      if (res.ok && resData.success) {
-        setGithubStatus((prev) => ({
-          ...prev,
-          configured: true,
-          lastSyncAt: resData.lastSyncAt || new Date().toISOString(),
-          lastCommitUrl: resData.commitUrl || prev.lastCommitUrl,
-        }));
-        setSaveStatus(`✓ ${resData.message}`);
-      } else {
-        setSaveStatus(`※ ${resData.message || 'GitHub 푸시 중 오류가 발생했습니다.'}`);
-      }
-    } catch {
-      setSaveStatus('※ 서버와 통신할 수 없습니다. 로컬 저장소에는 반영되었습니다.');
-    } finally {
-      setIsPushingGitHub(false);
-    }
-  };
-
-  const handleDownloadJsonBackup = () => {
-    const payload = buildCurrentPayload();
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'db.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setSaveStatus('최신 데이터베이스(db.json) 파일이 다운로드되었습니다.');
   };
 
   const handleResetToDefault = async () => {
@@ -335,7 +331,7 @@ export function AdminConsoleModal({
   const handleStartCreateActivity = () => {
     setActivityForm({
       id: `act-${Date.now()}`,
-      code: `[${new Date().getFullYear()}.${String(new Date().getMonth() + 1).padStart(2, '0')}]`,
+      code: '[UPCOMING]',
       date: `${new Date().getFullYear()}.${String(new Date().getMonth() + 1).padStart(2, '0')}`,
       title: 'NEW ALPINE ACTIVITY',
       distance: '10km',
@@ -444,18 +440,6 @@ export function AdminConsoleModal({
     setSaveStatus(
       `새 히어로 전시 사진(#${data.heroSlides.length + 1})이 추가되었습니다. [전체 저장]을 눌러 반영하세요.`
     );
-  };
-
-  const handleAddBlankHeroSlide = () => {
-    const newSlide: HeroSlideItem = {
-      id: `slide-${Date.now()}`,
-      image: '/images/hero_slide_01.jpg',
-    };
-    setData((prev) => ({
-      ...prev,
-      heroSlides: [...prev.heroSlides, newSlide],
-    }));
-    setSaveStatus('새 히어로 사진 슬롯이 추가되었습니다. 사진을 업로드해 주세요.');
   };
 
   const handleMoveHeroSlide = (index: number, direction: 'up' | 'down') => {
@@ -810,25 +794,11 @@ export function AdminConsoleModal({
         <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap justify-end">
           <button
             onClick={handleSaveAll}
-            disabled={isSaving || isPushingGitHub}
+            disabled={isSaving}
             className="px-3.5 sm:px-5 py-2 bg-white text-black font-mono text-xs font-bold tracking-[0.18em] uppercase hover:bg-white/90 disabled:opacity-50 transition-all flex items-center gap-2 border border-white active:scale-95 whitespace-nowrap shrink-0"
           >
             <Save size={14} />
             <span>{isSaving ? 'SAVING...' : 'SAVE ALL (전체 저장)'}</span>
-          </button>
-
-          <button
-            onClick={handlePushToGitHub}
-            disabled={isSaving || isPushingGitHub}
-            title={
-              githubStatus.configured
-                ? `GitHub (${githubStatus.repo}@${githubStatus.branch}) 원격 저장소로 즉시 푸시`
-                : '배포 환경변수(GITHUB_TOKEN, GITHUB_REPO)가 설정된 경우 GitHub 원격 저장소로 즉시 커밋·푸시합니다'
-            }
-            className="px-3 sm:px-4 py-2 border border-white/40 hover:border-white bg-white/10 hover:bg-white hover:text-black text-white font-mono text-xs font-bold tracking-[0.15em] uppercase disabled:opacity-50 transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0"
-          >
-            <GitBranch size={14} />
-            <span>{isPushingGitHub ? 'PUSHING...' : 'GITHUB PUSH'}</span>
           </button>
 
           <button
@@ -966,16 +936,27 @@ export function AdminConsoleModal({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
                   <div>
-                    <label className="block text-white/60 mb-1">일정 코드 (예: [2027.01])</label>
-                    <input
-                      type="text"
-                      value={activityForm.code || ''}
+                    <label className="block text-white/60 mb-1">일정 형태</label>
+                    <select
+                      value={
+                        activityForm.code === '[ARCHIVE]' || activityForm.code === '[UPCOMING]'
+                          ? activityForm.code
+                          : activityForm.code || '[UPCOMING]'
+                      }
                       onChange={(e) => updateActivityForm({ code: e.target.value })}
                       className="w-full bg-black border border-white/30 focus:border-white p-2.5 text-white"
-                    />
+                    >
+                      <option value="[UPCOMING]">UPCOMING</option>
+                      <option value="[ARCHIVE]">ARCHIVE</option>
+                      {activityForm.code &&
+                        activityForm.code !== '[UPCOMING]' &&
+                        activityForm.code !== '[ARCHIVE]' && (
+                          <option value={activityForm.code}>{activityForm.code}</option>
+                        )}
+                    </select>
                   </div>
                   <div>
-                    <label className="block text-white/60 mb-1">일정 날짜 (예: 2027.01)</label>
+                    <label className="block text-white/60 mb-1">일정 날짜</label>
                     <input
                       type="text"
                       value={activityForm.date || ''}
@@ -1371,14 +1352,6 @@ export function AdminConsoleModal({
                     }
                   />
                 </label>
-
-                <button
-                  onClick={handleAddBlankHeroSlide}
-                  className="px-3.5 py-2.5 border border-white/30 text-white/80 hover:text-white hover:border-white font-mono text-xs tracking-[0.15em] uppercase transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0"
-                >
-                  <Plus size={14} />
-                  <span>빈 슬라이드 슬롯 추가</span>
-                </button>
               </div>
             </div>
 
@@ -1699,7 +1672,6 @@ export function AdminConsoleModal({
                       <div className="space-y-4">
                         {blocks.map((block, blockIdx) => {
                           const blockFieldKey = `prod-${prod.id}-block-${blockIdx}`;
-                          const insertImgFieldKey = `prod-${prod.id}-insert-after-${blockIdx}`;
                           return (
                             <div
                               key={block.id || blockIdx}
@@ -1723,52 +1695,6 @@ export function AdminConsoleModal({
                                 </div>
 
                                 <div className="flex items-center gap-1.5 font-mono text-[11px] flex-wrap">
-                                  {/* Insert Text Below This Block */}
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      handleAddProductBlock(
-                                        prod.id,
-                                        'text',
-                                        '',
-                                        blockIdx
-                                      )
-                                    }
-                                    className="px-2 py-1 border border-white/20 hover:border-white text-white/70 hover:text-white text-[10px] transition-colors"
-                                    title="이 블록 바로 아래에 글 블록 끼워넣기"
-                                  >
-                                    + 아래에 글 추가
-                                  </button>
-
-                                  {/* Insert Photo Below This Block */}
-                                  <label
-                                    className="px-2 py-1 border border-white/20 hover:border-white text-white/70 hover:text-white text-[10px] cursor-pointer transition-colors"
-                                    title="이 블록 바로 아래에 사진 업로드하여 끼워넣기"
-                                  >
-                                    <span>
-                                      {uploadingField === insertImgFieldKey
-                                        ? '업로드 중...'
-                                        : '+ 아래에 사진 추가'}
-                                    </span>
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      className="sr-only"
-                                      onChange={(e) =>
-                                        handleFileUpload(
-                                          e,
-                                          (newUrl) =>
-                                            handleAddProductBlock(
-                                              prod.id,
-                                              'image',
-                                              newUrl,
-                                              blockIdx
-                                            ),
-                                          insertImgFieldKey
-                                        )
-                                      }
-                                    />
-                                  </label>
 
                                   <button
                                     type="button"
@@ -1915,28 +1841,6 @@ export function AdminConsoleModal({
                           <Plus size={14} />
                           <span>+ 본문 하단에 글(텍스트) 추가</span>
                         </button>
-
-                        <label className="px-4 py-2.5 bg-white/10 hover:bg-white hover:text-black text-white font-mono text-xs font-bold tracking-[0.14em] uppercase cursor-pointer transition-colors flex items-center gap-1.5 border border-white/40">
-                          <Upload size={14} />
-                          <span>
-                            {uploadingField === `prod-add-bottom-img-${prod.id}`
-                              ? '사진 업로드 중...'
-                              : '+ 본문 하단에 사진 업로드 추가'}
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="sr-only"
-                            onChange={(e) =>
-                              handleFileUpload(
-                                e,
-                                (newUrl) =>
-                                  handleAddProductBlock(prod.id, 'image', newUrl),
-                                `prod-add-bottom-img-${prod.id}`
-                              )
-                            }
-                          />
-                        </label>
                       </div>
                     </div>
                   </div>
@@ -2198,58 +2102,6 @@ export function AdminConsoleModal({
           </div>
         )}
       </main>
-
-      {/* ==================================================================== */}
-      {/* CONSOLE FOOTER */}
-      {/* ==================================================================== */}
-      <footer className="border-t border-white/20 bg-black px-4 sm:px-8 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 text-xs font-mono text-white/50 tracking-wider">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span>NAGA™ ADMIN CONSOLE</span>
-          <span>·</span>
-          <span>ACTIVE SESSIONS: {activeJoinCount}</span>
-          <span>·</span>
-          {githubStatus.configured ? (
-            <span className="text-white/80 flex items-center gap-1.5">
-              <GitBranch size={12} />
-              <span>
-                GITHUB CONNECTED ({githubStatus.repo}@{githubStatus.branch})
-              </span>
-              {githubStatus.lastCommitUrl && (
-                <a
-                  href={githubStatus.lastCommitUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline text-white hover:text-white/80 ml-1"
-                >
-                  [최근 커밋 보기]
-                </a>
-              )}
-            </span>
-          ) : (
-            <span className="text-white/40" title="배포 환경변수에 GITHUB_TOKEN 및 GITHUB_REPO(owner/repo)를 설정하면 저장 시 GitHub로 자동 푸시됩니다.">
-              GITHUB AUTO-PUSH: 환경변수(GITHUB_TOKEN, GITHUB_REPO) 설정 시 활성화
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            onClick={handleDownloadJsonBackup}
-            title="현재 수정된 전체 데이터를 db.json 파일로 다운로드합니다"
-            className="px-3 py-1.5 border border-white/25 hover:border-white text-white/75 hover:text-white uppercase flex items-center gap-1.5 transition-colors"
-          >
-            <Download size={12} />
-            <span>db.json 백업</span>
-          </button>
-          <button
-            onClick={handleSaveAll}
-            disabled={isSaving || isPushingGitHub}
-            className="px-4 py-1.5 bg-white text-black font-bold uppercase hover:bg-white/90 disabled:opacity-50"
-          >
-            {isSaving ? 'SAVING...' : 'SAVE ALL CHANGES'}
-          </button>
-        </div>
-      </footer>
     </div>
   );
 }

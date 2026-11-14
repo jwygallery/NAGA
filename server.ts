@@ -21,6 +21,11 @@ const PUBLIC_DATA_DIR = path.join(__dirname, 'public', 'data');
 const PUBLIC_DB_FILE = path.join(PUBLIC_DATA_DIR, 'db.json');
 const DEFAULT_DATA_TS_FILE = path.join(__dirname, 'src', 'defaultData.ts');
 const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
+const IMAGES_DIR = path.join(__dirname, 'public', 'images');
+
+// In-memory cache for site data so GET /api/data responds immediately without hitting GitHub or disk repeatedly
+let cachedAppData: NagaAppData | null = null;
+const inFlightUploadFetches = new Map<string, Promise<Buffer | null>>();
 
 for (const dir of [DATA_DIR, PUBLIC_DATA_DIR, UPLOADS_DIR]) {
   if (!fs.existsSync(dir)) {
@@ -579,10 +584,47 @@ async function syncDatabaseToGitHub(reason: string, includeAppSourceFiles = fals
   }
 }
 
-// Pull latest data/db.json and any missing/0-byte uploaded images from GitHub on server startup
+// Background hydration for any missing/0-byte uploaded images in public/uploads
+async function hydrateUploadsFromGitHubInBackground(targetRef: string) {
+  const { token, repo, canRead } = getGitHubConfig();
+  if (!canRead) return;
+
+  const headers = getGitHubHeaders(token);
+  try {
+    const uploadsListUrl = `https://api.github.com/repos/${repo}/contents/public/uploads?ref=${encodeURIComponent(targetRef)}`;
+    const uploadsRes = await fetch(uploadsListUrl, { method: 'GET', headers });
+    if (!uploadsRes.ok) return;
+
+    const items = (await uploadsRes.json()) as Array<{ name?: string; type?: string; size?: number }>;
+    if (!Array.isArray(items)) return;
+
+    for (const item of items) {
+      if (item.type === 'file' && item.name && (item.size ?? 0) > 0) {
+        const safeName = path.basename(item.name);
+        const localPath = path.join(UPLOADS_DIR, safeName);
+        const needsDownload = !fs.existsSync(localPath) || fs.statSync(localPath).size === 0;
+        if (needsDownload) {
+          const buf = await fetchBinaryFileFromGitHub(`public/uploads/${safeName}`);
+          if (buf && buf.length > 0) {
+            await fs.promises.mkdir(UPLOADS_DIR, { recursive: true });
+            await fs.promises.writeFile(localPath, buf);
+            console.log(`[NAGA Server] Hydrated uploaded image from GitHub: /uploads/${safeName} (${buf.length} bytes)`);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[NAGA Server] Background upload hydration warning:', err);
+  }
+}
+
+// Pull latest data/db.json from GitHub ONCE on server startup and populate in-memory + disk cache
 async function pullDatabaseFromGitHubOnStartup() {
   const { token, repo, branch, canRead } = getGitHubConfig();
-  if (!canRead) return;
+  if (!canRead) {
+    cachedAppData = readDatabaseFromDisk();
+    return;
+  }
 
   const headers = getGitHubHeaders(token);
 
@@ -609,38 +651,23 @@ async function pullDatabaseFromGitHubOnStartup() {
         const parsed = JSON.parse(decoded);
         const normalized = normalizeNagaData(parsed);
         const formatted = JSON.stringify(normalized, null, 2);
+        cachedAppData = normalized;
         fs.writeFileSync(DB_FILE, formatted, 'utf-8');
         fs.writeFileSync(PUBLIC_DB_FILE, formatted, 'utf-8');
         fs.writeFileSync(DEFAULT_DATA_TS_FILE, generateDefaultDataTsContent(normalized), 'utf-8');
         githubSyncState.lastSyncAt = new Date().toISOString();
-        console.log(`[NAGA Server] Pulled latest data/db.json from GitHub (${repo}@${targetRef.slice(0, 7)})`);
+        console.log(`[NAGA Server] Pulled & cached latest data/db.json from GitHub (${repo}@${targetRef.slice(0, 7)})`);
       }
     }
 
-    // Also hydrate any missing or 0-byte uploaded images in public/uploads from GitHub
-    const uploadsListUrl = `https://api.github.com/repos/${repo}/contents/public/uploads?ref=${encodeURIComponent(targetRef)}`;
-    const uploadsRes = await fetch(uploadsListUrl, { method: 'GET', headers });
-    if (uploadsRes.ok) {
-      const items = (await uploadsRes.json()) as Array<{ name?: string; type?: string; size?: number }>;
-      if (Array.isArray(items)) {
-        for (const item of items) {
-          if (item.type === 'file' && item.name && (item.size ?? 0) > 0) {
-            const safeName = path.basename(item.name);
-            const localPath = path.join(UPLOADS_DIR, safeName);
-            const needsDownload = !fs.existsSync(localPath) || fs.statSync(localPath).size === 0;
-            if (needsDownload) {
-              const buf = await fetchBinaryFileFromGitHub(`public/uploads/${safeName}`);
-              if (buf && buf.length > 0) {
-                fs.writeFileSync(localPath, buf);
-                console.log(`[NAGA Server] Hydrated uploaded image from GitHub: /uploads/${safeName} (${buf.length} bytes)`);
-              }
-            }
-          }
-        }
-      }
-    }
+    // Hydrate uploads in background so server startup is instantaneous
+    void hydrateUploadsFromGitHubInBackground(targetRef);
   } catch (err) {
-    console.warn('[NAGA Server] Could not pull initial db.json or uploads from GitHub:', err);
+    console.warn('[NAGA Server] Could not pull initial db.json from GitHub:', err);
+  } finally {
+    if (!cachedAppData) {
+      cachedAppData = readDatabaseFromDisk();
+    }
   }
 }
 
@@ -648,8 +675,17 @@ async function pullDatabaseFromGitHubOnStartup() {
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+const IMAGE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
+const staticImageOptions = {
+  maxAge: '365d',
+  immutable: true,
+  setHeaders: (res: express.Response) => {
+    res.setHeader('Cache-Control', IMAGE_CACHE_CONTROL);
+  },
+};
+
 // Dynamic proxy + local disk cache for /uploads/:filename
-// Ensures uploaded images never break on reconnect even if the container restarts or had a 0-byte file
+// On Cloud Run restart when public/uploads/ is empty, fetches once from GitHub, writes to local disk, and caches immutably
 app.get('/uploads/:filename', async (req, res) => {
   const filename = path.basename(req.params.filename || '');
   if (!filename) {
@@ -660,21 +696,33 @@ app.get('/uploads/:filename', async (req, res) => {
   const localPath = path.join(UPLOADS_DIR, filename);
 
   try {
-    if (fs.existsSync(localPath) && fs.statSync(localPath).size > 0) {
-      res.setHeader('Content-Type', mimeType);
-      res.setHeader('Cache-Control', 'public, max-age=31536000');
-      return res.sendFile(localPath);
+    if (fs.existsSync(localPath)) {
+      const stat = await fs.promises.stat(localPath);
+      if (stat.size > 0) {
+        res.setHeader('Content-Type', mimeType);
+        res.setHeader('Cache-Control', IMAGE_CACHE_CONTROL);
+        return res.sendFile(localPath);
+      }
     }
 
-    const remoteBuffer = await fetchBinaryFileFromGitHub(`public/uploads/${filename}`);
+    let fetchPromise = inFlightUploadFetches.get(filename);
+    if (!fetchPromise) {
+      fetchPromise = fetchBinaryFileFromGitHub(`public/uploads/${filename}`).finally(() => {
+        inFlightUploadFetches.delete(filename);
+      });
+      inFlightUploadFetches.set(filename, fetchPromise);
+    }
+
+    const remoteBuffer = await fetchPromise;
     if (remoteBuffer && remoteBuffer.length > 0) {
       try {
-        fs.writeFileSync(localPath, remoteBuffer);
+        await fs.promises.mkdir(UPLOADS_DIR, { recursive: true });
+        await fs.promises.writeFile(localPath, remoteBuffer);
       } catch (writeErr) {
         console.warn('[NAGA Server] Could not cache remote upload to disk:', writeErr);
       }
       res.setHeader('Content-Type', mimeType);
-      res.setHeader('Cache-Control', 'public, max-age=31536000');
+      res.setHeader('Cache-Control', IMAGE_CACHE_CONTROL);
       return res.send(remoteBuffer);
     }
   } catch (err) {
@@ -684,12 +732,13 @@ app.get('/uploads/:filename', async (req, res) => {
   return res.status(404).end();
 });
 
-// Serve static uploads and static data
-app.use('/uploads', express.static(UPLOADS_DIR));
+// Serve static uploads, static images (with 1-year immutable caching), and static data
+app.use('/uploads', express.static(UPLOADS_DIR, staticImageOptions));
+app.use('/images', express.static(IMAGES_DIR, staticImageOptions));
 app.use('/data', express.static(PUBLIC_DATA_DIR));
 
-// Helper to read database
-function readDatabase() {
+// Helper to read database from disk
+function readDatabaseFromDisk(): NagaAppData {
   try {
     if (fs.existsSync(DB_FILE)) {
       const content = fs.readFileSync(DB_FILE, 'utf-8');
@@ -702,10 +751,20 @@ function readDatabase() {
   return DEFAULT_NAGA_DATA;
 }
 
-// Helper to write database (writes data/db.json, public/data/db.json, AND src/defaultData.ts)
+// Helper to get database from in-memory cache (populates from disk once if empty)
+function readDatabase(): NagaAppData {
+  if (cachedAppData) {
+    return cachedAppData;
+  }
+  cachedAppData = readDatabaseFromDisk();
+  return cachedAppData;
+}
+
+// Helper to write database (updates in-memory cache + data/db.json, public/data/db.json, AND src/defaultData.ts)
 function writeDatabase(data: unknown) {
   try {
     const normalized = normalizeNagaData(data as Record<string, unknown>);
+    cachedAppData = normalized;
     const jsonString = JSON.stringify(normalized, null, 2);
     fs.writeFileSync(DB_FILE, jsonString, 'utf-8');
     fs.writeFileSync(PUBLIC_DB_FILE, jsonString, 'utf-8');
@@ -737,7 +796,7 @@ app.post('/api/auth/login', (req, res) => {
   });
 });
 
-// 2. Get Site Data
+// 2. Get Site Data (served instantaneously from in-memory cache)
 app.get('/api/data', (req, res) => {
   const data = readDatabase();
   const gh = getGitHubConfig();
