@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useId } from 'react';
+import React, { useState, useEffect, useId, useRef, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, X, ArrowRight, Check } from 'lucide-react';
 import { IMAGE_REGISTRY } from './imageRegistry';
 import { DEFAULT_NAGA_DATA, DEFAULT_JOIN_NOTICES, normalizeNagaData } from './defaultData';
@@ -8,6 +8,51 @@ import { AdminConsoleModal } from './components/AdminConsoleModal';
 
 // View type definition for SPA View Swap
 type ViewMode = 'home' | 'activities' | 'recovery' | 'join';
+
+interface ParsedHashRoute {
+  view: ViewMode;
+  activityId: string | null;
+  productId: string | null;
+  joinSessionId: string | null;
+}
+
+function parseHashRoute(rawHash: string): ParsedHashRoute {
+  const clean = (rawHash || '').replace(/^#\/?/, '').split('?')[0].trim();
+  if (!clean) {
+    return { view: 'home', activityId: null, productId: null, joinSessionId: null };
+  }
+
+  const segments = clean
+    .split('/')
+    .map((seg) => {
+      try {
+        return decodeURIComponent(seg.trim());
+      } catch {
+        return seg.trim();
+      }
+    })
+    .filter(Boolean);
+
+  const section = (segments[0] || '').toLowerCase();
+  const itemId = segments[1] || null;
+
+  if (section === 'activities') {
+    return { view: 'activities', activityId: itemId, productId: null, joinSessionId: null };
+  }
+  if (section === 'recovery') {
+    return { view: 'recovery', activityId: null, productId: itemId, joinSessionId: null };
+  }
+  if (section === 'join') {
+    return { view: 'join', activityId: null, productId: null, joinSessionId: itemId };
+  }
+
+  return { view: 'home', activityId: null, productId: null, joinSessionId: null };
+}
+
+function normalizeHashTarget(hash: string): string {
+  if (!hash || hash === '#') return '#/';
+  return hash.startsWith('#') ? hash : `#${hash}`;
+}
 
 function BrandLogo() {
   const [candidateIndex, setCandidateIndex] = useState(0);
@@ -46,12 +91,18 @@ function BrandLogo() {
 }
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<ViewMode>('home');
+  const [initialRoute] = useState<ParsedHashRoute>(() =>
+    typeof window !== 'undefined'
+      ? parseHashRoute(window.location.hash)
+      : { view: 'home', activityId: null, productId: null, joinSessionId: null }
+  );
+
+  const [currentView, setCurrentView] = useState<ViewMode>(initialRoute.view);
   const [activeSlide, setActiveSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
+  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(initialRoute.activityId);
   const [modalSlideIndex, setModalSlideIndex] = useState(0);
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(initialRoute.productId);
   const [productPhotoIndex, setProductPhotoIndex] = useState(0);
 
   // Central Application Data with Server & Cache Sync
@@ -109,6 +160,8 @@ export default function App() {
   const ACTIVITIES_DATA = appData.activities;
   const HERO_SLIDES = appData.heroSlides;
   const PRODUCTS_DATA = appData.products;
+  const selectedActivity: ActivityItem | null =
+    ACTIVITIES_DATA.find((a) => a.id === selectedActivityId) || null;
   const selectedProduct: ProductItem | null =
     PRODUCTS_DATA.find((p) => p.id === selectedProductId) || null;
 
@@ -122,13 +175,51 @@ export default function App() {
       ? allJoinNotices.filter((s) => s.isActive !== false)
       : [allJoinNotices[0] || DEFAULT_JOIN_NOTICES[0]];
 
+  const defaultJoinSessionIdRef = useRef<string>(
+    activeJoinSessions[0]?.id || 'join-session-taebaek'
+  );
+  defaultJoinSessionIdRef.current = activeJoinSessions[0]?.id || 'join-session-taebaek';
+
   const [selectedJoinSessionId, setSelectedJoinSessionId] = useState<string>(
-    () => activeJoinSessions[0]?.id || 'join-session-taebaek'
+    () => initialRoute.joinSessionId || activeJoinSessions[0]?.id || 'join-session-taebaek'
   );
 
   // Keep selectedJoinSessionId valid when sessions are added/toggled
   const currentJoinSession: JoinNoticeItem =
     activeJoinSessions.find((s) => s.id === selectedJoinSessionId) || activeJoinSessions[0];
+
+  // Bidirectional Hash Routing Synchronization
+  const syncStateFromHash = useCallback(() => {
+    const route = parseHashRoute(window.location.hash);
+    setCurrentView(route.view);
+    setSelectedActivityId(route.activityId);
+    setModalSlideIndex(0);
+    setSelectedProductId(route.productId);
+    setProductPhotoIndex(0);
+    if (route.view === 'join') {
+      setSelectedJoinSessionId(route.joinSessionId || defaultJoinSessionIdRef.current);
+      setFormSubmitted(false);
+      setFormError('');
+    }
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('hashchange', syncStateFromHash);
+    return () => {
+      window.removeEventListener('hashchange', syncStateFromHash);
+    };
+  }, [syncStateFromHash]);
+
+  const navigateToHash = (targetHash: string) => {
+    const normalizedTarget = normalizeHashTarget(targetHash);
+    const currentNormalized = normalizeHashTarget(window.location.hash);
+    if (currentNormalized === normalizedTarget) {
+      syncStateFromHash();
+      return;
+    }
+    window.location.hash = normalizedTarget;
+  };
 
   // Keep activeSlide in bounds if slides are deleted
   useEffect(() => {
@@ -318,7 +409,7 @@ export default function App() {
           {/* Logo (Clickable to return to Home View) */}
           <button
             id="brand-logo-btn"
-            onClick={() => setCurrentView('home')}
+            onClick={() => navigateToHash('#/')}
             className="flex items-center gap-2 sm:gap-3 group text-left focus:outline-none shrink-0"
             aria-label="NAGA Home"
           >
@@ -339,7 +430,7 @@ export default function App() {
           <nav id="naga-navigation" className="flex items-center font-mono text-[11px] sm:text-xs tracking-[0.1em] sm:tracking-[0.18em] shrink-0">
             <button
               id="nav-activities-btn"
-              onClick={() => setCurrentView('activities')}
+              onClick={() => navigateToHash('#/activities')}
               className={`px-2 sm:px-4 py-1.5 sm:py-2 uppercase transition-all border border-transparent min-h-[38px] flex items-center ${
                 currentView === 'activities'
                   ? 'bg-white text-black font-semibold border-white'
@@ -354,11 +445,7 @@ export default function App() {
 
             <button
               id="nav-recovery-btn"
-              onClick={() => {
-                setCurrentView('recovery');
-                setSelectedProductId(null);
-                setProductPhotoIndex(0);
-              }}
+              onClick={() => navigateToHash('#/recovery')}
               className={`px-2 sm:px-4 py-1.5 sm:py-2 uppercase transition-all border border-transparent min-h-[38px] flex items-center ${
                 currentView === 'recovery'
                   ? 'bg-white text-black font-semibold border-white'
@@ -373,7 +460,7 @@ export default function App() {
 
             <button
               id="nav-join-btn"
-              onClick={() => setCurrentView('join')}
+              onClick={() => navigateToHash('#/join')}
               className={`px-2 sm:px-4 py-1.5 sm:py-2 uppercase transition-all border border-transparent min-h-[38px] flex items-center ${
                 currentView === 'join'
                   ? 'bg-white text-black font-semibold border-white'
@@ -550,7 +637,7 @@ export default function App() {
                 </h2>
               </div>
               <button
-                onClick={() => setCurrentView('home')}
+                onClick={() => navigateToHash('#/')}
                 className="text-xs font-mono tracking-[0.2em] uppercase text-white/60 hover:text-white border border-white/20 px-3.5 py-2 self-start sm:self-auto hover:border-white transition-colors min-h-[38px] flex items-center"
               >
                 [ ← BACK TO HOME ]
@@ -563,10 +650,7 @@ export default function App() {
                 <div
                   key={act.id}
                   id={`activity-card-${act.id}`}
-                  onClick={() => {
-                    setSelectedActivity(act);
-                    setModalSlideIndex(0);
-                  }}
+                  onClick={() => navigateToHash(`#/activities/${encodeURIComponent(act.id)}`)}
                   className="group cursor-pointer border border-white/20 hover:border-white bg-black p-4 sm:p-7 transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 active:border-white/80"
                 >
                   <div className="flex-1 space-y-1.5 sm:space-y-2">
@@ -601,7 +685,7 @@ export default function App() {
               <div
                 id="activity-modal"
                 className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6"
-                onClick={() => setSelectedActivity(null)}
+                onClick={() => navigateToHash('#/activities')}
               >
                 <div
                   className="bg-black border border-white text-white w-full max-w-2xl px-5 pt-5 sm:px-8 sm:pt-8 space-y-5 sm:space-y-6 relative max-h-[85dvh] overflow-y-auto"
@@ -619,7 +703,7 @@ export default function App() {
                     </div>
                     <button
                       id="close-modal-btn"
-                      onClick={() => setSelectedActivity(null)}
+                      onClick={() => navigateToHash('#/activities')}
                       className="border border-white/40 p-2.5 text-white hover:bg-white hover:text-black transition-colors min-w-[42px] min-h-[42px] flex items-center justify-center shrink-0"
                       aria-label="Close"
                     >
@@ -772,7 +856,7 @@ export default function App() {
                     </span>
 
                     <button
-                      onClick={() => setSelectedActivity(null)}
+                      onClick={() => navigateToHash('#/activities')}
                       className="px-6 py-2.5 border border-white/40 hover:border-white hover:bg-white hover:text-black text-white font-mono text-xs tracking-[0.2em] uppercase transition-colors text-center"
                     >
                       [ CLOSE ]
@@ -854,10 +938,7 @@ export default function App() {
                     <div className="mb-6 sm:mb-8 flex items-center justify-between">
                       <button
                         type="button"
-                        onClick={() => {
-                          setSelectedProductId(null);
-                          setProductPhotoIndex(0);
-                        }}
+                        onClick={() => navigateToHash('#/recovery')}
                         className="text-xs font-mono tracking-[0.2em] uppercase text-white/70 hover:text-black hover:bg-white border border-white/30 px-4 py-2 hover:border-white transition-colors min-h-[38px] flex items-center"
                       >
                         [ ← BACK TO RECOVERY ]
@@ -918,11 +999,7 @@ export default function App() {
                     <div className="mt-12 sm:mt-16 pt-8 border-t border-white/20">
                       <button
                         type="button"
-                        onClick={() => {
-                          setSelectedProductId(null);
-                          setProductPhotoIndex(0);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
+                        onClick={() => navigateToHash('#/recovery')}
                         className="w-full sm:w-auto px-6 py-3.5 border border-white/40 hover:border-white hover:bg-white hover:text-black text-white font-mono text-xs font-bold tracking-[0.2em] uppercase transition-colors flex items-center justify-center gap-2"
                       >
                         <span>[ ← BACK TO RECOVERY ]</span>
@@ -945,7 +1022,7 @@ export default function App() {
                     </h2>
                   </div>
                   <button
-                    onClick={() => setCurrentView('home')}
+                    onClick={() => navigateToHash('#/')}
                     className="text-xs font-mono tracking-[0.2em] uppercase text-white/60 hover:text-white border border-white/20 px-3.5 py-2 self-start sm:self-auto hover:border-white transition-colors min-h-[38px] flex items-center"
                   >
                     [ ← BACK TO HOME ]
@@ -963,11 +1040,7 @@ export default function App() {
                       <article
                         key={prod.id}
                         id={`product-card-${prod.id}`}
-                        onClick={() => {
-                          setSelectedProductId(prod.id);
-                          setProductPhotoIndex(0);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
+                        onClick={() => navigateToHash(`#/recovery/${encodeURIComponent(prod.id)}`)}
                         className="cursor-pointer border border-white/20 hover:border-white bg-black flex flex-col transition-all duration-300 group"
                       >
                         {/* 대표사진 (Cover Photo on Top) */}
@@ -1048,7 +1121,7 @@ export default function App() {
                 </p>
               </div>
               <button
-                onClick={() => setCurrentView('home')}
+                onClick={() => navigateToHash('#/')}
                 className="text-xs font-mono tracking-[0.2em] uppercase text-white/60 hover:text-white border border-white/20 px-3.5 py-2 self-start sm:self-auto hover:border-white transition-colors min-h-[38px] flex items-center"
               >
                 [ ← BACK TO HOME ]
@@ -1075,11 +1148,7 @@ export default function App() {
                       role="tab"
                       aria-selected={isSelected}
                       type="button"
-                      onClick={() => {
-                        setSelectedJoinSessionId(session.id);
-                        setFormSubmitted(false);
-                        setFormError('');
-                      }}
+                      onClick={() => navigateToHash(`#/join/${encodeURIComponent(session.id)}`)}
                       className={`text-left border p-3.5 sm:p-4 transition-all flex flex-col justify-between gap-1.5 sm:min-w-[240px] sm:flex-1 ${
                         isSelected
                           ? 'bg-white text-black border-white'
@@ -1184,7 +1253,7 @@ export default function App() {
                     SUBMIT ANOTHER APPLICATION
                   </button>
                   <button
-                    onClick={() => setCurrentView('activities')}
+                    onClick={() => navigateToHash('#/activities')}
                     className="bg-white text-black px-6 py-3 font-mono text-xs font-bold tracking-[0.2em] uppercase hover:bg-white/90 transition-colors"
                   >
                     CHECK ACTIVITIES

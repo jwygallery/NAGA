@@ -1,45 +1,9 @@
 {
   "activities": [
     {
-      "id": "act-02",
-      "code": "[2027.06]",
-      "date": "2027.06",
-      "title": "TRAINING DRILL 01: NAM-SAN",
-      "distance": "10km",
-      "elevation": "+450m 누적고도",
-      "location": "남산 순환로 및 업힐 트레일 코스",
-      "keyPoints": "남산 업힐 인터벌 ",
-      "gearRequired": "트레킹 기어, 물병",
-      "recoveryProtocol": "운동 후 프로틴 쉐이크 지급",
-      "description": "남산 업힐 인터벌 훈련을 통한 심폐 지구력 강화 및 가파른 경사로 페이스 조절 능력 훈련.",
-      "images": [
-        "/images/activity_02_slide_1.jpg",
-        "/images/activity_02_slide_2.jpg",
-        "/images/activity_02_slide_3.jpg"
-      ]
-    },
-    {
-      "id": "act-03",
-      "code": "[2027.06]",
-      "date": "2027.06",
-      "title": "TRAINING DRILL 02: GWAN-AK-SAN",
-      "distance": "15km",
-      "elevation": "+1,280m 누적고도",
-      "location": "관악산",
-      "keyPoints": "야간 산행 연습",
-      "gearRequired": "트레킹 기어, 물병, 헤드랜턴",
-      "recoveryProtocol": "운동 후 프로틴 쉐이크 지급",
-      "description": "야간 산행 연습 및 시야가 제한된 어두운 야간 암릉 지형에서의 안전한 보행과 장비 적응 훈련.",
-      "images": [
-        "/images/activity_03_slide_1.jpg",
-        "/images/activity_03_slide_2.jpg",
-        "/images/activity_03_slide_3.jpg"
-      ]
-    },
-    {
       "id": "act-04",
-      "code": "[2027.07]",
-      "date": "2027.07",
+      "code": "[UPCOMING]",
+      "date": "JUL, 07, 2027",
       "title": "2027 SEOUL DO-BUK MAIN CHALLENGE",
       "distance": "20km",
       "elevation": "+2,000m 누적고도",
@@ -50,8 +14,24 @@
       "description": "서울의 아름다운 두 명산, 도봉산과 북한산을 한번에 등반하는 여정. ",
       "images": [
         "/images/activity_04_slide_1.jpg",
-        "/images/activity_04_slide_2.jpg",
         "/images/activity_04_slide_3.jpg"
+      ]
+    },
+    {
+      "id": "act-03",
+      "code": "[ARCHIVE]",
+      "date": "NOV, 23, 2027",
+      "title": "TRAINING DRILL 01: BUK-HAN-SAN",
+      "distance": "15km",
+      "elevation": "+1,280m 누적고도",
+      "location": "백운대탐방지원센터",
+      "keyPoints": "야간 산행 연습",
+      "gearRequired": "트레킹 기어, 물병, 헤드랜턴",
+      "recoveryProtocol": "운동 후 프로틴 쉐이크 지급",
+      "description": "야간 산행 연습 및 시야가 제한된 어두운 야간 암릉 지형에서의 안전한 보행과 장비 적응 훈련.",
+      "images": [
+        "/images/activity_03_slide_1.jpg",
+        "/images/activity_03_slide_2.jpg"
       ]
     }
   ],
@@ -61,12 +41,12 @@
       "image": "/images/hero_slide_01.jpg"
     },
     {
-      "id": "slide-02",
-      "image": "/images/hero_slide_02.jpg"
-    },
-    {
       "id": "slide-03",
       "image": "/images/hero_slide_03.jpg"
+    },
+    {
+      "id": "slide-02",
+      "image": "/uploads/1794630964989_1_jpg.jpg"
     },
     {
       "id": "slide-1794243198810",
