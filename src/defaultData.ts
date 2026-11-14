@@ -20,40 +20,28 @@ export function normalizeImageUrl(url: string | undefined | null): string {
 
 export const DEFAULT_JOIN_NOTICES: JoinNoticeItem[] = [
   {
-    "id": "join-from-act-02-1794286649535",
+    "id": "join-from-act-04-1794631687057",
     "isActive": true,
-    "tag": "OPEN RECRUITMENT · 2027.06",
-    "title": "TRAINING DRILL 01: NAM-SAN",
-    "sub": "남산 업힐 인터벌  (10km · +450m 누적고도)",
-    "description": "남산 업힐 인터벌 훈련을 통한 심폐 지구력 강화 및 가파른 경사로 페이스 조절 능력 훈련.",
-    "coursePhoto": "/images/activity_02_slide_1.jpg",
+    "tag": "OPEN RECRUITMENT · JUL, 07, 2027",
+    "title": "2027 SEOUL DO-BUK MAIN CHALLENGE",
+    "sub": "서울 최고봉 북한산과 도봉산 등반 (20km · +2,000m 누적고도)",
+    "description": "서울의 아름다운 두 명산, 도봉산과 북한산을 한번에 등반하는 여정. ",
+    "coursePhoto": "/images/activity_04_slide_1.jpg",
     "photoArchiveTag": "COURSE ARCHIVE",
-    "photoTrailTag": "TRAINING DRILL 01: NAM-SAN · 10km",
-    "targetSession": "TRAINING DRILL 01: NAM-SAN [2027.06] - 남산 업힐 인터벌 "
+    "photoTrailTag": "2027 SEOUL DO-BUK MAIN CHALLENGE · 20km",
+    "targetSession": "2027 SEOUL DO-BUK MAIN CHALLENGE [UPCOMING] - 서울 최고봉 북한산과 도봉산 등반"
   },
   {
-    "id": "join-from-act-03-1794286650719",
+    "id": "join-from-act-03-1794631687976",
     "isActive": true,
-    "tag": "OPEN RECRUITMENT · 2027.06",
-    "title": "TRAINING DRILL 02: GWAN-AK-SAN",
+    "tag": "OPEN RECRUITMENT · NOV, 23, 2027",
+    "title": "TRAINING DRILL 01: BUK-HAN-SAN",
     "sub": "야간 산행 연습 (15km · +1,280m 누적고도)",
     "description": "야간 산행 연습 및 시야가 제한된 어두운 야간 암릉 지형에서의 안전한 보행과 장비 적응 훈련.",
     "coursePhoto": "/images/activity_03_slide_1.jpg",
     "photoArchiveTag": "COURSE ARCHIVE",
-    "photoTrailTag": "TRAINING DRILL 02: GWAN-AK-SAN · 15km",
-    "targetSession": "TRAINING DRILL 02: GWAN-AK-SAN [2027.06] - 야간 산행 연습"
-  },
-  {
-    "id": "join-from-act-04-1794286655367",
-    "isActive": true,
-    "tag": "OPEN RECRUITMENT · 2027.07",
-    "title": "2027 SEOUL DO-BUK MAIN CHALLENGE",
-    "sub": "서울 최고봉 북한산과 도봉산 등반 (20km · +2,000m 누적고도)",
-    "description": "서울의 아름다운 두 명산, 도봉산과 북한산을 한번에 등반하는 여정.",
-    "coursePhoto": "/images/activity_04_slide_1.jpg",
-    "photoArchiveTag": "COURSE ARCHIVE",
-    "photoTrailTag": "2027 SEOUL DO-BUK MAIN CHALLENGE · 20km",
-    "targetSession": "2027 SEOUL DO-BUK MAIN CHALLENGE [2027.07] - 서울 최고봉 북한산과 도봉산 등반"
+    "photoTrailTag": "TRAINING DRILL 01: BUK-HAN-SAN · 15km",
+    "targetSession": "TRAINING DRILL 01: BUK-HAN-SAN [ARCHIVE] - 야간 산행 연습"
   }
 ];
 
