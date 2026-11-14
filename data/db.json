@@ -64,19 +64,11 @@
       "usage": "July, 06, 2026",
       "detailDescription": "급하게 단백질을 섭취해야할 때, 편의점에 들어가 어떤 쉐이크를 선택하는 게 좋을까?\n가장 성분이 클린한 쉐이크가 무엇인지 성분표를 분석해봤다.\n\n01. 흡수 속도: 유청(WPI)인가, 우유단백(MPI/MPC)인가?\n시중 편의점 팩 음료의 대다수(더:단백, 닥터유 프로, 랩노쉬 등)는 원가 절감과 묵직한 목넘김을 위해 MPI(분리우유단백)와 MPC(농축우유단백)를 주원료로 사용합니다. 우유단백질은 약 80%가 위산과 만나 응고되는 '카제인'이고, 20%만이 빠르게 흡수되는 '유청'입니다. 카제인은 4~6시간에 걸쳐 아미노산을 서서히 공급하므로 일상 간식이나 취침 전에는 유리하지만, 운동 직후 30분(골든타임)에 찢어진 근섬유로 아미노산을 폭발적으로 밀어 넣기에는 한계가 있습니다. 반면 셀렉스 프로핏은 100% WPI(분리유청단백)만을 사용하여 위장 체류 시간을 최소화하고 가장 빠른 혈중 아미노산 농도 상승을 유도합니다.\n\n02. 위장 부담(GI Distress): 탈수 직후의 유당과 삼투압\n장시간 산행 중에는 혈액이 근육과 피부로 몰리면서 위장관 혈류량이 급감합니다. 이 상태에서 유당이 일부 남아있는 MPC 기반 음료를 급하게 마시면 삼투압 현상으로 인해 복부 팽만이나 설사를 겪기 쉽습니다. 고강도 필드 활동 직후에는 유당과 지방을 정제한 WPI 단일 원료 제품이나 유당분해 공정을 거친 제품을 선택하는 것이 안전합니다.\n\n03. 합성 증점제와 첨가물의 역설\n상온 유통과 부드러운 질감을 유지하기 위해 대부분의 시판 RTD 음료에는 셀룰로스검, 카라기난, 젤란검 같은 합성 증점제·유화제와 인공 감미료(수크랄로스, 아세설팜칼륨)가 배합됩니다. 평소에는 문제가 되지 않지만, 극심한 탈수와 체온 상승을 겪은 아웃도어 활동 직후에는 이러한 합성 첨가물이 장 점막을 자극하고 불필요한 갈증을 유발할 수 있습니다.\n\n1. SELEX PRO-FIT (셀렉스 프로핏 초코)\n   - VOL / KCAL : 330ml / 100kcal\n   - MACRO      : PRO 20g | SUGAR 0g | FAT 0.8g\n   - SOURCE     : 100% WPI (분리유청단백)\n   - NOTE       : 유당 제거 및 최고속 흡수. 고강도 훈련 직후 최적화.\n\n2. BINGGRAE THE:DANBAEK (빙그레 더:단백 초코)\n   - VOL / KCAL : 250ml / 105kcal\n   - MACRO      : PRO 20g | SUGAR 0.8g | FAT 0.6g\n   - SOURCE     : MPI, MPC (우유단백질: 카제인 80% + 유청 20%)\n   - NOTE       : 높은 기호성. 카제인 비중이 높아 느린 흡수 패턴.\n\n3. TAKEFIT MAX (테이크핏 맥스 초코)\n   - VOL / KCAL : 250ml / 105kcal\n   - MACRO      : PRO 21g | SUGAR 1g | FAT 1.1g\n   - SOURCE     : ISP (분리대두단백) + MPI, MPC (우유단백) 혼합\n   - NOTE       : 동·식물성 복합 배합 및 유당분해우유 사용으로 소화 보완.\n\n4. DR.YOU PRO (닥터유 프로 초코)\n   - VOL / KCAL : 250ml / 150kcal\n   - MACRO      : PRO 24g | SUGAR 1g | FAT 3.9g\n   - SOURCE     : MPI, MPC (우유단백) + ISP (대두단백)\n   - NOTE       : 높은 단백질 함량. (※ 일반 '닥터유 드링크'는 당류 20g 내외로 주의)\n\n5. LABNOSH PROTEIN (랩노쉬 프로틴 라떼)\n   - VOL / KCAL : 350ml / 170kcal\n   - MACRO      : PRO 27g | SUGAR 5g | FAT 0.9g\n   - SOURCE     : MPC, MPI (농축·분리우유단백)\n   - NOTE       : 대용량 식사 대용 스펙. 상대적으로 높은 당류 및 카페인(라떼 기준) 체크.",
       "images": [
-        "/uploads/1794243418898_IMG_5445_jpeg.jpg",
         "/images/product_02_alpine_shake.jpg",
-        "/uploads/1794568209767_IMG_5483_jpeg.jpg",
         "/uploads/1794631449048_____png.png"
       ],
       "subtitle": "July, 06, 2026",
       "blocks": [
-        {
-          "id": "prod-01-block-img-0",
-          "type": "image",
-          "content": "/uploads/1794243418898_IMG_5445_jpeg.jpg",
-          "caption": ""
-        },
         {
           "id": "prod-01-block-txt-0",
           "type": "text",
@@ -88,12 +80,6 @@
           "type": "image",
           "content": "/images/product_02_alpine_shake.jpg",
           "caption": "물론 이렇게 먹으면 제일 좋다"
-        },
-        {
-          "id": "prod-01-block-1794568213572-b0bv",
-          "type": "image",
-          "content": "/uploads/1794568209767_IMG_5483_jpeg.jpg",
-          "caption": "얘네는 잘생겼다"
         },
         {
           "id": "prod-01-block-1794631282904-moc2",
