@@ -34,7 +34,7 @@ export const DEFAULT_JOIN_NOTICES: JoinNoticeItem[] = [
   {
     "id": "join-from-act-04-1794738553961",
     "isActive": true,
-    "tag": "OPEN RECRUITMENT · JUL 07, 2027",
+    "tag": "OPEN RECRUITMENT · JUL, 2027",
     "title": "2027 SEOUL DO-BUK MAIN CHALLENGE",
     "sub": "서울 최고봉 북한산과 도봉산 등반 (20km · +2,000m 누적고도)",
     "description": "서울의 아름다운 두 명산, 도봉산과 북한산을 한번에 등반하는 여정. ",
@@ -100,7 +100,7 @@ export const DEFAULT_NAGA_DATA: NagaAppData = {
   {
     "id": "act-04",
     "code": "[UPCOMING]",
-    "date": "JUL 07, 2027",
+    "date": "JUL, 2027",
     "title": "2027 SEOUL DO-BUK MAIN CHALLENGE",
     "distance": "20km",
     "elevation": "+2,000m 누적고도",
