@@ -20,18 +20,6 @@ export function normalizeImageUrl(url: string | undefined | null): string {
 
 export const DEFAULT_JOIN_NOTICES: JoinNoticeItem[] = [
   {
-    "id": "join-from-act-04-1794631687057",
-    "isActive": true,
-    "tag": "OPEN RECRUITMENT · JUL, 07, 2027",
-    "title": "2027 SEOUL DO-BUK MAIN CHALLENGE",
-    "sub": "서울 최고봉 북한산과 도봉산 등반 (20km · +2,000m 누적고도)",
-    "description": "서울의 아름다운 두 명산, 도봉산과 북한산을 한번에 등반하는 여정. ",
-    "coursePhoto": "/images/activity_04_slide_1.jpg",
-    "photoArchiveTag": "COURSE ARCHIVE",
-    "photoTrailTag": "2027 SEOUL DO-BUK MAIN CHALLENGE · 20km",
-    "targetSession": "2027 SEOUL DO-BUK MAIN CHALLENGE [UPCOMING] - 서울 최고봉 북한산과 도봉산 등반"
-  },
-  {
     "id": "join-from-act-03-1794631687976",
     "isActive": false,
     "tag": "OPEN RECRUITMENT · NOV, 23, 2026",
@@ -42,6 +30,18 @@ export const DEFAULT_JOIN_NOTICES: JoinNoticeItem[] = [
     "photoArchiveTag": "COURSE ARCHIVE",
     "photoTrailTag": "TRAINING DRILL 01: BUK-HAN-SAN · 15km",
     "targetSession": "TRAINING DRILL 01: BUK-HAN-SAN [ARCHIVE] - 야간 산행 연습"
+  },
+  {
+    "id": "join-from-act-04-1794738553961",
+    "isActive": true,
+    "tag": "OPEN RECRUITMENT · JUL 07, 2027",
+    "title": "2027 SEOUL DO-BUK MAIN CHALLENGE",
+    "sub": "서울 최고봉 북한산과 도봉산 등반 (20km · +2,000m 누적고도)",
+    "description": "서울의 아름다운 두 명산, 도봉산과 북한산을 한번에 등반하는 여정. ",
+    "coursePhoto": "/images/activity_04_slide_1.jpg",
+    "photoArchiveTag": "COURSE ARCHIVE",
+    "photoTrailTag": "2027 SEOUL DO-BUK MAIN CHALLENGE · 20km",
+    "targetSession": "2027 SEOUL DO-BUK MAIN CHALLENGE [UPCOMING] - 서울 최고봉 북한산과 도봉산 등반"
   }
 ];
 
@@ -100,7 +100,7 @@ export const DEFAULT_NAGA_DATA: NagaAppData = {
   {
     "id": "act-04",
     "code": "[UPCOMING]",
-    "date": "JUL, 07, 2027",
+    "date": "JUL 07, 2027",
     "title": "2027 SEOUL DO-BUK MAIN CHALLENGE",
     "distance": "20km",
     "elevation": "+2,000m 누적고도",
@@ -117,7 +117,7 @@ export const DEFAULT_NAGA_DATA: NagaAppData = {
   {
     "id": "act-03",
     "code": "[ARCHIVE]",
-    "date": "NOV, 23, 2026",
+    "date": "NOV 23, 2026",
     "title": "TRAINING DRILL 01: BUK-HAN-SAN",
     "distance": "15km",
     "elevation": "+1,280m 누적고도",
