@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useId, useRef, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, X, ArrowRight, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { IMAGE_REGISTRY } from './imageRegistry';
 import { DEFAULT_NAGA_DATA, DEFAULT_JOIN_NOTICES, normalizeNagaData } from './defaultData';
 import { ActivityItem, ProductItem, HeroSlideItem, JoinNoticeData, JoinNoticeItem, NagaAppData } from './types';
@@ -93,6 +93,32 @@ function BrandLogo() {
         </svg>
       )}
     </div>
+  );
+}
+
+interface SubViewFooterProps {
+  isAdminLoggedIn: boolean;
+  onAdminClick: () => void;
+}
+
+function SubViewFooter({ isAdminLoggedIn, onAdminClick }: SubViewFooterProps) {
+  return (
+    <footer className="mt-auto pt-10 sm:pt-12">
+      <div className="pt-6 border-t border-white/20 text-xs font-mono tracking-[0.14em] sm:tracking-[0.18em] text-white/50 flex flex-col sm:flex-row justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span>ORGANIZER: JWY | SEOUL, KOREA</span>
+          <button
+            type="button"
+            onClick={onAdminClick}
+            className="text-[9px] font-mono tracking-[0.2em] text-white/20 hover:text-white/60 transition-colors uppercase cursor-pointer"
+            title="ADMINISTRATION"
+          >
+            {isAdminLoggedIn ? '[CONSOLE]' : '[ADMIN]'}
+          </button>
+        </div>
+        <div>© {new Date().getFullYear()} NAGA™. ALL RIGHTS RESERVED.</div>
+      </div>
+    </footer>
   );
 }
 
@@ -269,6 +295,26 @@ export default function App() {
       });
     };
   }, [HERO_SLIDES]);
+
+  // Activity Detail Modal Accessibility: Escape key close & body scroll lock
+  useEffect(() => {
+    if (!selectedActivity) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        navigateToHash('#/activities');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedActivity]);
 
   // Admin Management State
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
@@ -493,7 +539,7 @@ export default function App() {
               <span className="font-syne font-bold tracking-[0.2em] sm:tracking-[0.25em] text-base sm:text-lg leading-none text-white flex items-center gap-1">
                 NAGA<span className="text-[10px] tracking-normal font-sans align-top">™</span>
               </span>
-              <span className="text-[8px] sm:text-[9px] text-white/60 tracking-[0.12em] sm:tracking-[0.18em] uppercase font-mono mt-0.5 truncate max-w-[120px] xs:max-w-[180px] sm:max-w-none">
+              <span className="hidden sm:block text-[9px] text-white/60 tracking-[0.18em] uppercase font-mono mt-0.5">
                 NATIONAL ALPINE GUARD ASSOCIATION
               </span>
             </div>
@@ -504,7 +550,7 @@ export default function App() {
             <button
               id="nav-activities-btn"
               onClick={() => navigateToHash('#/activities')}
-              className={`px-2 sm:px-4 py-1.5 sm:py-2 uppercase transition-all border border-transparent min-h-[38px] flex items-center ${
+              className={`px-2.5 sm:px-4 py-2 uppercase transition-all border border-transparent min-h-[44px] flex items-center ${
                 currentView === 'activities'
                   ? 'bg-white text-black font-semibold border-white'
                   : 'text-white/80 hover:text-white hover:border-white/30'
@@ -519,7 +565,7 @@ export default function App() {
             <button
               id="nav-recovery-btn"
               onClick={() => navigateToHash('#/recovery')}
-              className={`px-2 sm:px-4 py-1.5 sm:py-2 uppercase transition-all border border-transparent min-h-[38px] flex items-center ${
+              className={`px-2.5 sm:px-4 py-2 uppercase transition-all border border-transparent min-h-[44px] flex items-center ${
                 currentView === 'recovery'
                   ? 'bg-white text-black font-semibold border-white'
                   : 'text-white/80 hover:text-white hover:border-white/30'
@@ -534,7 +580,7 @@ export default function App() {
             <button
               id="nav-join-btn"
               onClick={() => navigateToHash('#/join')}
-              className={`px-2 sm:px-4 py-1.5 sm:py-2 uppercase transition-all border border-transparent min-h-[38px] flex items-center ${
+              className={`px-2.5 sm:px-4 py-2 uppercase transition-all border border-transparent min-h-[44px] flex items-center ${
                 currentView === 'join'
                   ? 'bg-white text-black font-semibold border-white'
                   : 'text-white/80 hover:text-white hover:border-white/30'
@@ -560,7 +606,7 @@ export default function App() {
             {/* Hero Section (메인 배너): 모바일에서도 가로 4:3 비율 유지 + 하단 배너 한눈에 노출 */}
             <section
               id="hero-banner-section"
-              className="relative w-full aspect-[4/3] sm:aspect-auto sm:h-[64dvh] sm:min-h-[420px] max-h-[760px] bg-zinc-900 overflow-hidden flex flex-col justify-between touch-pan-y shrink-0"
+              className="relative w-full aspect-[4/3] sm:aspect-auto sm:h-[64dvh] sm:min-h-[440px] sm:max-h-[680px] bg-zinc-900 overflow-hidden flex flex-col justify-between touch-pan-y shrink-0"
               onMouseEnter={() => setIsPaused(true)}
               onMouseLeave={() => setIsPaused(false)}
               onTouchStart={handleTouchStart}
@@ -611,11 +657,11 @@ export default function App() {
 
                 {/* Subtle Slide Counter & Progress Bars */}
                 {HERO_SLIDES.length > 0 && (
-                  <div className="flex flex-col items-end gap-1.5">
-                    <div className="font-mono text-[11px] tabular-nums tracking-[0.2em] text-white/80">
+                  <div className="bg-black/75 border border-white/30 px-2.5 py-1.5 flex flex-col items-end gap-1.5">
+                    <div className="font-mono text-[11px] tabular-nums tracking-[0.2em] text-white/90 leading-none">
                       <span>{String((activeSlide % HERO_SLIDES.length) + 1).padStart(2, '0')}</span>
                       <span className="text-white/40 mx-1">/</span>
-                      <span className="text-white/50">{String(HERO_SLIDES.length).padStart(2, '0')}</span>
+                      <span className="text-white/55">{String(HERO_SLIDES.length).padStart(2, '0')}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       {HERO_SLIDES.map((s, idx) => (
@@ -713,9 +759,10 @@ export default function App() {
               </div>
               <button
                 onClick={() => navigateToHash('#/')}
-                className="text-xs font-mono tracking-[0.2em] uppercase text-white/60 hover:text-white border border-white/20 px-3.5 py-2 self-start sm:self-auto hover:border-white transition-colors min-h-[38px] flex items-center"
+                className="text-xs font-mono tracking-[0.18em] uppercase text-white/65 hover:text-white border border-white/25 px-3.5 py-2 self-start sm:self-auto hover:border-white transition-colors min-h-[44px] flex items-center gap-2"
               >
-                [ ← BACK TO HOME ]
+                <ArrowLeft size={13} />
+                <span>BACK TO HOME</span>
               </button>
             </div>
 
@@ -729,17 +776,27 @@ export default function App() {
                   className="group cursor-pointer border border-white/20 hover:border-white bg-black p-4 sm:p-7 transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 active:border-white/80"
                 >
                   <div className="flex-1 space-y-1.5 sm:space-y-2">
-                    <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-                      <span className="font-mono text-xs sm:text-sm font-semibold tracking-[0.2em] text-white border border-white/40 px-2 sm:px-2.5 py-0.5 bg-white/5 tabular-nums">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                      <span className="font-mono text-xs font-semibold tracking-[0.18em] text-white border border-white/40 px-2 sm:px-2.5 py-0.5 bg-white/5 tabular-nums">
                         {act.code}
                       </span>
-                      <span className="font-mono text-xs text-white/60 tracking-[0.15em] uppercase tabular-nums">
+                      {act.date && (
+                        <span className="font-mono text-xs text-white/80 tracking-[0.14em] uppercase tabular-nums">
+                          {act.date}
+                        </span>
+                      )}
+                      <span className="text-white/30">·</span>
+                      <span className="font-mono text-xs text-white/60 tracking-[0.14em] uppercase tabular-nums">
                         {act.distance}
                       </span>
-                      <span className="text-white/30">·</span>
-                      <span className="font-mono text-xs text-white/50 tracking-[0.1em]">
-                        {act.keyPoints}
-                      </span>
+                      {act.keyPoints && (
+                        <>
+                          <span className="text-white/30">·</span>
+                          <span className="font-mono text-xs text-white/55 tracking-[0.06em]">
+                            {act.keyPoints}
+                          </span>
+                        </>
+                      )}
                     </div>
 
                     <h3 className="text-base sm:text-xl font-syne font-bold tracking-tight text-white group-hover:text-white/90">
@@ -759,27 +816,34 @@ export default function App() {
             {selectedActivity && (
               <div
                 id="activity-modal"
+                role="dialog"
+                aria-modal="true"
                 className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6"
                 onClick={() => navigateToHash('#/activities')}
               >
                 <div
-                  className="bg-black border border-white text-white w-full max-w-2xl px-5 pt-5 sm:px-8 sm:pt-8 space-y-5 sm:space-y-6 relative max-h-[85dvh] overflow-y-auto"
+                  className="bg-black border border-white text-white w-full max-w-2xl px-5 sm:px-8 space-y-5 sm:space-y-6 relative max-h-[85dvh] overflow-y-auto"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {/* Modal Header */}
-                  <div className="border-b border-white/20 pb-4 flex items-start justify-between gap-3">
+                  {/* Sticky Modal Header */}
+                  <div className="sticky top-0 z-30 bg-black border-b border-white/20 py-4 sm:py-5 flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <span className="font-mono text-xs tracking-[0.18em] sm:tracking-[0.2em] text-white/60 block uppercase tabular-nums">
-                        {selectedActivity.code}
-                      </span>
-                      <h3 className="text-lg sm:text-2xl font-syne font-bold uppercase tracking-tight mt-1 text-white break-words">
+                      <div className="flex items-center gap-2.5 flex-wrap font-mono text-xs tracking-[0.16em] uppercase tabular-nums">
+                        <span className="text-white border border-white/35 px-2 py-0.5 bg-white/5">
+                          {selectedActivity.code}
+                        </span>
+                        {selectedActivity.date && (
+                          <span className="text-white/75">{selectedActivity.date}</span>
+                        )}
+                      </div>
+                      <h3 className="text-lg sm:text-2xl font-syne font-bold uppercase tracking-tight mt-2 text-white break-words">
                         {selectedActivity.title}
                       </h3>
                     </div>
                     <button
                       id="close-modal-btn"
                       onClick={() => navigateToHash('#/activities')}
-                      className="border border-white/40 p-2.5 text-white hover:bg-white hover:text-black transition-colors min-w-[42px] min-h-[42px] flex items-center justify-center shrink-0"
+                      className="border border-white/40 p-2.5 text-white hover:bg-white hover:text-black transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0"
                       aria-label="Close"
                     >
                       <X size={18} />
@@ -945,25 +1009,16 @@ export default function App() {
             )}
 
             {/* View Sub-footer */}
-            <div className="mt-10 sm:mt-12 pt-6 border-t border-white/20 text-xs font-mono tracking-[0.15em] sm:tracking-[0.18em] text-white/50 flex flex-col sm:flex-row justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span>ORGANIZER: JWY | SEOUL, KOREA</span>
-                <button
-                  onClick={() => {
-                    if (isAdminLoggedIn) {
-                      setIsAdminConsoleOpen(true);
-                    } else {
-                      setIsAdminLoginOpen(true);
-                    }
-                  }}
-                  className="text-[9px] font-mono tracking-[0.2em] text-white/20 hover:text-white/60 transition-colors uppercase cursor-pointer"
-                  title="ADMINISTRATION"
-                >
-                  {isAdminLoggedIn ? '[CONSOLE]' : '[ADMIN]'}
-                </button>
-              </div>
-              <div>2026 NAGA™. ALL RIGHTS RESERVED.</div>
-            </div>
+            <SubViewFooter
+              isAdminLoggedIn={isAdminLoggedIn}
+              onAdminClick={() => {
+                if (isAdminLoggedIn) {
+                  setIsAdminConsoleOpen(true);
+                } else {
+                  setIsAdminLoginOpen(true);
+                }
+              }}
+            />
           </div>
         )}
 
@@ -1017,39 +1072,40 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => navigateToHash('#/recovery')}
-                        className="text-xs font-mono tracking-[0.2em] uppercase text-white/70 hover:text-black hover:bg-white border border-white/30 px-4 py-2 hover:border-white transition-colors min-h-[38px] flex items-center"
+                        className="text-xs font-mono tracking-[0.18em] uppercase text-white/70 hover:text-black hover:bg-white border border-white/30 px-4 py-2 hover:border-white transition-colors min-h-[44px] flex items-center gap-2"
                       >
-                        [ ← BACK TO RECOVERY ]
+                        <ArrowLeft size={13} />
+                        <span>BACK TO RECOVERY</span>
                       </button>
                     </div>
 
-                    {/* Blog Post Header: 제목 (Title) & 부제목 (Subtitle) */}
+                    {/* Blog Post Header: 제목 (Title) & 작성 날짜 (Date) */}
                     <header className="border-b border-white/25 pb-6 sm:pb-8 mb-8 sm:mb-10 space-y-2.5 sm:space-y-3">
-                      <h1 className="text-2xl sm:text-4xl font-syne font-bold tracking-tight text-white leading-tight break-keep">
+                      <h1 className="text-2xl sm:text-4xl font-syne font-bold tracking-[-0.02em] text-white leading-snug break-keep">
                         {selectedProduct.name}
                       </h1>
                       {postSubtitle && (
-                        <p className="text-sm sm:text-lg font-sans text-white/65 leading-relaxed break-keep">
+                        <time className="block text-xs sm:text-sm font-mono tracking-[0.16em] uppercase text-white/60 tabular-nums">
                           {postSubtitle}
-                        </p>
+                        </time>
                       )}
                     </header>
 
-                    {/* Blog Post Body: 사용자가 배치한 순서대로 사진과 글이 스크롤되며 노출 */}
+                    {/* Blog Post Body: 사용자가 배치한 순서대로 사진과 글이 스크롤되며 노출 (원본 비율 유지) */}
                     <div className="space-y-7 sm:space-y-9">
                       {postBlocks.map((block, idx) => {
                         if (block.type === 'image') {
                           if (!block.content) return null;
                           return (
                             <figure key={block.id || idx} className="space-y-2">
-                              <div className="w-full min-h-[180px] border border-white/20 bg-zinc-900 overflow-hidden">
+                              <div className="w-full border border-white/20 bg-zinc-900 overflow-hidden">
                                 <img
                                   src={resolveAssetUrl(block.content)}
                                   alt={
                                     block.caption ||
                                     `${selectedProduct.name} 본문 사진 ${idx + 1}`
                                   }
-                                  className="w-full h-auto max-h-[720px] object-cover"
+                                  className="w-full h-auto object-contain"
                                   loading="lazy"
                                   decoding="async"
                                   referrerPolicy="no-referrer"
@@ -1080,9 +1136,10 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => navigateToHash('#/recovery')}
-                        className="w-full sm:w-auto px-6 py-3.5 border border-white/40 hover:border-white hover:bg-white hover:text-black text-white font-mono text-xs font-bold tracking-[0.2em] uppercase transition-colors flex items-center justify-center gap-2"
+                        className="w-full sm:w-auto px-6 py-3.5 border border-white/40 hover:border-white hover:bg-white hover:text-black text-white font-mono text-xs font-bold tracking-[0.18em] uppercase transition-colors flex items-center justify-center gap-2 min-h-[44px]"
                       >
-                        <span>[ ← BACK TO RECOVERY ]</span>
+                        <ArrowLeft size={13} />
+                        <span>BACK TO RECOVERY</span>
                       </button>
                     </div>
                   </article>
@@ -1090,7 +1147,7 @@ export default function App() {
               })()
             ) : (
               /* ============================================================== */
-              /* RECOVERY BLOG PREVIEW LIST (대표사진 + 제목 + 부제목 미리보기 카드) */
+              /* RECOVERY BLOG PREVIEW LIST (대표사진 + 제목 + 날짜 미리보기 카드) */
               /* ============================================================== */
               <>
                 {/* View Header */}
@@ -1103,13 +1160,14 @@ export default function App() {
                   </div>
                   <button
                     onClick={() => navigateToHash('#/')}
-                    className="text-xs font-mono tracking-[0.2em] uppercase text-white/60 hover:text-white border border-white/20 px-3.5 py-2 self-start sm:self-auto hover:border-white transition-colors min-h-[38px] flex items-center"
+                    className="text-xs font-mono tracking-[0.18em] uppercase text-white/65 hover:text-white border border-white/25 px-3.5 py-2 self-start sm:self-auto hover:border-white transition-colors min-h-[44px] flex items-center gap-2"
                   >
-                    [ ← BACK TO HOME ]
+                    <ArrowLeft size={13} />
+                    <span>BACK TO HOME</span>
                   </button>
                 </div>
 
-                {/* 2-Column Blog Preview Grid: 대표사진 + 제목 + 부제목 */}
+                {/* 2-Column Blog Preview Grid: 대표사진 + 제목 + 날짜 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
                   {PRODUCTS_DATA.map((prod) => {
                     const previewSubtitle =
@@ -1135,21 +1193,21 @@ export default function App() {
                           />
                         </div>
 
-                        {/* 제목 (Title) & 부제목 (Subtitle) */}
+                        {/* 제목 (Title) & 날짜 (Date) */}
                         <div className="p-4 sm:p-6 flex-1 flex flex-col justify-between space-y-4">
                           <div className="space-y-1.5 sm:space-y-2">
-                            <h3 className="text-xl sm:text-2xl font-syne font-bold tracking-tight text-white group-hover:text-white/90 break-keep">
+                            <h3 className="text-xl sm:text-2xl font-syne font-bold tracking-[-0.02em] leading-snug text-white group-hover:text-white/90 break-keep">
                               {prod.name}
                             </h3>
                             {previewSubtitle && (
-                              <p className="text-xs sm:text-sm font-sans text-white/70 leading-relaxed break-keep">
+                              <time className="block text-xs font-mono tracking-[0.16em] uppercase text-white/55 tabular-nums">
                                 {previewSubtitle}
-                              </p>
+                              </time>
                             )}
                           </div>
 
                           <div className="pt-3 sm:pt-4 border-t border-white/10 flex items-center justify-between font-mono text-xs tracking-[0.18em] uppercase text-white/70 group-hover:text-white">
-                            <span>[ READ POST ]</span>
+                            <span>READ POST</span>
                             <ArrowRight
                               size={15}
                               className="group-hover:translate-x-1 transition-transform"
@@ -1164,25 +1222,16 @@ export default function App() {
             )}
 
             {/* View Sub-footer */}
-            <div className="mt-10 sm:mt-12 pt-6 border-t border-white/20 text-xs font-mono tracking-[0.15em] sm:tracking-[0.18em] text-white/50 flex flex-col sm:flex-row justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span>ORGANIZER: JWY | SEOUL, KOREA</span>
-                <button
-                  onClick={() => {
-                    if (isAdminLoggedIn) {
-                      setIsAdminConsoleOpen(true);
-                    } else {
-                      setIsAdminLoginOpen(true);
-                    }
-                  }}
-                  className="text-[9px] font-mono tracking-[0.2em] text-white/20 hover:text-white/60 transition-colors uppercase cursor-pointer"
-                  title="ADMINISTRATION"
-                >
-                  {isAdminLoggedIn ? '[CONSOLE]' : '[ADMIN]'}
-                </button>
-              </div>
-              <div>2026 NAGA™. ALL RIGHTS RESERVED.</div>
-            </div>
+            <SubViewFooter
+              isAdminLoggedIn={isAdminLoggedIn}
+              onAdminClick={() => {
+                if (isAdminLoggedIn) {
+                  setIsAdminConsoleOpen(true);
+                } else {
+                  setIsAdminLoginOpen(true);
+                }
+              }}
+            />
           </div>
         )}
 
@@ -1191,71 +1240,69 @@ export default function App() {
         {/* ==================================================================== */}
         {currentView === 'join' && (
           <div id="join-view" className="flex-1 flex flex-col max-w-4xl w-full mx-auto px-3.5 sm:px-8 py-6 sm:py-12">
-            {/* View Header */}
+            {/* View Header (1. ACTIVITIES / 2. RECOVERY와 높이·비례 통일) */}
             <div className="border-b border-white/20 pb-4 mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
                 <h2 className="text-2xl sm:text-4xl font-syne font-bold uppercase tracking-tight text-white inline-flex items-baseline gap-2.5">
                   <span className="font-sans font-bold tabular-nums">3.</span>
                   <span>JOIN</span>
                 </h2>
-                <p className="text-xs font-mono tracking-[0.12em] text-white/60 mt-1.5">
-                  참가 세션 선택 및 신청
-                </p>
               </div>
               <button
                 onClick={() => navigateToHash('#/')}
-                className="text-xs font-mono tracking-[0.2em] uppercase text-white/60 hover:text-white border border-white/20 px-3.5 py-2 self-start sm:self-auto hover:border-white transition-colors min-h-[38px] flex items-center"
+                className="text-xs font-mono tracking-[0.18em] uppercase text-white/65 hover:text-white border border-white/25 px-3.5 py-2 self-start sm:self-auto hover:border-white transition-colors min-h-[44px] flex items-center gap-2"
               >
-                [ ← BACK TO HOME ]
+                <ArrowLeft size={13} />
+                <span>BACK TO HOME</span>
               </button>
             </div>
 
-            {/* Multi-Session Selector Tab Bar (모바일: 세로 스택 / 데스크톱: 가로 스크롤 탭) */}
-            <div className="mb-6 sm:mb-8">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-mono tracking-[0.15em] text-white/50 uppercase">
-                  SESSIONS ({activeJoinSessions.length})
-                </span>
-              </div>
-              <div
-                role="tablist"
-                aria-label="Active Sessions"
-                className="flex flex-col sm:flex-row sm:overflow-x-auto no-scrollbar gap-2.5"
-              >
-                {activeJoinSessions.map((session, idx) => {
-                  const isSelected = session.id === currentJoinSession.id;
-                  return (
-                    <button
-                      key={session.id}
-                      role="tab"
-                      aria-selected={isSelected}
-                      type="button"
-                      onClick={() => navigateToHash(`#/join/${encodeURIComponent(session.id)}`)}
-                      className={`text-left border p-3.5 sm:p-4 transition-all flex flex-col justify-between gap-1.5 sm:min-w-[240px] sm:flex-1 ${
-                        isSelected
-                          ? 'bg-white text-black border-white'
-                          : 'bg-black text-white border-white/25 hover:border-white/70 hover:bg-white/[0.03]'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-2 w-full">
-                        <span
-                          className={`text-[10px] font-mono tracking-[0.18em] uppercase tabular-nums ${
-                            isSelected ? 'text-black/60 font-bold' : 'text-white/45'
-                          }`}
-                        >
-                          {session.tag || `SESSION ${String(idx + 1).padStart(2, '0')}`}
-                        </span>
-                        <span
-                          className={`text-[9px] font-mono tracking-[0.18em] px-1.5 py-0.5 uppercase font-bold shrink-0 ${
-                            isSelected
-                              ? 'bg-black text-white'
-                              : 'border border-white/25 text-white/60'
-                          }`}
-                        >
-                          {isSelected ? 'SELECTED' : 'OPEN'}
-                        </span>
-                      </div>
-                      <div className="mt-0.5">
+            {/* Multi-Session Selector Tab Bar: 2개 이상 세션이 활성화된 경우에만 표시하여 중복 제거 */}
+            {activeJoinSessions.length > 1 && (
+              <div className="mb-6 sm:mb-8">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-mono tracking-[0.15em] text-white/50 uppercase">
+                    SELECT SESSION ({activeJoinSessions.length})
+                  </span>
+                </div>
+                <div
+                  role="tablist"
+                  aria-label="Active Sessions"
+                  className="flex flex-col sm:flex-row sm:overflow-x-auto no-scrollbar gap-2.5"
+                >
+                  {activeJoinSessions.map((session, idx) => {
+                    const isSelected = session.id === currentJoinSession.id;
+                    return (
+                      <button
+                        key={session.id}
+                        role="tab"
+                        aria-selected={isSelected}
+                        type="button"
+                        onClick={() => navigateToHash(`#/join/${encodeURIComponent(session.id)}`)}
+                        className={`text-left border p-3.5 sm:p-4 transition-all flex flex-col justify-between gap-1.5 sm:min-w-[240px] sm:flex-1 ${
+                          isSelected
+                            ? 'bg-white text-black border-white'
+                            : 'bg-black text-white border-white/25 hover:border-white/70 hover:bg-white/[0.03]'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2 w-full">
+                          <span
+                            className={`text-[10px] font-mono tracking-[0.18em] uppercase tabular-nums ${
+                              isSelected ? 'text-black/65 font-bold' : 'text-white/50'
+                            }`}
+                          >
+                            {session.tag || `SESSION ${String(idx + 1).padStart(2, '0')}`}
+                          </span>
+                          <span
+                            className={`text-[9px] font-mono tracking-[0.18em] px-1.5 py-0.5 uppercase font-bold shrink-0 ${
+                              isSelected
+                                ? 'bg-black text-white'
+                                : 'border border-white/25 text-white/60'
+                            }`}
+                          >
+                            {isSelected ? 'SELECTED' : 'OPEN'}
+                          </span>
+                        </div>
                         <div
                           className={`text-sm sm:text-base font-syne font-bold uppercase tracking-tight leading-snug break-keep ${
                             isSelected ? 'text-black' : 'text-white'
@@ -1263,19 +1310,12 @@ export default function App() {
                         >
                           {session.title}
                         </div>
-                        <div
-                          className={`text-[11px] font-mono tracking-[0.04em] mt-0.5 line-clamp-1 ${
-                            isSelected ? 'text-black/75' : 'text-white/60'
-                          }`}
-                        >
-                          {session.sub}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Content: 현재 선택된 모집 세션 안내 */}
             <div className="border border-white/20 bg-white/[0.03] p-4 sm:p-6 mb-6 sm:mb-8 space-y-4">
@@ -1284,9 +1324,11 @@ export default function App() {
                   <span className="text-[10px] font-mono tracking-[0.22em] text-white/50 uppercase block">
                     {currentJoinSession.tag || 'UPCOMING SESSION'}
                   </span>
-                  <span className="text-[10px] font-mono tracking-[0.2em] text-white/40 uppercase tabular-nums">
-                    SESSION {String(activeJoinSessions.findIndex((s) => s.id === currentJoinSession.id) + 1).padStart(2, '0')} / {String(activeJoinSessions.length).padStart(2, '0')}
-                  </span>
+                  {activeJoinSessions.length > 1 && (
+                    <span className="text-[10px] font-mono tracking-[0.2em] text-white/40 uppercase tabular-nums">
+                      SESSION {String(activeJoinSessions.findIndex((s) => s.id === currentJoinSession.id) + 1).padStart(2, '0')} / {String(activeJoinSessions.length).padStart(2, '0')}
+                    </span>
+                  )}
                 </div>
                 <h3 className="text-xl sm:text-3xl font-syne font-bold uppercase tracking-tight text-white mt-1.5 leading-snug break-keep">
                   {currentJoinSession.title}
@@ -1368,17 +1410,14 @@ export default function App() {
                   </div>
                 )}
 
-                {/* 선택된 신청 세션 표시 */}
-                <div className="border border-white/25 bg-white/[0.04] p-3.5 sm:p-4 space-y-1">
-                  <span className="text-[10px] font-mono tracking-[0.2em] text-white/50 uppercase block">
+                {/* 선택된 신청 세션 표시 (간결 1줄 확인 배너) */}
+                <div className="border border-white/25 bg-white/[0.04] px-3.5 py-2.5 flex items-center justify-between gap-2 flex-wrap">
+                  <span className="text-[10px] font-mono tracking-[0.2em] text-white/50 uppercase">
                     SELECTED SESSION
                   </span>
-                  <div className="text-sm sm:text-base font-syne font-bold uppercase tracking-tight text-white break-keep">
+                  <span className="text-xs sm:text-sm font-syne font-bold uppercase tracking-tight text-white break-keep">
                     {currentJoinSession.title}
-                  </div>
-                  <p className="text-xs font-mono text-white/75 break-keep">
-                    {currentJoinSession.sub}
-                  </p>
+                  </span>
                   <input
                     type="hidden"
                     name="sessions"
@@ -1485,9 +1524,12 @@ export default function App() {
                     className="w-full py-3.5 sm:py-4 bg-white text-black font-mono text-xs sm:text-sm font-bold tracking-[0.2em] sm:tracking-[0.25em] uppercase hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] transition-all flex items-center justify-center gap-3 border border-white min-h-[46px]"
                   >
                     {isSubmitting ? (
-                      <span className="animate-pulse">[ SUBMITTING... ]</span>
+                      <span className="animate-pulse">SUBMITTING...</span>
                     ) : (
-                      <span>[ SUBMIT APPLICATION ➔ ]</span>
+                      <>
+                        <span>SUBMIT APPLICATION</span>
+                        <ArrowRight size={15} />
+                      </>
                     )}
                   </button>
                 </div>
@@ -1495,25 +1537,16 @@ export default function App() {
             )}
 
             {/* View Sub-footer */}
-            <div className="mt-10 sm:mt-12 pt-6 border-t border-white/20 text-xs font-mono tracking-[0.15em] sm:tracking-[0.18em] text-white/50 flex flex-col sm:flex-row justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span>ORGANIZER: JWY | SEOUL, KOREA</span>
-                <button
-                  onClick={() => {
-                    if (isAdminLoggedIn) {
-                      setIsAdminConsoleOpen(true);
-                    } else {
-                      setIsAdminLoginOpen(true);
-                    }
-                  }}
-                  className="text-[9px] font-mono tracking-[0.2em] text-white/20 hover:text-white/60 transition-colors uppercase cursor-pointer"
-                  title="ADMINISTRATION"
-                >
-                  {isAdminLoggedIn ? '[CONSOLE]' : '[ADMIN]'}
-                </button>
-              </div>
-              <div>2026 NAGA™. ALL RIGHTS RESERVED.</div>
-            </div>
+            <SubViewFooter
+              isAdminLoggedIn={isAdminLoggedIn}
+              onAdminClick={() => {
+                if (isAdminLoggedIn) {
+                  setIsAdminConsoleOpen(true);
+                } else {
+                  setIsAdminLoginOpen(true);
+                }
+              }}
+            />
           </div>
         )}
       </main>

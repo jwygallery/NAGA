@@ -1,1 +1,40 @@
 @import "tailwindcss";
+
+@theme {
+  --color-night: #000000;
+  --color-snow: #ffffff;
+  --font-sans: "Space Grotesk", "Noto Sans KR", sans-serif;
+  --font-syne: "Syne", "Noto Sans KR", sans-serif;
+  --font-mono: "Space Grotesk", "Noto Sans KR", monospace;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: #000000;
+    color: #ffffff;
+    font-family: "Space Grotesk", "Noto Sans KR", sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    word-break: keep-all;
+    min-height: 100dvh;
+  }
+
+  ::selection {
+    background: #ffffff;
+    color: #000000;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

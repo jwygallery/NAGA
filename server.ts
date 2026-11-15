@@ -550,9 +550,11 @@ async function syncDatabaseToGitHub(reason: string, includeAppSourceFiles = fals
       const extraPaths = [
         'index.html',
         'vite.config.ts',
+        'src/index.css',
         'src/types.ts',
         'src/githubDirect.ts',
         'src/App.tsx',
+        'src/components/AdminLoginModal.tsx',
         'src/components/AdminConsoleModal.tsx',
         'server.ts',
         'netlify.toml',

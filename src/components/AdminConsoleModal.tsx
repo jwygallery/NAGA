@@ -78,11 +78,33 @@ export function AdminConsoleModal({
   const [showGhToken, setShowGhToken] = useState<boolean>(false);
 
   React.useEffect(() => {
-    if (isOpen) {
-      setGhConfig(getGitHubDirectConfig());
-      setGhConfigured(hasGitHubDirectConfig());
-    }
-  }, [isOpen]);
+    if (!isOpen) return;
+    setGhConfig(getGitHubDirectConfig());
+    setGhConfigured(hasGitHubDirectConfig());
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (isGitHubSettingsOpen) {
+        setIsGitHubSettingsOpen(false);
+        return;
+      }
+      const activeTag = document.activeElement?.tagName;
+      if (activeTag && ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) {
+        (document.activeElement as HTMLElement).blur();
+        return;
+      }
+      onClose();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, isGitHubSettingsOpen, onClose]);
 
   // Sync with initialData when opened or updated
   React.useEffect(() => {

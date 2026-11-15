@@ -31,55 +31,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              night: '#000000',
-              snow: '#FFFFFF',
-            },
-            fontFamily: {
-              sans: ['"Space Grotesk"', '"Noto Sans KR"', 'sans-serif'],
-              syne: ['"Syne"', 'sans-serif'],
-              mono: ['"Space Grotesk"', 'monospace'],
-            }
-          }
-        }
-      }
-    </script>
-    <style>
-      /* Crisp 1px minimal wireframe styling and pure contrast */
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        background-color: #000000;
-        color: #ffffff;
-        font-family: 'Space Grotesk', 'Noto Sans KR', sans-serif;
-        margin: 0;
-        padding: 0;
-        overflow-x: hidden;
-        word-break: keep-all;
-        min-height: 100dvh;
-      }
-      /* Hide scrollbar utility */
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
-      /* Custom selection style */
-      ::selection {
-        background: #ffffff;
-        color: #000000;
-      }
-    </style>
   </head>
   <body class="bg-black text-white min-h-[100dvh] break-keep">
     <div id="root"></div>
