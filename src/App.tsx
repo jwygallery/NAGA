@@ -116,7 +116,7 @@ function SubViewFooter({ isAdminLoggedIn, onAdminClick }: SubViewFooterProps) {
             {isAdminLoggedIn ? '[CONSOLE]' : '[ADMIN]'}
           </button>
         </div>
-        <div>© {new Date().getFullYear()} NAGA™. ALL RIGHTS RESERVED.</div>
+        <div>© 2024 NAGA™. ALL RIGHTS RESERVED.</div>
       </div>
     </footer>
   );
@@ -720,7 +720,7 @@ export default function App() {
                         @nationalalpineguard
                       </a>
                     </div>
-                    <div>SEOUL, KOREA</div>
+                    <div>SEOUL, KOREA · EST. 2024</div>
                     <div className="pt-0.5">
                       <button
                         id="footer-admin-trigger-btn"
